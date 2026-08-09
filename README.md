@@ -13,6 +13,11 @@
   <strong>macOS 네이티브</strong> · <strong>Swift 6 + SwiftUI</strong> · <strong>11가지 게임 형식</strong>
 </p>
 
+<p align="center">
+  ✦ 제작자 <a href="https://github.com/BoraSarang">BoRaSaRang</a> &nbsp;·&nbsp;
+  ✉️ 문의 <a href="mailto:leeborasarang@gmail.com">leeborasarang@gmail.com</a>
+</p>
+
 ---
 
 ## 🖼️ 미리보기
@@ -104,3 +109,9 @@ swift test
 ## ⚖️ 라이선스
 
 © 2026 Pure Solitaire — 모든 권리 보유.
+
+## 🙌 만든 사람
+
+- **제작자**: [BoRaSaRang](https://github.com/BoraSarang)
+- **문의 메일**: [leeborasarang@gmail.com](mailto:leeborasarang@gmail.com)
+- 버그 제보, 기능 제안, 여러 의견은 언제든 메일로 보내 주세요. 😊

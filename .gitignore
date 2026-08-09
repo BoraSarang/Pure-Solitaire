@@ -18,3 +18,6 @@ PureFreeCell.app/
 
 # 아이콘 산출물
 AppIcon.iconset/
+
+# 릴리스 zip 산출물
+Pure-Solitaire-*.zip
