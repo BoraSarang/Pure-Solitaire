@@ -202,6 +202,16 @@ final class FreeCellGame {
   - `drawFromStock`: `min(drawMode, stock.count)`장을 스톡에서 웨이스트로 이동(잔량은 그 장수만). `canMove`/recycle 동일.
   - VM: `klondikeDrawMode` computed가 `gameOptions.selectedID(for:optionID:)`에서 읽음 → `newGame`에 전달, `restoreKlondike` 시 저장된 `drawMode`로 설정 옵션 동기화.
 
+### 3.16 전체 힌트 강조 (v3.14)
+- **목적**: 유효 이동 전체의 소스를 동시에 강조 — 기존 단일 힌트 순환(⌘H)과 병행하는 독립 모드.
+- **VM 상태** (`FreeCellViewModel`):
+  - `@Published showAllHints: Bool` — 전체 힌트 모드 토글(세션 상태, 영구 저장 안 함).
+  - `currentHintCandidates()` — 기존 `hint()`/`runAutoPlay()` 내 게임별 후보 산출 로직을 공용 메서드로 추출(모든 변형의 `hintCandidates()` 재사용).
+  - `displayedHintMoves: [Move]` — `showAllHints`면 `currentHintCandidates` 전체, 아니면 `[highlightedMove]`(또는 빈 배열). 뷰 소스 판정의 단일 진실 소스.
+  - `toggleAllHints()`/`clearAllHints()` — 토글 시 메시지 표시, 해제 시 강조 제거. 이동 적용(`apply`)·새 게임(`newGame`) 경로에서 자동 해제.
+- **뷰 소스 일반화** (`GameBoardView`): 소스 강조 판정 함수 13개(`isHintSource`/`isKlondikeHintSource`/…/홈·프리셀 소스)가 단일 `highlightedMove` 스위치에서 `displayedHintMoves` 기준 `contains` 검사로 변경 — 동일 로직(카드 위치 매칭)이 단일/전체에서 공용 동작.
+- **진입점**: 사이드바 "전체 힌트" 토글 버튼(`isActive`) + 게임 메뉴 "전체 힌트"(⇧⌘H). 설정은 세션 토글로만(영구 기본값 없음).
+
 ## 4. UI 설계 (SwiftUI)
 
 ### 4.1 카드 커스텀 벡터 렌더링

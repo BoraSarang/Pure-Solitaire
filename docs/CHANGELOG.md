@@ -1,5 +1,15 @@
 # CHANGELOG — 변경 이력
 
+## [3.14.0] — 2026-08-09 — [macos] — 전체 힌트 강조
+### 변경 (T-175~T-177)
+- **전체 힌트 강조**: 유효 이동 전체의 소스를 한 번에 강조. `⇧⌘H`(또는 사이드바 "전체 힌트" 토글)로 켜짐/꺼짐. 켜지면 현재 보드의 모든 이동 가능한 소스 카드가 노란 테두리로 동시 표시되고, 이동/새 게임/게임 전환 시 자동 해제.
+- **단일 힌트 유지**: 기존 `⌘H` 후보 순환 + `Enter` 적용 + 소스→목적지 왕복 2회 애니메이션은 그대로.
+- **구현**: VM에 `showAllHints` + `displayedHintMoves`(전체 힌트 시 `currentHintCandidates` 전체, 아니면 하이라이트 1개) 추가. `hint()`의 게임별 후보 추출 로직을 `currentHintCandidates()`로 공용화. GameBoardView의 소스 하이라이트 판정 함수 13개(홈/프리셀/열 — FreeCell/Klondike/Yukon/FortyThieves/Golf/Pyramid/TriPeaks/Spider)를 단일 `highlightedMove` 대신 `displayedHintMoves` 기준으로 일반화.
+### 검증
+- `swift build`(debug·release) 경고 0건, 단위 테스트 **178개** 통과(표시 계층 변경, 기존 유지)
+- release 설치·실행 (PID 27391, VERSION 3.14.0)
+- 문서: PLAN_v3.14/TODO/DESIGN/CHANGELOG/테스트 가이드/세션 로그
+
 ## [3.13.0] — 2026-08-09 — [macos] — 코어 QoL 3종
 ### 변경 (T-170~T-172)
 - **승리 자동 완성 (T-170)**: 승리 직전 상태(잔여 카드가 모두 홈 이동 가능)에서 남은 카드를 홈셀로 자동 정리. 홈셀 중심 게임(freecell/bakersGame/seaTower/superFreeCell/klondike/yukon/fortyThieves)만 적용, spider/golf/pyramid/triPeaks 제외. `applyRaw` 경유로 이동을 **undo 스택에 포함**(중간 복귀 가능), 최대 500회 가드, 완료 시 사운드+승리 연출. 설정 "승리 자동 완성" 토글(@AppStorage, 기본 켬).

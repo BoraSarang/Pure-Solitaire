@@ -15,6 +15,12 @@
 - [x] T-173: 테스트 추가 + 회귀(178개 통과) + swift build(debug·release) 경고 0
 - [x] T-174: release 설치·실행(VERSION 3.13.0, PID 90472) + 문서 갱신 (PLAN/TODO/DESIGN/CHANGELOG)
 
+## v3.14 — 전체 힌트 강조 (완료 — 2026-08-09, PLAN_v3.14_macos.md)
+- [x] T-175: VM 상태 — showAllHints + currentHintCandidates()(hint 후보 공용 추출) + displayedHintMoves + 토글/해제(이동·새 게임 시)
+- [x] T-176: GameBoardView 소스 헬퍼 13개(홈/프리셀/열/스톡·웨이스트)를 displayedHintMoves 기반으로 일반화
+- [x] T-177: SideBar "전체 힌트" 토글 버튼(isActive) + GameCommands ⇧⌘H 메뉴 + 빈 상태 처리
+- [x] T-178: 회귀(178개 유지) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.14.0, PID 27391) + 문서
+
 ## v1.0 — 프리셀 MVP
 
 ### Phase 1: GameCore (플랫폼 독립 로직)

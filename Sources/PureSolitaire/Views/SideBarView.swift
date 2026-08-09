@@ -82,6 +82,16 @@ struct SideBarView: View {
                 vm.hint()
             }
             SideBarButton(
+                icon: "lightbulb.max.fill",
+                title: "전체 힌트",
+                shortcut: "⇧⌘H",
+                isActive: vm.showAllHints,
+                accessibilityValue: vm.showAllHints ? "켜짐" : "꺼짐",
+                fg: fg
+            ) {
+                vm.toggleAllHints()
+            }
+            SideBarButton(
                 icon: "wand.and.stars",
                 title: "자동 플레이",
                 shortcut: "⇧⌘A",

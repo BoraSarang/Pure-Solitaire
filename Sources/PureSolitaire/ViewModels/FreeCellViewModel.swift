@@ -28,6 +28,8 @@ final class FreeCellViewModel: ObservableObject {
     @Published private(set) var highlightedMove: Move?
     @Published var hintAnimationMove: Move?
     @Published var hintAnimationTick = 0
+    /// 전체 힌트 강조 모드 — 켜져 있으면 유효 이동 전체의 소스를 동시에 강조
+    @Published var showAllHints = false
     @Published var isDealing = false
     @Published private(set) var lastHomeCard: Card?
     @Published private(set) var elapsedSeconds: TimeInterval = 0
@@ -401,6 +403,7 @@ final class FreeCellViewModel: ObservableObject {
         highlightedMove = nil
         hintCandidates = []
         hintIndex = 0
+        clearAllHints()
         dismissMessage()
         stats.setLastGameNumber(safeNumber, for: variant)
         stats.recordStarted(variant)
@@ -500,6 +503,7 @@ final class FreeCellViewModel: ObservableObject {
         guard ok else { return false }
         selection = nil
         dismissMessage()
+        clearAllHints()
         highlightedMove = nil
         SoundPlayer.shared.play(move.isHomeMove ? .home : .move, enabled: settings.soundEnabled, volume: settings.soundVolume)
         if move.isHomeMove {
@@ -1323,26 +1327,57 @@ final class FreeCellViewModel: ObservableObject {
 
     // MARK: - 힌트 / 자동 플레이
 
+    /// 현재 게임의 유효 이동 후보 (전체 힌트/힌트 순환 공용)
+    var currentHintCandidates: [Move] {
+        if let s = spider {
+            return s.hintCandidates()
+        } else if let k = klondike {
+            return k.hintCandidates()
+        } else if let y = yukon {
+            return y.hintCandidates()
+        } else if let f = fortyThieves {
+            return f.hintCandidates()
+        } else if let g = golf {
+            return g.hintCandidates()
+        } else if let p = pyramid {
+            return p.hintCandidates()
+        } else if let t = triPeaks {
+            return t.hintCandidates()
+        } else {
+            return game.hintCandidates()
+        }
+    }
+
+    /// 표시할 힌트 이동 목록 — 전체 힌트 ON이면 모든 후보, 아니면 단일 하이라이트
+    var displayedHintMoves: [Move] {
+        if showAllHints {
+            return currentHintCandidates
+        }
+        if let move = highlightedMove {
+            return [move]
+        }
+        return []
+    }
+
+    /// 전체 힌트 강조 토글 — 켜면 유효 이동 전체의 소스를 동시에 강조
+    func toggleAllHints() {
+        showAllHints.toggle()
+        if showAllHints {
+            showMessage("전체 힌트: 이동 가능한 \(currentHintCandidates.count)곳을 표시합니다.")
+        } else {
+            clearAllHints()
+            dismissMessage()
+        }
+    }
+
+    /// 전체 힌트 해제 (강조만 제거, 단일 힌트 상태는 유지)
+    func clearAllHints() {
+        showAllHints = false
+    }
+
     /// 힌트: 다음 후보로 순환하며 해당 이동을 하이라이트 (적용하지 않음)
     func hint() {
-        let candidates: [Move]
-        if let s = spider {
-            candidates = s.hintCandidates()
-        } else if let k = klondike {
-            candidates = k.hintCandidates()
-        } else if let y = yukon {
-            candidates = y.hintCandidates()
-        } else if let f = fortyThieves {
-            candidates = f.hintCandidates()
-        } else if let g = golf {
-            candidates = g.hintCandidates()
-        } else if let p = pyramid {
-            candidates = p.hintCandidates()
-        } else if let t = triPeaks {
-            candidates = t.hintCandidates()
-        } else {
-            candidates = game.hintCandidates()
-        }
+        let candidates = currentHintCandidates
         guard !candidates.isEmpty else {
             highlightedMove = nil
             hintAnimationMove = nil

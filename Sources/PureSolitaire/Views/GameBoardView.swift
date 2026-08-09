@@ -239,12 +239,13 @@ struct GameBoardView: View {
 
     /// 힌트 하이라이트 소스(홈) 여부 — Yukon (해당 수트 홈셀만)
     private func isYukonHomeHintSource(_ index: Int) -> Bool {
-        guard let move = vm.highlightedMove else { return false }
-        switch move {
-        case let .columnToHome(_, card):
-            return vm.yukon?.homes[index].last?.suit == card.suit
-        default:
-            return false
+        vm.displayedHintMoves.contains { move in
+            switch move {
+            case let .columnToHome(_, card):
+                return vm.yukon?.homes[index].last?.suit == card.suit
+            default:
+                return false
+            }
         }
     }
 
@@ -325,14 +326,13 @@ struct GameBoardView: View {
 
     /// 힌트 하이라이트 소스(홈) 여부 — Forty Thieves (해당 수트 홈셀만)
     private func isFortyThievesHomeHintSource(_ index: Int) -> Bool {
-        guard let move = vm.highlightedMove else { return false }
-        switch move {
-        case let .columnToHome(_, card):
-            return vm.fortyThieves?.homes[index].last?.suit == card.suit
-        case .wasteToFoundation:
-            return false
-        default:
-            return false
+        vm.displayedHintMoves.contains { move in
+            switch move {
+            case let .columnToHome(_, card):
+                return vm.fortyThieves?.homes[index].last?.suit == card.suit
+            default:
+                return false
+            }
         }
     }
 
@@ -760,26 +760,31 @@ struct GameBoardView: View {
 
     /// 힌트 하이라이트 소스(홈) 여부 — FreeCell
     private func isHomeHintSource(_ index: Int) -> Bool {
-        guard case let .homeToColumn(homeIndex, _, _)? = vm.highlightedMove else { return false }
-        return homeIndex == index
+        vm.displayedHintMoves.contains {
+            if case let .homeToColumn(homeIndex, _, _) = $0 { return homeIndex == index }
+            return false
+        }
     }
 
     /// 힌트 하이라이트 소스(홈) 여부 — Klondike
     private func isKlondikeHomeHintSource(_ index: Int) -> Bool {
-        guard let move = vm.highlightedMove else { return false }
-        switch move {
-        case .wasteToFoundation: return false
-        case let .columnToHome(_, card):
-            return vm.klondike?.homes[index].last?.suit == card.suit
-        default:
-            return false
+        vm.displayedHintMoves.contains { move in
+            switch move {
+            case .wasteToFoundation: return false
+            case let .columnToHome(_, card):
+                return vm.klondike?.homes[index].last?.suit == card.suit
+            default:
+                return false
+            }
         }
     }
 
     /// 힌트 하이라이트 소스(프리셀) 여부
     private func isFreeCellHintSource(_ index: Int) -> Bool {
-        guard case let .freeCellToColumn(fc, _, _)? = vm.highlightedMove else { return false }
-        return fc == index
+        vm.displayedHintMoves.contains {
+            if case let .freeCellToColumn(fc, _, _) = $0 { return fc == index }
+            return false
+        }
     }
 
     // MARK: - 타블로 열
@@ -882,35 +887,38 @@ struct GameBoardView: View {
 
     /// 힌트 하이라이트 소스(타블로) 여부 — FreeCell
     private func isHintSource(card: Card, cardIndex: Int, column: Int) -> Bool {
-        guard let move = vm.highlightedMove else { return false }
-        switch move {
-        case let .columnToColumn(from, _, count):
-            guard from == column else { return false }
-            let fromBottom = vm.game.columns[column].count - 1 - cardIndex
-            return fromBottom < count
-        case let .columnToHome(ci, _):
-            return ci == column && cardIndex == vm.game.columns[column].count - 1
-        case let .columnToFreeCell(ci, _, _):
-            return ci == column && cardIndex == vm.game.columns[column].count - 1
-        default:
-            return false
+        vm.displayedHintMoves.contains { move in
+            switch move {
+            case let .columnToColumn(from, _, count):
+                guard from == column else { return false }
+                let fromBottom = vm.game.columns[column].count - 1 - cardIndex
+                return fromBottom < count
+            case let .columnToHome(ci, _):
+                return ci == column && cardIndex == vm.game.columns[column].count - 1
+            case let .columnToFreeCell(ci, _, _):
+                return ci == column && cardIndex == vm.game.columns[column].count - 1
+            default:
+                return false
+            }
         }
     }
 
     /// 힌트 하이라이트 소스(타블로) 여부 — Klondike
     private func isKlondikeHintSource(column: Int, cardIndex: Int, card: Card) -> Bool {
-        guard let move = vm.highlightedMove, let k = vm.klondike else { return false }
-        switch move {
-        case let .columnToColumn(from, _, count):
-            guard from == column else { return false }
-            let fromBottom = k.columns[column].count - 1 - cardIndex
-            return fromBottom < count
-        case let .columnToHome(ci, c):
-            return ci == column && cardIndex == k.columns[column].count - 1 && c == card
-        case let .flipColumnCard(ci, c):
-            return ci == column && cardIndex == k.columns[column].count - 1 && c == card
-        default:
-            return false
+        guard let k = vm.klondike else { return false }
+        return vm.displayedHintMoves.contains { move in
+            switch move {
+            case let .columnToColumn(from, _, count):
+                guard from == column else { return false }
+                let fromBottom = k.columns[column].count - 1 - cardIndex
+                return fromBottom < count
+            case let .columnToHome(ci, c):
+                return ci == column && cardIndex == k.columns[column].count - 1 && c == card
+            case let .flipColumnCard(ci, c):
+                return ci == column && cardIndex == k.columns[column].count - 1 && c == card
+            default:
+                return false
+            }
         }
     }
 
@@ -986,16 +994,18 @@ struct GameBoardView: View {
 
     /// 힌트 하이라이트 소스(타블로) 여부 — Forty Thieves
     private func isFortyThievesHintSource(column: Int, cardIndex: Int, card: Card) -> Bool {
-        guard let move = vm.highlightedMove, let f = vm.fortyThieves else { return false }
-        switch move {
-        case let .columnToColumn(from, _, count):
-            guard from == column else { return false }
-            let fromBottom = f.columns[column].count - 1 - cardIndex
-            return fromBottom < count
-        case let .columnToHome(ci, c):
-            return ci == column && cardIndex == f.columns[column].count - 1 && c == card
-        default:
-            return false
+        guard let f = vm.fortyThieves else { return false }
+        return vm.displayedHintMoves.contains { move in
+            switch move {
+            case let .columnToColumn(from, _, count):
+                guard from == column else { return false }
+                let fromBottom = f.columns[column].count - 1 - cardIndex
+                return fromBottom < count
+            case let .columnToHome(ci, c):
+                return ci == column && cardIndex == f.columns[column].count - 1 && c == card
+            default:
+                return false
+            }
         }
     }
 
@@ -1048,34 +1058,40 @@ struct GameBoardView: View {
 
     /// 힌트 하이라이트 소스(타블로) 여부 — Golf (열 맨 아래 카드 → 웨이스트)
     private func isGolfHintSource(column: Int, cardIndex: Int) -> Bool {
-        guard let move = vm.highlightedMove, let g = vm.golf else { return false }
-        if case let .columnToWaste(ci, _) = move {
-            return ci == column && cardIndex == g.columns[column].count - 1
+        guard let g = vm.golf else { return false }
+        return vm.displayedHintMoves.contains { move in
+            if case let .columnToWaste(ci, _) = move {
+                return ci == column && cardIndex == g.columns[column].count - 1
+            }
+            return false
         }
-        return false
     }
 
     /// 힌트 하이라이트 소스 여부 — Pyramid (합 13 노출 카드)
     private func isPyramidHintSource(index: Int, card: Card) -> Bool {
-        guard let move = vm.highlightedMove, let p = vm.pyramid else { return false }
+        guard let p = vm.pyramid else { return false }
         let isCardAt = p.pyramid.indices.contains(index) && p.pyramid[index] == card
-        switch move {
-        case let .pyramidRemovePair(first, _):
-            return isCardAt && p.pyramid[index] == first
-        case let .pyramidRemoveWastePair(c), let .pyramidRemoveSingle(c):
-            return isCardAt && p.pyramid[index] == c
-        default:
-            return false
+        return vm.displayedHintMoves.contains { move in
+            switch move {
+            case let .pyramidRemovePair(first, _):
+                return isCardAt && p.pyramid[index] == first
+            case let .pyramidRemoveWastePair(c), let .pyramidRemoveSingle(c):
+                return isCardAt && p.pyramid[index] == c
+            default:
+                return false
+            }
         }
     }
 
     /// 힌트 하이라이트 소스 여부 — TriPeaks (웨이스트와 1 랭크 차이 노출 카드)
     private func isTriPeaksHintSource(index: Int, card: Card) -> Bool {
-        guard let move = vm.highlightedMove, let t = vm.triPeaks else { return false }
-        if case let .triPeaksRemove(c) = move {
-            return t.peaks.indices.contains(index) && t.peaks[index] == c
+        guard let t = vm.triPeaks else { return false }
+        return vm.displayedHintMoves.contains { move in
+            if case let .triPeaksRemove(c) = move {
+                return t.peaks.indices.contains(index) && t.peaks[index] == c
+            }
+            return false
         }
-        return false
     }
 
     /// Yukon 타블로 열 (뒤집힌 카드 + 유콘 그룹 이동)
@@ -1115,16 +1131,18 @@ struct GameBoardView: View {
 
     /// 힌트 하이라이트 소스(타블로) 여부 — Yukon
     private func isYukonHintSource(column: Int, cardIndex: Int, card: Card) -> Bool {
-        guard let move = vm.highlightedMove, let y = vm.yukon else { return false }
-        switch move {
-        case let .columnToColumn(from, _, count):
-            guard from == column else { return false }
-            let fromBottom = y.columns[column].count - 1 - cardIndex
-            return fromBottom < count
-        case let .columnToHome(ci, c):
-            return ci == column && cardIndex == y.columns[column].count - 1 && c == card
-        default:
-            return false
+        guard let y = vm.yukon else { return false }
+        return vm.displayedHintMoves.contains { move in
+            switch move {
+            case let .columnToColumn(from, _, count):
+                guard from == column else { return false }
+                let fromBottom = y.columns[column].count - 1 - cardIndex
+                return fromBottom < count
+            case let .columnToHome(ci, c):
+                return ci == column && cardIndex == y.columns[column].count - 1 && c == card
+            default:
+                return false
+            }
         }
     }
 
@@ -1138,14 +1156,16 @@ struct GameBoardView: View {
 
     /// 힌트 하이라이트 소스(타블로) 여부 — Spider
     private func isSpiderHintSource(column: Int, cardIndex: Int, card: Card) -> Bool {
-        guard let move = vm.highlightedMove, let s = vm.spider else { return false }
-        switch move {
-        case let .columnToColumn(from, _, count):
-            guard from == column else { return false }
-            let fromBottom = s.columns[column].count - 1 - cardIndex
-            return fromBottom < count
-        default:
-            return false
+        guard let s = vm.spider else { return false }
+        return vm.displayedHintMoves.contains { move in
+            switch move {
+            case let .columnToColumn(from, _, count):
+                guard from == column else { return false }
+                let fromBottom = s.columns[column].count - 1 - cardIndex
+                return fromBottom < count
+            default:
+                return false
+            }
         }
     }
 

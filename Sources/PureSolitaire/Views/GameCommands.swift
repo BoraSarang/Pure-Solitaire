@@ -36,6 +36,8 @@ struct GameCommands: Commands {
 
             Button("힌트") { viewModel.hint() }
                 .keyboardShortcut("h", modifiers: .command)
+            Button("전체 힌트") { viewModel.toggleAllHints() }
+                .keyboardShortcut("h", modifiers: [.command, .shift])
             Button("힌트 적용") { _ = viewModel.applyHighlightedHint() }
                 .keyboardShortcut(.return)
                 .disabled(viewModel.highlightedMove == nil)
