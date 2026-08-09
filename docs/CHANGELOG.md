@@ -1,5 +1,15 @@
 # CHANGELOG — 변경 이력
 
+## [3.13.0] — 2026-08-09 — [macos] — 코어 QoL 3종
+### 변경 (T-170~T-172)
+- **승리 자동 완성 (T-170)**: 승리 직전 상태(잔여 카드가 모두 홈 이동 가능)에서 남은 카드를 홈셀로 자동 정리. 홈셀 중심 게임(freecell/bakersGame/seaTower/superFreeCell/klondike/yukon/fortyThieves)만 적용, spider/golf/pyramid/triPeaks 제외. `applyRaw` 경유로 이동을 **undo 스택에 포함**(중간 복귀 가능), 최대 500회 가드, 완료 시 사운드+승리 연출. 설정 "승리 자동 완성" 토글(@AppStorage, 기본 켬).
+- **이동 수 통계 (T-171)**: 전역/변형별로 `totalMoves`·`leastMoves`·`avgMoves`(반올림) 기록·표시. 승리 기록(`RecordStore.GameRecord.moves`)에 이동 수 저장(기존 데이터 호환, 기본 0). `StatsView` 선택/전체 요약 + 상세에 "최소 이동"·"평균 이동", 최근 승리 목록에 "N 이동" 표시.
+- **Klondike 스톡 1·3장 (T-172)**: 설정/게임 번호 시트에 "스톡 드로" 옵션(1장/3장) 추가. `KlondikeGame.drawMode`(1/3, Codable 호환, 기본 1)로 드로 장수 반영 — 3장 드로 시 남은 1~2장은 그 장수만 웨이스트로, 재활용 순서 유지.
+### 검증
+- `swift build`(debug·release) 경고 0건, 단위 테스트 **178개** 통과(신규 7: Klondike 3장 드로 3 + 드로 모드 Codable + canAutoFinish 전수 + RecordStore moves 왕복 + Klondike 옵션 정의)
+- release 설치·실행 (PID 90472, VERSION 3.13.0)
+- 문서: PLAN_v3.13/TODO/DESIGN/CHANGELOG/테스트 가이드/세션 로그
+
 ## [3.12.1] — 2026-08-09 — [macos] — 리브랜딩
 ### 변경 (T-169)
 - **앱 이름 변경**: `Pure FreeCell` → `Pure Solitaire`(순수한 솔리테어). 패키지/실행 타깃·소스 디렉터리 `PureFreeCell` → `PureSolitaire`, `PureFreeCellApp` → `PureSolitaireApp`.

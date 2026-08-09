@@ -110,6 +110,13 @@ public struct FreeCellGame: Equatable, Sendable, Codable {
         }
     }
 
+    /// 자동 완성 판단: 승리 직전 상태 — 남은 모든 카드가 바로 홈으로 이동 가능한 때.
+    /// (홈셀 계열 게임 전용; spider/golf/pyramid/triPeaks는 완성 구조가 달라 제외)
+    public var canAutoFinish: Bool {
+        guard !isWon else { return false }
+        return allCardsInPlay.allSatisfy { canMoveToHome($0) }
+    }
+
     public var hasAnyMove: Bool {
         hint() != nil
     }

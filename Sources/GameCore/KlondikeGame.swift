@@ -20,6 +20,8 @@ public struct KlondikeGame: Equatable, Sendable, Codable {
     public internal(set) var waste: [Card]
     public internal(set) var homes: [[Card]]
     public let gameNumber: Int
+    /// 스톡 드로 장수 (1 = 한 장, 3 = 세 장)
+    public var drawMode: Int
     public private(set) var moveCount: Int = 0
     private var undoStack: [Snapshot] = []
     private var redoStack: [Snapshot] = []
@@ -35,8 +37,9 @@ public struct KlondikeGame: Equatable, Sendable, Codable {
     public static let columnCount = 7
     public static let homeCount = 4
 
-    public init(gameNumber: Int) {
+    public init(gameNumber: Int, drawMode: Int = 1) {
         self.gameNumber = gameNumber
+        self.drawMode = drawMode == 3 ? 3 : 1
         let shuffled = DealGenerator.shuffledCards(gameNumber: gameNumber)
         var columns = Array(repeating: [ColumnCard](), count: Self.columnCount)
         var index = 0
@@ -54,10 +57,52 @@ public struct KlondikeGame: Equatable, Sendable, Codable {
         self.homes = Array(repeating: [], count: Self.homeCount)
     }
 
+    // MARK: - Codable (이전 저장 데이터 호환 — drawMode 기본 1)
+
+    private enum CodingKeys: String, CodingKey {
+        case columns, stock, waste, homes, gameNumber, drawMode, moveCount, undoStack, redoStack
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        columns = try c.decode([[ColumnCard]].self, forKey: .columns)
+        stock = try c.decode([Card].self, forKey: .stock)
+        waste = try c.decode([Card].self, forKey: .waste)
+        homes = try c.decode([[Card]].self, forKey: .homes)
+        gameNumber = try c.decode(Int.self, forKey: .gameNumber)
+        drawMode = try c.decodeIfPresent(Int.self, forKey: .drawMode) ?? 1
+        moveCount = try c.decodeIfPresent(Int.self, forKey: .moveCount) ?? 0
+        undoStack = try c.decodeIfPresent([Snapshot].self, forKey: .undoStack) ?? []
+        redoStack = try c.decodeIfPresent([Snapshot].self, forKey: .redoStack) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(columns, forKey: .columns)
+        try c.encode(stock, forKey: .stock)
+        try c.encode(waste, forKey: .waste)
+        try c.encode(homes, forKey: .homes)
+        try c.encode(gameNumber, forKey: .gameNumber)
+        try c.encode(drawMode, forKey: .drawMode)
+        try c.encode(moveCount, forKey: .moveCount)
+        try c.encode(undoStack, forKey: .undoStack)
+        try c.encode(redoStack, forKey: .redoStack)
+    }
+
     // MARK: - 조회
 
     public var isWon: Bool {
         homes.allSatisfy { $0.count == 13 }
+    }
+
+    /// 자동 완성 판단: 승리 직전 상태 — 모든 카드가 앞면으로 노출되고
+    /// 스톡/웨이스트가 비어 홈 셀로만 완성하면 승리하는 때.
+    public var canAutoFinish: Bool {
+        guard !isWon else { return false }
+        guard stock.isEmpty, waste.isEmpty else { return false }
+        return columns.allSatisfy { column in
+            column.allSatisfy { $0.faceUp && canMoveToFoundation($0.card) }
+        }
     }
 
     /// 홈셀에 놓을 수 있는지 (같은 수트, A부터 순차)
@@ -190,7 +235,12 @@ public struct KlondikeGame: Equatable, Sendable, Codable {
             homes[homeIndex(for: card)!].append(card)
 
         case .drawFromStock:
-            waste.append(stock.removeLast())
+            // drawMode장을 스톡 맨 위(배열 마지막)에서 순서대로 웨이스트에 쌓는다.
+            // 표준 규칙: 3장 드로 시 스톡 상단 3장이 그대로 노출되어 맨 위(마지막)만 플레이 가능.
+            let count = min(drawMode, stock.count)
+            let drawn = Array(stock.suffix(count))
+            waste.append(contentsOf: drawn)
+            stock.removeLast(count)
 
         case .recycleStock:
             stock = waste.reversed()

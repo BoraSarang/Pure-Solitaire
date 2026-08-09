@@ -33,6 +33,17 @@ public struct YukonGame: Equatable, Sendable, Codable {
         homes.allSatisfy { $0.count == 13 }
     }
 
+    /// 자동 완성 판단: 승리 직전 상태 — 모든 카드가 앞면으로 노출되고 바로 홈으로 이동 가능한 때.
+    public var canAutoFinish: Bool {
+        guard !isWon else { return false }
+        var allCards: [Card] = []
+        for column in columns {
+            guard column.allSatisfy({ $0.faceUp }) else { return false }
+            allCards.append(contentsOf: column.map { $0.card })
+        }
+        return allCards.allSatisfy { canMoveToFoundation($0) }
+    }
+
     /// 홈셀에 놓을 수 있는지 (같은 수트, A부터 순차)
     public func canMoveToFoundation(_ card: Card) -> Bool {
         if card.rank == .ace {

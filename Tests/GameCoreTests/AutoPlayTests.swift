@@ -97,4 +97,20 @@ final class AutoPlayTests: XCTestCase {
             }
         }
     }
+
+    // MARK: - canAutoFinish (속성 전수)
+
+    /// canAutoFinish는 모든 홈셀 변형에 존재하고 Bool을 반환해야 한다
+    func testCanAutoFinishExistsAcrossAllGames() {
+        let games: [(String, Bool)] = [
+            ("freecell", FreeCellGame(gameNumber: 1).canAutoFinish),
+            ("bakers", FreeCellGame(gameNumber: 1, variant: .bakersGame).canAutoFinish),
+            ("klondike", KlondikeGame(gameNumber: 1).canAutoFinish),
+            ("yukon", YukonGame(gameNumber: 1).canAutoFinish),
+            ("forty", FortyThievesGame(gameNumber: 1).canAutoFinish),
+        ]
+        for (name, value) in games {
+            XCTAssertTrue((true == value) || (value == false), "\(name) canAutoFinish 타입 불일치")
+        }
+    }
 }

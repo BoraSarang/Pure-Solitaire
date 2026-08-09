@@ -10,10 +10,17 @@ final class StatsStore {
         let currentStreak: Int
         let bestStreak: Int
         let bestTime: Double?
+        let totalMoves: Int
+        let leastMoves: Int?
 
         var winRate: Double {
             guard totalGames > 0 else { return 0 }
             return Double(wins) / Double(totalGames) * 100
+        }
+
+        var avgMoves: Int? {
+            guard wins > 0 else { return nil }
+            return Int((Double(totalMoves) / Double(wins)).rounded())
         }
     }
 
@@ -23,6 +30,8 @@ final class StatsStore {
         static let currentStreak = "stats.currentStreak"
         static let bestStreak = "stats.bestStreak"
         static let lastGameNumber = "stats.lastGameNumber"
+        static let totalMoves = "stats.totalMoves"
+        static let leastMoves = "stats.leastMoves"
 
         static func variant(_ variant: GameVariant, _ key: String) -> String {
             "stats.\(variant.rawValue).\(key)"
@@ -55,6 +64,25 @@ final class StatsStore {
 
     var winRate: Double {
         runRate(totalGames, wins)
+    }
+
+    var totalMoves: Int {
+        get { defaults.integer(forKey: Keys.totalMoves) }
+        set { defaults.set(newValue, forKey: Keys.totalMoves) }
+    }
+
+    var leastMoves: Int? {
+        get {
+            let v = defaults.integer(forKey: Keys.leastMoves)
+            return v > 0 ? v : nil
+        }
+        set {
+            if let v = newValue {
+                defaults.set(v, forKey: Keys.leastMoves)
+            } else {
+                defaults.removeObject(forKey: Keys.leastMoves)
+            }
+        }
     }
 
     /// 마지막으로 시작한 게임 번호 (변형별)
@@ -90,7 +118,10 @@ final class StatsStore {
             wins: defaults.integer(forKey: Keys.variant(variant, "wins")),
             currentStreak: defaults.integer(forKey: Keys.variant(variant, "currentStreak")),
             bestStreak: defaults.integer(forKey: Keys.variant(variant, "bestStreak")),
-            bestTime: bestTimeSeconds(for: variant)
+            bestTime: bestTimeSeconds(for: variant),
+            totalMoves: defaults.integer(forKey: Keys.variant(variant, "totalMoves")),
+            leastMoves: (defaults.integer(forKey: Keys.variant(variant, "leastMoves")) > 0)
+                ? defaults.integer(forKey: Keys.variant(variant, "leastMoves")) : nil
         )
     }
 
@@ -100,10 +131,18 @@ final class StatsStore {
         defaults.set(defaults.integer(forKey: key) + 1, forKey: key)
     }
 
-    func recordWin(_ variant: GameVariant) {
+    func recordWin(_ variant: GameVariant, moves: Int) {
         wins += 1
         currentStreak += 1
         bestStreak = max(bestStreak, currentStreak)
+        totalMoves += moves
+        if let least = leastMoves {
+            if moves > 0 && moves < least {
+                leastMoves = moves
+            }
+        } else if moves > 0 {
+            leastMoves = moves
+        }
 
         let base = Keys.variant(variant, "")
         defaults.set(defaults.integer(forKey: base + "wins") + 1, forKey: base + "wins")
@@ -111,6 +150,14 @@ final class StatsStore {
         defaults.set(streak, forKey: base + "currentStreak")
         let best = max(defaults.integer(forKey: base + "bestStreak"), streak)
         defaults.set(best, forKey: base + "bestStreak")
+
+        // 변형별 이동 수 — 최소/누적
+        let varMoves = defaults.integer(forKey: base + "totalMoves") + moves
+        defaults.set(varMoves, forKey: base + "totalMoves")
+        let varLeast = defaults.integer(forKey: base + "leastMoves")
+        if varLeast <= 0 || (moves > 0 && moves < varLeast) {
+            defaults.set(moves, forKey: base + "leastMoves")
+        }
     }
 
     func recordLoss(_ variant: GameVariant) {
@@ -125,10 +172,11 @@ final class StatsStore {
 
     // MARK: - 초기화
 
-    /// 전체 통계 + 변형별 통계 모두 삭제 (베스트 타임/마지막 게임 번호 포함)
+    /// 전체화 통계 + 변형별 통계 모두 삭제 (베스트 타임/마지막 게임 번호 포함)
     func resetAll() {
         for key in [
-            Keys.totalGames, Keys.wins, Keys.currentStreak, Keys.bestStreak, Keys.lastGameNumber
+            Keys.totalGames, Keys.wins, Keys.currentStreak, Keys.bestStreak,
+            Keys.lastGameNumber, Keys.totalMoves, Keys.leastMoves
         ] {
             defaults.removeObject(forKey: key)
         }
@@ -140,6 +188,8 @@ final class StatsStore {
             defaults.removeObject(forKey: base + "bestStreak")
             defaults.removeObject(forKey: base + "lastGameNumber")
             defaults.removeObject(forKey: base + "bestTimeSeconds")
+            defaults.removeObject(forKey: base + "totalMoves")
+            defaults.removeObject(forKey: base + "leastMoves")
         }
     }
 }

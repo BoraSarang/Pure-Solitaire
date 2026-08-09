@@ -225,6 +225,53 @@ final class KlondikeGameTests: XCTestCase {
         XCTAssertEqual(g.waste.count, 1)
     }
 
+    // MARK: - 스톡 드로 3장 모드
+
+    /// drawMode=3: 드로마다 3장씩, 3장 미만 남으면 남은 만큼만
+    func testDrawThreeCards() {
+        var g = KlondikeGame(gameNumber: 1, drawMode: 3)
+        XCTAssertTrue(g.canMove(.drawFromStock))
+        XCTAssertTrue(g.apply(.drawFromStock))
+        XCTAssertEqual(g.waste.count, 3)
+        XCTAssertEqual(g.stock.count, 21)
+    }
+
+    /// 드로 3장에서 3장 미만 남으면 남은 장수만 웨이스트로
+    func testDrawThreePartialStock() {
+        var g = KlondikeGame(gameNumber: 1, drawMode: 3)
+        g.stock = [Card(suit: .hearts, rank: .two), Card(suit: .clubs, rank: .three)]
+        XCTAssertTrue(g.apply(.drawFromStock))
+        XCTAssertEqual(g.waste.count, 2)
+        XCTAssertTrue(g.stock.isEmpty)
+        _ = g.apply(.recycleStock)
+        XCTAssertTrue(g.waste.isEmpty)
+        XCTAssertEqual(g.stock.count, 2)
+    }
+
+    /// 드로 3장 모드에서 recycle 후 순서 유지
+    func testDrawThreeRecycle() {
+        var g = KlondikeGame(gameNumber: 1, drawMode: 3)
+        while !g.stock.isEmpty {
+            _ = g.apply(.drawFromStock)
+        }
+        let firstWasteCard = g.waste[0]
+        _ = g.apply(.recycleStock)
+        _ = g.apply(.drawFromStock)
+        XCTAssertEqual(g.waste.count, 3)
+        XCTAssertEqual(g.waste.last, firstWasteCard)
+    }
+
+    /// 드로 3장 모드 Codable 왕복 (drawMode 보존)
+    func testCodableRoundTripDrawModeThree() {
+        var g = KlondikeGame(gameNumber: 617, drawMode: 3)
+        _ = g.apply(.drawFromStock)
+        let data = try! JSONEncoder().encode(g)
+        let restored = try! JSONDecoder().decode(KlondikeGame.self, from: data)
+        XCTAssertEqual(restored.drawMode, 3)
+        XCTAssertEqual(restored.waste, g.waste)
+        XCTAssertEqual(restored.stock, g.stock)
+    }
+
     /// Codable 왕복
     func testCodableRoundTrip() {
         var g = KlondikeGame(gameNumber: 617)

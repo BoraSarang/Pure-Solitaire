@@ -73,6 +73,9 @@ struct StatsView: View {
             statRow(label: "승률", value: String(format: "%.1f%%", vm.allWinRate))
             statRow(label: "현재 연승", value: "\(vm.allCurrentStreak)")
             statRow(label: "최고 연승", value: "\(vm.allBestStreak)")
+            if let least = vm.allLeastMoves {
+                statRow(label: "최소 이동 (승리)", value: "\(least)")
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
@@ -92,6 +95,12 @@ struct StatsView: View {
             statRow(label: "최고 연승", value: "\(e.bestStreak)")
             if let t = e.bestTime {
                 statRow(label: "최단 승리", value: formatTime(t))
+            }
+            if let m = e.leastMoves {
+                statRow(label: "최소 이동", value: "\(m)")
+            }
+            if let a = e.avgMoves {
+                statRow(label: "평균 이동", value: "\(a)")
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -141,6 +150,12 @@ struct StatsView: View {
             if let t = e.bestTime {
                 statRow(label: "최단 승리", value: formatTime(t))
             }
+            if let m = e.leastMoves {
+                statRow(label: "최소 이동", value: "\(m)")
+            }
+            if let a = e.avgMoves {
+                statRow(label: "평균 이동", value: "\(a)")
+            }
             if !records.isEmpty {
                 Text("최근 승리")
                     .font(.subheadline.bold())
@@ -150,6 +165,11 @@ struct StatsView: View {
                         Text("게임 \(record.gameNumber)")
                             .monospacedDigit()
                         Spacer()
+                        if record.moves > 0 {
+                            Text("\(record.moves) 이동")
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                        }
                         Text(formatTime(record.seconds))
                             .foregroundStyle(.secondary)
                             .monospacedDigit()

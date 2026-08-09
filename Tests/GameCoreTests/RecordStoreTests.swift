@@ -22,6 +22,22 @@ final class RecordStoreTests: XCTestCase {
         store.clear(for: variant)
     }
 
+    func testRecordStoreMovesRoundTrip() {
+        let store = RecordStore()
+        let variant: GameVariant = .freecell
+        store.clear(for: variant)
+
+        store.record(RecordStore.GameRecord(gameNumber: 1, variant: variant, seconds: 120, moves: 42), for: variant)
+        store.record(RecordStore.GameRecord(gameNumber: 617, variant: variant, seconds: 300, moves: 7), for: variant)
+
+        let records = store.records(for: variant)
+        XCTAssertEqual(records.count, 2)
+        let byGame = Dictionary(uniqueKeysWithValues: records.map { ($0.gameNumber, $0) })
+        XCTAssertEqual(byGame[1]?.moves, 42)
+        XCTAssertEqual(byGame[617]?.moves, 7)
+        store.clear(for: variant)
+    }
+
     func testRecordStoreMaxLimit() {
         let store = RecordStore()
         let variant: GameVariant = .bakersGame

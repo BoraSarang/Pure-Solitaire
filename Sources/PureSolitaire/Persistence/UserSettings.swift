@@ -44,6 +44,7 @@ final class UserSettings: ObservableObject {
     @AppStorage("settings.cardStyle") var cardStyleRaw = CardStyle.classic.rawValue
     @AppStorage("settings.background") var backgroundRaw = BackgroundStyle.green.rawValue
     @AppStorage("settings.autoPlayEnabled") var autoPlayEnabled = true
+    @AppStorage("settings.autoFinishEnabled") var autoFinishEnabled = true
     @AppStorage("settings.animationSpeed") var animationSpeed = 0.6
     @AppStorage("settings.soundEnabled") var soundEnabled = true
     @AppStorage("settings.bgmEnabled") var bgmEnabled = false

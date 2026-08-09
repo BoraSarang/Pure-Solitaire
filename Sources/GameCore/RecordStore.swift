@@ -8,13 +8,30 @@ public final class RecordStore {
         public let variant: GameVariant
         public let seconds: Double
         public let date: Date
+        public let moves: Int
 
-        public init(gameNumber: Int, variant: GameVariant, seconds: Double, date: Date = Date()) {
+        public init(gameNumber: Int, variant: GameVariant, seconds: Double, moves: Int = 0, date: Date = Date()) {
             self.id = UUID()
             self.gameNumber = gameNumber
             self.variant = variant
             self.seconds = seconds
+            self.moves = moves
             self.date = date
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case id, gameNumber, variant, seconds, date, moves
+        }
+
+        /// 기존 저장 데이터(moves 없음) 호환 — 없으면 0
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            id = try c.decode(UUID.self, forKey: .id)
+            gameNumber = try c.decode(Int.self, forKey: .gameNumber)
+            variant = try c.decode(GameVariant.self, forKey: .variant)
+            seconds = try c.decode(Double.self, forKey: .seconds)
+            date = try c.decode(Date.self, forKey: .date)
+            moves = try c.decodeIfPresent(Int.self, forKey: .moves) ?? 0
         }
     }
 

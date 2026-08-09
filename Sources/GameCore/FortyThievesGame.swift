@@ -39,6 +39,15 @@ public struct FortyThievesGame: Equatable, Sendable, Codable {
         homes.allSatisfy { $0.count == 13 }
     }
 
+    /// 자동 완성 판단: 승리 직전 상태 — 스톡/웨이스트가 비고 열 카드 전부가 바로 홈으로 이동 가능한 때.
+    public var canAutoFinish: Bool {
+        guard !isWon else { return false }
+        guard stock.isEmpty, waste.isEmpty else { return false }
+        return columns.allSatisfy { column in
+            column.allSatisfy { canMoveToFoundation($0) }
+        }
+    }
+
     /// 홈셀에 놓을 수 있는지 (같은 수트, A부터 순차)
     public func canMoveToFoundation(_ card: Card) -> Bool {
         if card.rank == .ace {

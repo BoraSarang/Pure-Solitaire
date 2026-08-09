@@ -6,7 +6,14 @@
 - [ ] 대기 / [x] 완료 / (진행중) 표시
 
 ## v3.12.1 — 리브랜딩 (완료 — 2026-08-09)
-- [x] T-169: Pure FreeCell → Pure Solitaire / 순수한 솔리테어 (테그 타깃·소스 폴더·App struct 변경, 번들 ID com.borasarang.puresolitaire, 릴리스 시 앱 번들명·Dock 표시명·문서·창 제목 갱신, 기존 앱 삭제)
+- [x] T-169: Pure FreeCell → Pure Solitaire / 순수한 솔리테어
+
+## v3.13 — 코어 QoL: 자동 완성 / 이동 수 통계 / Klondike 스톡 1·3장 (완료 — 2026-08-09, PLAN_v3.13_macos.md)
+- [x] T-170: 승리 자동 완성 — GameCore 판단(canAutoFinish) + VM runAutoFinish + UserSettings 토글 + apply 연결
+- [x] T-171: 이동 수 통계 — StatsStore(least/max/avg) 확장 + RecordStore.moves + VM 승리 기록 + StatsView 표시
+- [x] T-172: Klondike 스톡 1/3장 — KlondikeGame.drawMode + optionDefinitions 옵션 + VM 전달·복원
+- [x] T-173: 테스트 추가 + 회귀(178개 통과) + swift build(debug·release) 경고 0
+- [x] T-174: release 설치·실행(VERSION 3.13.0, PID 90472) + 문서 갱신 (PLAN/TODO/DESIGN/CHANGELOG)
 
 ## v1.0 — 프리셀 MVP
 

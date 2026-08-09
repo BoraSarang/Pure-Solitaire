@@ -50,6 +50,8 @@ struct SettingsView: View {
             Section {
                 Toggle("자동 이동", isOn: $settings.autoPlayEnabled)
                     .toggleStyle(.switch)
+                Toggle("승리 자동 완성", isOn: $settings.autoFinishEnabled)
+                    .toggleStyle(.switch)
                 Toggle("효과음", isOn: $settings.soundEnabled)
                     .toggleStyle(.switch)
                 HStack {

@@ -186,6 +186,22 @@ final class FreeCellGame {
   - 자동 플레이 버튼: `settings.autoPlayEnabled`로 상태 표시, 클릭 시 `.toggle()` + 켜지면 즉시 `vm.runAutoPlay()`. 설정 시트 "자동 이동" 스위치와 `@AppStorage` 자동 동기화.
   - `GameCommands` "자동 플레이"(⇧⌘A)도 같은 토글 동작으로 통일, 켜짐 시 `Label`에 `checkmark` 표시.
 
+### 3.15 자동 완성 / 이동 수 통계 / Klondike 스톡 드로 (v3.13)
+- **승리 자동 완성(Auto-finish)** (`FreeCellViewModel.runAutoFinish()`):
+  - 트리거: `apply(_:)` 성공 직후 — `settings.autoFinishEnabled` && `autoFinishConditionHolds()`(홈셀 중심 게임이 **승리 직전 상태** `canAutoFinish`)면 `runAutoFinish()` 실행. spider/golf/pyramid/triPeaks는 제외.
+  - 동작: `homeMovesOnlyFilter()`로 홈 이동 후보만 반복 적용(최대 500회 가드), `applyRaw` 경유 — `applyRaw`가 게임의 `apply`를 호출하므로 **undo 스택에 포함**(중간 복귀 가능). 종료 후 `checkState()`+`persist()`.
+  - 후보: Klondike는 `columnToHome`+`wasteToFoundation`, Yukon은 `columnToHome`, FortyThieves는 `columnToHome`+`wasteToFoundation`, FreeCell 게임은 `AutoPlay.safeAutoPlayMoves`(안전 규칙) 우선, 비어 있으면 `hintCandidates().homeMove` 폴백.
+  - 설정: `UserSettings.autoFinishEnabled`(@AppStorage, 기본 true) — 게임플레이 설정 "승리 자동 완성" 토글.
+- **이동 수 통계** (`StatsStore` + `RecordStore`):
+  - `StatsStore.Entry`에 `totalMoves: Int`·`leastMoves: Int?` 추가(`avgMoves`는 `totalMoves/wins` 반올림 computed). 전체 합계와 변형별 키(`stats.{variant}.{key}`) 모두 기록.
+  - `StatsStore.recordWin(_:moves:)` — 승리 시 이동 수 집계 + 최소 갱신(0 제외). `resetAll`이 새 키 포함 제거.
+  - `RecordStore.GameRecord`에 `moves: Int`(=0) 추가 — 기존 Codable `decodeIfPresent` 기본 0으로 하위 호환, VM이 승리 직전 `currentMoveCount` 저장 → StatsView에 최근 승리 이동 수 표시.
+- **Klondike 스톡 1·3장** (`KlondikeGame.drawMode`):
+  - `GameVariant.klondike.optionDefinitions`에 `GameOption(id: "klondikeDraw", choices: "1장"/"3장")` 추가 — 게임 번호 시트/설정의 `optionDefinitions` 자동 렌더 재사용.
+  - `KlondikeGame.drawMode: Int`(init 기본 1, `==3 ? 3 : 1` 정규화) + Codable `decodeIfPresent ?? 1` — 기존 저장 호환.
+  - `drawFromStock`: `min(drawMode, stock.count)`장을 스톡에서 웨이스트로 이동(잔량은 그 장수만). `canMove`/recycle 동일.
+  - VM: `klondikeDrawMode` computed가 `gameOptions.selectedID(for:optionID:)`에서 읽음 → `newGame`에 전달, `restoreKlondike` 시 저장된 `drawMode`로 설정 옵션 동기화.
+
 ## 4. UI 설계 (SwiftUI)
 
 ### 4.1 카드 커스텀 벡터 렌더링

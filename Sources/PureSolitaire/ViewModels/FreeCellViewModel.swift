@@ -72,6 +72,14 @@ final class FreeCellViewModel: ObservableObject {
         }
     }
 
+    /// Klondike 스톡 드로 장수 (1 or 3) — GameOptionsStore 기반
+    private var klondikeDrawMode: Int {
+        guard let def = GameVariant.klondike.optionDefinitions.first(where: { $0.id == "klondikeDraw" }),
+              let raw = Int(gameOptions.selectedID(for: .klondike, option: def)),
+              raw == 3 else { return 1 }
+        return 3
+    }
+
     /// 변형별 승리 기록 (최신순)
     var winRecords: [RecordStore.GameRecord] {
         recordStore.records(for: variant)
@@ -113,6 +121,7 @@ final class FreeCellViewModel: ObservableObject {
     var allWinRate: Double { stats.winRate }
     var allCurrentStreak: Int { stats.currentStreak }
     var allBestStreak: Int { stats.bestStreak }
+    var allLeastMoves: Int? { stats.leastMoves }
 
     func stats(for v: GameVariant) -> StatsStore.Entry { stats.entry(for: v) }
 
@@ -150,6 +159,7 @@ final class FreeCellViewModel: ObservableObject {
             startElapsedTimer()
         } else if let restored = gameSaver.restoreKlondike() {
             klondike = restored
+            gameOptions.setSelectedID(String(restored.drawMode), for: .klondike, optionID: "klondikeDraw")
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
             gameStartedAt = Date()
@@ -327,7 +337,7 @@ final class FreeCellViewModel: ObservableObject {
         let safeNumber = min(max(number, DealGenerator.minGameNumber), DealGenerator.maxGameNumber)
         switch variant {
         case .klondike:
-            klondike = KlondikeGame(gameNumber: safeNumber)
+            klondike = KlondikeGame(gameNumber: safeNumber, drawMode: klondikeDrawMode)
             spider = nil
             yukon = nil
             pyramid = nil
@@ -495,7 +505,9 @@ final class FreeCellViewModel: ObservableObject {
         if move.isHomeMove {
             pulseHomeCard(for: move)
         }
-        if settings.autoPlayEnabled {
+        if settings.autoFinishEnabled && runAutoFinish() {
+            // 자동 완성으로 마무리됨 (checkState/persist는 runAutoFinish 내부에서 실행)
+        } else if settings.autoPlayEnabled {
             runAutoPlay()
         } else {
             checkState()
@@ -938,14 +950,15 @@ final class FreeCellViewModel: ObservableObject {
         let isWon = currentIsWon
         if isWon {
             stopElapsedTimer()
-            stats.recordWin(variant)
+            stats.recordWin(variant, moves: currentMoveCount)
             if let start = gameStartedAt {
                 let seconds = Date().timeIntervalSince(start)
                 stats.recordWinTime(seconds, for: variant)
                 recordStore.record(RecordStore.GameRecord(
                     gameNumber: currentGameNumber,
                     variant: variant,
-                    seconds: seconds
+                    seconds: seconds,
+                    moves: currentMoveCount
                 ), for: variant)
                 gameStartedAt = nil
             }
@@ -1410,6 +1423,77 @@ final class FreeCellViewModel: ObservableObject {
         }
         checkState()
         persist()
+    }
+
+    /// 자동 완성: 승리 직전 상태(모든 카드가 홈으로 이동 가능)라면 남은 카드를 홈으로 정리한다.
+    /// 홈셀 중심 게임(freecell/bakers/seaTower/superFreeCell/klondike/yukon/fortyThieves)만.
+    @discardableResult
+    func runAutoFinish() -> Bool {
+        guard settings.autoFinishEnabled else { return false }
+        guard autoFinishConditionHolds() else { return false }
+
+        var applied = 0
+        var guardCount = 0
+        while guardCount < 500 {
+            guardCount += 1
+            let homeMoves = homeMovesOnlyFilter()
+            guard !homeMoves.isEmpty else { break }
+            var progressed = false
+            for move in homeMoves {
+                if applyRaw(move) {
+                    applied += 1
+                    progressed = true
+                }
+            }
+            if !progressed { break }
+        }
+        if applied > 0 {
+            SoundPlayer.shared.play(.home, enabled: settings.soundEnabled, volume: settings.soundVolume)
+            showMessage("자동 완성: \(applied)장을 마무리했습니다.")
+        }
+        checkState()
+        persist()
+        return applied > 0
+    }
+
+    /// 자동 완성 대상 게임이며 승리 직전 상태인지 (GameCore 판단 위임)
+    private func autoFinishConditionHolds() -> Bool {
+        if spider != nil || golf != nil || pyramid != nil || triPeaks != nil {
+            return false
+        }
+        if let k = klondike { return k.canAutoFinish }
+        if let y = yukon { return y.canAutoFinish }
+        if let f = fortyThieves { return f.canAutoFinish }
+        return game.canAutoFinish
+    }
+
+    /// 현재 게임의 홈 이동 후보만 추출 (자동 완성용)
+    private func homeMovesOnlyFilter() -> [Move] {
+        if let k = klondike {
+            return k.hintCandidates().filter {
+                if case .columnToHome = $0 { return true }
+                if case .wasteToFoundation = $0 { return true }
+                return false
+            }
+        }
+        if let y = yukon {
+            return y.hintCandidates().filter {
+                if case .columnToHome = $0 { return true }
+                return false
+            }
+        }
+        if let f = fortyThieves {
+            return f.hintCandidates().filter {
+                if case .columnToHome = $0 { return true }
+                if case .wasteToFoundation = $0 { return true }
+                return false
+            }
+        }
+        if spider != nil || golf != nil || pyramid != nil || triPeaks != nil {
+            return []
+        }
+        let safe = AutoPlay.safeAutoPlayMoves(in: game)
+        return safe.isEmpty ? game.hintCandidates().filter { $0.isHomeMove } : safe
     }
 
     /// 자동 플레이용: 소리/펄스 없이 순수 적용 (재귀 방지)

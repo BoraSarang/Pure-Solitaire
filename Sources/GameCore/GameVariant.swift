@@ -40,9 +40,17 @@ public enum GameVariant: String, Codable, CaseIterable, Sendable {
     }
 
     /// 변형별 옵션 정의 — 게임 번호 시트/설정에서 자동 렌더링.
-    /// 새 게임이 옵션을 가지면 여기에 추가한다 (현재 유일 옵션: Spider 난이도).
+    /// 새 게임이 옵션을 가지면 여기에 추가한다.
     public var optionDefinitions: [GameOption] {
         switch self {
+        case .klondike:
+            return [
+                GameOption(
+                    id: "klondikeDraw",
+                    title: "스톡 드로",
+                    choices: ["1", "3"].map { GameOptionChoice(id: $0, title: $0 + "장") }
+                )
+            ]
         case .spider:
             return [
                 GameOption(
