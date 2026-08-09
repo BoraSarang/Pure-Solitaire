@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-app:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build release
+        run: swift build -c release
+
+      - name: Package .app bundle
+        run: |
+          EXECUTABLE="PureSolitaire"
+          APP_NAME="Pure Solitaire"
+          BIN=".build/release/$EXECUTABLE"
+          APP="$APP_NAME.app"
+          rm -rf "$APP"
+          mkdir -p "$APP/Contents/MacOS"
+          mkdir -p "$APP/Contents/Resources"
+          cp "$BIN" "$APP/Contents/MacOS/$EXECUTABLE"
+          if [ -f "resources/bgm.wav" ]; then
+            cp "resources/bgm.wav" "$APP/Contents/Resources/bgm.wav"
+          fi
+          cat > "$APP/Contents/Info.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>$APP_NAME</string>
+	<key>CFBundleDisplayName</key>
+	<string>순수한 솔리테어</string>
+	<key>CFBundleExecutable</key>
+	<string>$EXECUTABLE</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.borasarang.puresolitaire</string>
+	<key>CFBundleVersion</key>
+	<string>${GITHUB_REF_NAME#v}</string>
+	<key>CFBundleShortVersionString</key>
+	<string>${GITHUB_REF_NAME#v}</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>13.0</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.card-games</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+</dict>
+</plist>
+PLIST
+          codesign --force --deep --sign - "$APP"
+          ditto -c -k --keepParent "$APP" "Pure-Solitaire-${GITHUB_REF_NAME#v}-macos.zip"
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Pure-Solitaire-*.zip
+          generate_release_notes: true

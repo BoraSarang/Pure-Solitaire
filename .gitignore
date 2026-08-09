@@ -1,0 +1,20 @@
+# SwiftPM 빌드 산출물
+.build/
+DerivedData/
+*.o
+*.swiftmodule
+
+# macOS
+.DS_Store
+
+# Xcode
+xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+# 임시 앱 번들 (스크립트 산출)
+Pure Solitaire.app/
+PureFreeCell.app/
+
+# 아이콘 산출물
+AppIcon.iconset/
