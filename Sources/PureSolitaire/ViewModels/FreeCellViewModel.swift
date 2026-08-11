@@ -274,6 +274,12 @@ final class FreeCellViewModel: ObservableObject {
         showingNewGameConfirmation = true
     }
 
+    /// 데일리 딜 — 오늘 날짜 시드로 현재 변형의 고정 게임 시작
+    func startDailyDeal() {
+        let number = DailyDeal.gameNumber(for: Date(), variant: variant)
+        requestNewGame(number: number, variant: variant)
+    }
+
     func requestNewGame(variant: GameVariant) {
         guard currentMoveCount > 0 && !currentIsWon else {
             newGame(variant: variant)

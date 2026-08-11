@@ -27,6 +27,12 @@
 - [x] T-182: 카드 앞면 2종(레트로/딥) CardView 스타일 분기 + 픽커 자동 반영
 - [ ] T-183: 회귀(178개 유지) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.15.0) + 문서
 
+## v3.16 — 데일리 딜 (진행중 — 2026-08-12, PLAN_v3.16_macos.md)
+- [x] T-184: DailyDeal 날짜→시드 매핑 + 단위 테스트 5개
+- [x] T-185: startDailyDeal() VM 진입점
+- [x] T-186: 사이드바 "데일리 딜" 버튼(⌘D) + 게임 메뉴 항목
+- [ ] T-187: 회귀(178+5) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.16.0) + 문서
+
 ## v1.0 — 프리셀 MVP
 
 ### Phase 1: GameCore (플랫폼 독립 로직)

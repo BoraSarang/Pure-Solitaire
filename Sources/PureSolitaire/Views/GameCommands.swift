@@ -22,6 +22,8 @@ struct GameCommands: Commands {
         CommandMenu("게임") {
             Button("게임 번호...") { viewModel.showingGameNumber = true }
                 .keyboardShortcut("g", modifiers: .command)
+            Button("데일리 딜") { viewModel.startDailyDeal() }
+                .keyboardShortcut("d", modifiers: .command)
 
             Divider()
 

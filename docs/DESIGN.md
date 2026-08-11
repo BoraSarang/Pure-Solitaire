@@ -221,6 +221,12 @@ final class FreeCellGame {
 - **카드 뒷면 5종** (`CardBack`): classic/blue/gold + ocean/forest. tint/accent 토큰만 추가 → `CardBackArtwork`/`CardView.backView` 자동 반영.
 - **카드 앞면 4종** (`CardStyle`): classic/simple + retro(세리프+아이보리) / deep(다크 배경+밝은 면색). `CardView`의 background/borderColor/fontDesign/faceForeground 분기 + `SuitSymbolView(foreground:)` 주입, `MiniCardFaceView` 동일 재현.
 
+### 3.18 데일리 딜 (v3.16)
+- **목적**: 날짜를 결정적 시드로 변환해 하루 1개 고정 게임 제공 — 기존 게임 번호(시드) 파이프라인 재사용.
+- **`GameCore/DailyDeal.gameNumber(for:variant:)`**: 날짜 순번(`Calendar.ordinality(of: .day, in: .era)`) + 변형 rawValue 해시(djb2)를 결정적 혼합(오버플로 XOR/곱)해 `1...DealGenerator.maxGameNumber` 범위 시드 생성. 같은 날짜+변형이면 항상 같은 번호, 변형별 독립.
+- **VM `startDailyDeal()`**: `DailyDeal.gameNumber(for: Date(), variant:)` → `requestNewGame(number:variant:)` 경유(진행 중 확인 다이얼로그 + 통계/자동플레이/딜 연출 재사용).
+- **진입점**: 사이드바 "데일리 딜"(calendar, ⌘D) + 게임 메뉴 "데일리 딜"(⌘D). 승리/통계는 일반 게임과 동일 처리(시드가 게임 번호로 기록).
+
 ## 4. UI 설계 (SwiftUI)
 
 ### 4.1 카드 커스텀 벡터 렌더링

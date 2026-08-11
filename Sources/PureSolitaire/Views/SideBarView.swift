@@ -55,6 +55,9 @@ struct SideBarView: View {
             SideBarButton(icon: "number", title: "게임 번호", shortcut: "⌘G", fg: fg) {
                 vm.showingGameNumber = true
             }
+            SideBarButton(icon: "calendar", title: "데일리 딜", shortcut: "⌘D", fg: fg) {
+                vm.startDailyDeal()
+            }
             SideBarButton(icon: "arrow.left.arrow.right", title: "게임 전환", shortcut: "", fg: fg) {
                 vm.switchToRandomGame()
             }

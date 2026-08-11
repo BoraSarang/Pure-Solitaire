@@ -1,5 +1,16 @@
 # CHANGELOG — 변경 이력
 
+## [3.16.0] — 2026-08-12 — [macos] — 데일리 딜
+### 변경 (T-184~T-186)
+- **데일리 딜**: 날짜(YYYY-MM-DD)를 결정적 시드로 변환해 하루 1개 고정 게임. 같은 날짜+변형이면 항상 같은 배치, 변형마다 다른 시드(변형별 데일리 1개씩).
+- **구현**: `GameCore/DailyDeal.gameNumber(for:variant:)` 신규 — 날짜 순번(era 기준)+변형 rawValue 해시를 결정적 혼합해 `1...1,000,000` 시드 생성. 기존 게임 번호 파이프라인 재사용.
+- **진입**: 사이드바 "데일리 딜"(calendar, ⌘D) + 게임 메뉴 "데일리 딜"(⌘D). `startDailyDeal()`이 진행 중이면 기존 확인 다이얼로그를 띄우고, 게임 시작/통계 기록/자동플레이/딜 연출은 기존 경로 재사용.
+- **Winnable**: 사용자 결정으로 v3.16에서 제외(후속 버전에서 재검토).
+### 검증
+- `swift build`(debug) 경고 0건, 단위 테스트 **183개** 통과(DailyDeal 5개 신규)
+- 문서: PLAN_v3.16/TODO/CHANGELOG/DESIGN
+- 수동 검증은 v3.15~v3.19 일괄로 지연
+
 ## [3.15.0] — 2026-08-12 — [macos] — 커스텀 배경/카드면
 ### 변경 (T-180~T-182)
 - **커스텀 배경 (T-180)**: 설정 "배경" 픽커에 **커스텀** 항목 추가. "이미지 선택…" 버튼(NSOpenPanel)으로 사진 업로드 → `Application Support/Pure Solitaire/custom-background.png`에 복사 저장 → 보드/창 배경으로 렌더. "제거" 버튼으로 원복. 공용 `BackgroundLayer` 뷰가 커스텀 이미지/색 분기 처리(GameBoardView·ContentView 공용). 누락 시 기본 그린 폴백.
