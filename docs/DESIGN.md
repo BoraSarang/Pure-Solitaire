@@ -212,6 +212,15 @@ final class FreeCellGame {
 - **뷰 소스 일반화** (`GameBoardView`): 소스 강조 판정 함수 13개(`isHintSource`/`isKlondikeHintSource`/…/홈·프리셀 소스)가 단일 `highlightedMove` 스위치에서 `displayedHintMoves` 기준 `contains` 검사로 변경 — 동일 로직(카드 위치 매칭)이 단일/전체에서 공용 동작.
 - **진입점**: 사이드바 "전체 힌트" 토글 버튼(`isActive`) + 게임 메뉴 "전체 힌트"(⇧⌘H). 설정은 세션 토글로만(영구 기본값 없음).
 
+### 3.17 커스텀 배경 / 카드면 (v3.15)
+- **커스텀 배경** (`BackgroundStyle.custom`):
+  - 저장: 선택 이미지를 `Application Support/Pure Solitaire/custom-background.png`로 PNG 변환 후 원자적 저장(`setCustomBackground(from:)`). 경로는 `@AppStorage("settings.customBackgroundPath")`로 유지, 파일 누락 시 `fileExists` 가드로 폴백.
+  - 렌더: 공용 `BackgroundLayer` 뷰 — `.custom` + `customBackgroundImage`(NSImage 로드) 있으면 이미지(`scaledToFill`+`clipped`), 아니면 `UserSettings.color(for:)`. `GameBoardView`/`ContentView`의 `.background`에 공용 사용.
+  - 제거: `removeCustomBackground()` — 파일 삭제 + 경로 초기화 + `.green` 복귀.
+  - UI: `BackgroundStylePicker` 커스텀 셀(축소 이미지/`photo` 아이콘) + SettingsView "이미지 선택…"(NSOpenPanel)/"제거" 버튼.
+- **카드 뒷면 5종** (`CardBack`): classic/blue/gold + ocean/forest. tint/accent 토큰만 추가 → `CardBackArtwork`/`CardView.backView` 자동 반영.
+- **카드 앞면 4종** (`CardStyle`): classic/simple + retro(세리프+아이보리) / deep(다크 배경+밝은 면색). `CardView`의 background/borderColor/fontDesign/faceForeground 분기 + `SuitSymbolView(foreground:)` 주입, `MiniCardFaceView` 동일 재현.
+
 ## 4. UI 설계 (SwiftUI)
 
 ### 4.1 카드 커스텀 벡터 렌더링

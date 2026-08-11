@@ -1,5 +1,23 @@
 import SwiftUI
+import AppKit
 import GameCore
+
+/// 보드/창 공용 배경 — 커스텀 배경이면 이미지, 아니면 색상
+struct BackgroundLayer: View {
+    let settings: UserSettings
+
+    var body: some View {
+        if settings.background == .custom,
+           let image = settings.customBackgroundImage {
+            Image(nsImage: image)
+                .resizable()
+                .scaledToFill()
+                .clipped()
+        } else {
+            UserSettings.color(for: settings.background)
+        }
+    }
+}
 
 /// 카드 뒷면 패턴 아트워크 — `CardView.backView`와 설정 미리보기 공용 (tint/accent 토큰 재사용)
 struct CardBackArtwork: View {
@@ -48,7 +66,7 @@ struct MiniCardFaceView: View {
                         .foregroundStyle(faceColor)
                         .lineLimit(1)
                     SpadeShape()
-                        .fill(Color(red: 0.10, green: 0.10, blue: 0.10))
+                        .fill(faceColor)
                         .frame(width: w * 0.16, height: w * 0.16)
                 }
                 .frame(width: w * 0.26, alignment: .leading)
@@ -59,21 +77,45 @@ struct MiniCardFaceView: View {
     }
 
     private var fontDesign: Font.Design {
-        style == .classic ? .serif : .rounded
+        switch style {
+        case .classic, .retro: return .serif
+        case .simple, .deep: return .rounded
+        }
     }
 
     private var background: Color {
-        style == .classic ? Color.white : Color(red: 0.92, green: 0.93, blue: 0.90)
+        switch style {
+        case .classic:
+            Color.white
+        case .simple:
+            Color(red: 0.92, green: 0.93, blue: 0.90)
+        case .retro:
+            Color(red: 0.98, green: 0.94, blue: 0.86)
+        case .deep:
+            Color(red: 0.18, green: 0.20, blue: 0.28)
+        }
     }
 
     private var borderColor: Color {
-        style == .classic
-            ? Color(red: 0.45, green: 0.45, blue: 0.45)
-            : Color(red: 0.70, green: 0.72, blue: 0.68)
+        switch style {
+        case .classic:
+            return Color(red: 0.45, green: 0.45, blue: 0.45)
+        case .simple:
+            return Color(red: 0.70, green: 0.72, blue: 0.68)
+        case .retro:
+            return Color(red: 0.55, green: 0.40, blue: 0.25)
+        case .deep:
+            return Color(red: 0.55, green: 0.60, blue: 0.75)
+        }
     }
 
     private var faceColor: Color {
-        Color(red: 0.12, green: 0.12, blue: 0.12)
+        switch style {
+        case .deep:
+            Color(red: 0.88, green: 0.90, blue: 0.95)
+        default:
+            Color(red: 0.12, green: 0.12, blue: 0.12)
+        }
     }
 }
 
@@ -129,9 +171,10 @@ struct CardStylePicker: View {
     }
 }
 
-/// 배경 선택 — 실제 색 스와치 미리보기
+/// 배경 선택 — 실제 색 스와치(또는 커스텀 이미지) 미리보기
 struct BackgroundStylePicker: View {
     @Binding var selection: UserSettings.BackgroundStyle
+    let settings: UserSettings
 
     var body: some View {
         HStack(spacing: 14) {
@@ -142,6 +185,22 @@ struct BackgroundStylePicker: View {
                     content: RoundedRectangle(cornerRadius: 8)
                         .fill(UserSettings.color(for: style))
                         .frame(width: 72, height: 56)
+                        .overlay(
+                            Group {
+                                if style == .custom {
+                                    if let image = settings.customBackgroundImage {
+                                        Image(nsImage: image)
+                                            .resizable()
+                                            .scaledToFill()
+                                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    } else {
+                                        Image(systemName: "photo")
+                                            .foregroundStyle(.white.opacity(0.9))
+                                            .font(.system(size: 18, weight: .medium))
+                                    }
+                                }
+                            }
+                        )
                 ) {
                     selection = style
                 }

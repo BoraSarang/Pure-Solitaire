@@ -96,18 +96,19 @@ struct SpadeShape: Shape {
 
 struct SuitSymbolView: View {
     let suit: Suit
+    var foreground: Color?
 
     var body: some View {
         Group {
             switch suit {
             case .hearts:
-                HeartShape().fill(Color(red: 0.85, green: 0.10, blue: 0.10))
+                HeartShape().fill(foreground ?? Color(red: 0.85, green: 0.10, blue: 0.10))
             case .diamonds:
-                DiamondShape().fill(Color(red: 0.85, green: 0.10, blue: 0.10))
+                DiamondShape().fill(foreground ?? Color(red: 0.85, green: 0.10, blue: 0.10))
             case .clubs:
-                ClubShape().fill(Color(red: 0.10, green: 0.10, blue: 0.10))
+                ClubShape().fill(foreground ?? Color(red: 0.10, green: 0.10, blue: 0.10))
             case .spades:
-                SpadeShape().fill(Color(red: 0.10, green: 0.10, blue: 0.10))
+                SpadeShape().fill(foreground ?? Color(red: 0.10, green: 0.10, blue: 0.10))
             }
         }
     }
@@ -135,7 +136,10 @@ struct CardView: View {
     }
 
     private var fontDesign: Font.Design {
-        style == .classic ? .serif : .rounded
+        switch style {
+        case .classic, .retro: return .serif
+        case .simple, .deep: return .rounded
+        }
     }
 
     var body: some View {
@@ -153,10 +157,10 @@ struct CardView: View {
                     VStack(alignment: .leading, spacing: 1) {
                         Text(card.rank.label)
                             .font(.system(size: w * 0.30, weight: .bold, design: fontDesign))
-                            .foregroundStyle(faceColor)
+                            .foregroundStyle(faceForeground)
                             .lineLimit(1)
                             .minimumScaleFactor(0.5)
-                        SuitSymbolView(suit: card.suit)
+                        SuitSymbolView(suit: card.suit, foreground: faceForeground)
                             .frame(width: w * 0.18, height: w * 0.18)
                     }
                     .frame(width: w * 0.24, alignment: .leading)
@@ -165,17 +169,17 @@ struct CardView: View {
                     VStack(alignment: .trailing, spacing: 1) {
                         Text(card.rank.label)
                             .font(.system(size: w * 0.30, weight: .bold, design: fontDesign))
-                            .foregroundStyle(faceColor)
+                            .foregroundStyle(faceForeground)
                             .lineLimit(1)
                             .minimumScaleFactor(0.5)
-                        SuitSymbolView(suit: card.suit)
+                        SuitSymbolView(suit: card.suit, foreground: faceForeground)
                             .frame(width: w * 0.18, height: w * 0.18)
                     }
                     .rotationEffect(.degrees(180))
                     .frame(width: w * 0.24, alignment: .trailing)
                     .position(x: w * 0.80, y: h * 0.80)
 
-                    SuitSymbolView(suit: card.suit)
+                    SuitSymbolView(suit: card.suit, foreground: faceForeground)
                         .frame(width: w * 0.62, height: w * 0.62)
                         .position(x: w * 0.5, y: h * 0.52)
 
@@ -226,6 +230,10 @@ struct CardView: View {
                 Color.white
             case .simple:
                 Color(red: 0.92, green: 0.93, blue: 0.90)
+            case .retro:
+                Color(red: 0.98, green: 0.94, blue: 0.86)
+            case .deep:
+                Color(red: 0.18, green: 0.20, blue: 0.28)
             }
         } else {
             if isHighlighted {
@@ -244,8 +252,22 @@ struct CardView: View {
                 return Color(red: 0.45, green: 0.45, blue: 0.45)
             case .simple:
                 return Color(red: 0.70, green: 0.72, blue: 0.68)
+            case .retro:
+                return Color(red: 0.55, green: 0.40, blue: 0.25)
+            case .deep:
+                return Color(red: 0.55, green: 0.60, blue: 0.75)
             }
         }
         return Color.clear
+    }
+
+    /// 앞면 글자/무늬 색 — 딥 스타일은 밝은 면(앞면) 텍스트를 연하게 유지, 딥 배경에선 밝은 색
+    private var faceForeground: Color {
+        if style == .deep, card != nil {
+            return isRed
+                ? Color(red: 0.95, green: 0.45, blue: 0.45)
+                : Color(red: 0.88, green: 0.90, blue: 0.95)
+        }
+        return faceColor
     }
 }

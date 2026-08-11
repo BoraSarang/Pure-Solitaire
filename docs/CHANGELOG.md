@@ -1,5 +1,15 @@
 # CHANGELOG — 변경 이력
 
+## [3.15.0] — 2026-08-12 — [macos] — 커스텀 배경/카드면
+### 변경 (T-180~T-182)
+- **커스텀 배경 (T-180)**: 설정 "배경" 픽커에 **커스텀** 항목 추가. "이미지 선택…" 버튼(NSOpenPanel)으로 사진 업로드 → `Application Support/Pure Solitaire/custom-background.png`에 복사 저장 → 보드/창 배경으로 렌더. "제거" 버튼으로 원복. 공용 `BackgroundLayer` 뷰가 커스텀 이미지/색 분기 처리(GameBoardView·ContentView 공용). 누락 시 기본 그린 폴백.
+- **카드 뒷면 2종 추가 (T-181)**: 클래식/블루/골드 + **오션/숲**. `CardBack`에 tint/accent만 추가해 기존 `CardBackArtwork`/`CardView.backView`에 자동 반영.
+- **카드 앞면 2종 추가 (T-182)**: 클래식/심플 + **레트로/딥**. `CardStyle` 확장 — 레트로는 세리프+아이보리 배경, 딥은 다크 배경+밝은 면색(심볼/랭크 대비). `SuitSymbolView`에 foreground 주입, `MiniCardFaceView` 동일 분기.
+### 검증
+- `swift build`(debug) 경고 0건, 단위 테스트 **178개** 통과(표시/설정 계층 — GameCore 무변경)
+- 문서: PLAN_v3.15/TODO/CHANGELOG/DESIGN
+- 수동 검증은 v3.15~v3.19 일괄로 지연
+
 ## [3.14.0] — 2026-08-09 — [macos] — 전체 힌트 강조
 ### 변경 (T-175~T-177)
 - **전체 힌트 강조**: 유효 이동 전체의 소스를 한 번에 강조. `⇧⌘H`(또는 사이드바 "전체 힌트" 토글)로 켜짐/꺼짐. 켜지면 현재 보드의 모든 이동 가능한 소스 카드가 노란 테두리로 동시 표시되고, 이동/새 게임/게임 전환 시 자동 해제.

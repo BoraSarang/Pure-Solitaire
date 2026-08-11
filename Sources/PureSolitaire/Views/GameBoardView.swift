@@ -95,7 +95,7 @@ struct GameBoardView: View {
                 runHintDragAnimation(boardSize: geo.size, cardSize: size)
             }
         }
-        .background(settings.backgroundColor(for: settings.background))
+        .background(BackgroundLayer(settings: settings))
         .animation(.easeInOut(duration: settings.animationSpeed), value: vm.game)
         .animation(.easeInOut(duration: settings.animationSpeed), value: vm.klondike)
         .animation(.easeInOut(duration: settings.animationSpeed), value: vm.spider)

@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import GameCore
 
 /// 설정 시트 — 섹션(카드/보드/게임플레이/게임별 옵션/데이터)별로 정리
@@ -31,7 +32,16 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("배경")
                         .font(.callout.weight(.medium))
-                    BackgroundStylePicker(selection: $settings.background)
+                    BackgroundStylePicker(selection: $settings.background, settings: settings)
+                }
+                HStack {
+                    Text("커스텀 배경")
+                    Button("이미지 선택…") { chooseCustomBackground() }
+                    Button("제거", role: .destructive) {
+                        settings.removeCustomBackground()
+                    }
+                    .disabled(settings.customBackgroundPath.isEmpty)
+                    .disabled(settings.background != .custom)
                 }
                 HStack {
                     Text("보드 줌")
@@ -165,5 +175,17 @@ struct SettingsView: View {
             get: { vm.gameOptions.selectedID(for: variant, option: option) },
             set: { vm.gameOptions.setSelectedID($0, for: variant, optionID: option.id) }
         )
+    }
+
+    /// 커스텀 배경 이미지 선택 → Application Support 저장 + 적용
+    private func chooseCustomBackground() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.image]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.title = "커스텀 배경 이미지 선택"
+        if panel.runModal() == .OK, let url = panel.url {
+            _ = settings.setCustomBackground(from: url)
+        }
     }
 }

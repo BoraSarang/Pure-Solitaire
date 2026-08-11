@@ -35,7 +35,7 @@ struct ContentView: View {
                     .transition(AnyTransition.scale.combined(with: .opacity))
             }
         }
-        .background(settings.backgroundColor(for: settings.background))
+        .background(BackgroundLayer(settings: settings))
         .background(WindowAccessor { window in
             window.setFrameAutosaveName("PureSolitaireMainWindow")
         })
