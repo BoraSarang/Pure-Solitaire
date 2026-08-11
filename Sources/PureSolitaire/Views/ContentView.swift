@@ -58,6 +58,12 @@ struct ContentView: View {
         .sheet(isPresented: $vm.showingStats) {
             StatsView()
         }
+        .sheet(isPresented: $vm.showingChallenge) {
+            ChallengeView()
+        }
+        .sheet(isPresented: $vm.showingAchievements) {
+            AchievementsView()
+        }
         .sheet(isPresented: $vm.showingSettings) {
             SettingsView()
         }

@@ -22,6 +22,8 @@ final class FreeCellViewModel: ObservableObject {
     @Published var showingGameNumber = false
     @Published var showingStats = false
     @Published var showingSettings = false
+    @Published var showingChallenge = false
+    @Published var showingAchievements = false
     @Published var showingNewGameConfirmation = false
     @Published var showNextGameButton = false
     @Published private(set) var message: String?
@@ -59,6 +61,8 @@ final class FreeCellViewModel: ObservableObject {
     private let stats = StatsStore()
     private let gameSaver = GameSaver()
     private let recordStore = RecordStore()
+    let challengeStore = ChallengeStore()
+    let achievementStore = AchievementStore()
     let gameOptions = GameOptionsStore()
 
     /// Spider 난이도 — GameOptionsStore 기반 (단일 진실 소스)
@@ -278,6 +282,87 @@ final class FreeCellViewModel: ObservableObject {
     func startDailyDeal() {
         let number = DailyDeal.gameNumber(for: Date(), variant: variant)
         requestNewGame(number: number, variant: variant)
+    }
+
+    // MARK: - 데일리 챌린지 / 업적
+
+    /// 오늘 챌린지 시작 — 오늘 고정 변형 + 시드로 새 게임
+    func startChallenge() {
+        let date = Date()
+        let v = DailyChallenge.challengeVariant(for: date)
+        let number = DailyChallenge.gameNumber(for: date)
+        requestNewGame(number: number, variant: v)
+    }
+
+    /// 오늘 챌린지 별점 합계 (승리/시간/이동 수 기준)
+    func todayChallengeStars() -> Int {
+        challengeStore.todayResult()?.stars ?? 0
+    }
+
+    /// 승리 기록 시 활성 챌린지 별점 반영 — checkState 승리 분기에서 호출
+    func recordChallengeIfToday() {
+        let date = Date()
+        guard DailyChallenge.gameNumber(for: date) == currentGameNumber else { return }
+        let v = DailyChallenge.challengeVariant(for: date)
+        guard let start = gameStartedAt else { return }
+        let seconds = Date().timeIntervalSince(start)
+        let stars = DailyChallenge.stars(
+            variant: v,
+            isWin: currentIsWon,
+            seconds: seconds,
+            moves: currentMoveCount
+        )
+        let key = ChallengeStore.dateKey(for: date)
+        challengeStore.record(ChallengeStore.Result(
+            dateKey: key,
+            variant: v,
+            stars: stars,
+            seconds: seconds,
+            moves: currentMoveCount
+        ))
+        objectWillChange.send()
+    }
+
+    /// 잠금 해제 직전 신규 업적 갱신 — 메시지 표시용 신규 목록 반환
+    @discardableResult
+    func refreshAchievements() -> [Achievement] {
+        let snapshot = statsSnapshot()
+        var newly: [Achievement] = []
+        for achievement in Achievement.all {
+            if Achievement.isUnlocked(achievement.kind, stats: snapshot, challengeStars: todayChallengeStars()) {
+                if achievementStore.recordUnlock(achievement.kind) {
+                    newly.append(achievement)
+                }
+            }
+        }
+        if !newly.isEmpty {
+            objectWillChange.send()
+        }
+        return newly
+    }
+
+    /// 업적 판정용 통계 스냅샷
+    private func statsSnapshot() -> StatsSnapshot {
+        let variantsWon = GameVariant.allCases.filter { stats.entry(for: $0).wins > 0 }.count
+        var bestTime: Double?
+        for v in GameVariant.allCases {
+            if let t = stats.bestTimeSeconds(for: v), bestTime == nil || t < bestTime! {
+                bestTime = t
+            }
+        }
+        return StatsSnapshot(
+            totalGames: stats.totalGames,
+            wins: stats.wins,
+            bestStreak: stats.bestStreak,
+            variantsWonCount: variantsWon,
+            bestTimeSeconds: bestTime
+        )
+    }
+
+    /// 잠금 해제된 업적 목록
+    func unlockedAchievements() -> [Achievement] {
+        let unlocked = achievementStore.unlockedSet()
+        return Achievement.all.filter { unlocked.contains($0.kind.rawValue) }
     }
 
     func requestNewGame(variant: GameVariant) {
@@ -961,6 +1046,8 @@ final class FreeCellViewModel: ObservableObject {
         if isWon {
             stopElapsedTimer()
             stats.recordWin(variant, moves: currentMoveCount)
+            recordChallengeIfToday()
+            refreshAchievements()
             if let start = gameStartedAt {
                 let seconds = Date().timeIntervalSince(start)
                 stats.recordWinTime(seconds, for: variant)

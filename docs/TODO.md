@@ -33,6 +33,12 @@
 - [x] T-186: 사이드바 "데일리 딜" 버튼(⌘D) + 게임 메뉴 항목
 - [ ] T-187: 회귀(178+5) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.16.0) + 문서
 
+## v3.17 — 데일리 챌린지 + 업적 (진행중 — 2026-08-12, PLAN_v3.17_macos.md)
+- [x] T-188: DailyChallenge(변형/시드/별점) + ChallengeStore(완료 저장) + 테스트
+- [x] T-189: Achievement 모델 + 판정 + AchievementStore + 테스트
+- [x] T-190: VM + ChallengeView/AchievementsView + 사이드바/메뉴/시트 연결
+- [ ] T-191: 회귀(183+15) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.17.0) + 문서
+
 ## v1.0 — 프리셀 MVP
 
 ### Phase 1: GameCore (플랫폼 독립 로직)

@@ -24,6 +24,10 @@ struct GameCommands: Commands {
                 .keyboardShortcut("g", modifiers: .command)
             Button("데일리 딜") { viewModel.startDailyDeal() }
                 .keyboardShortcut("d", modifiers: .command)
+            Button("데일리 챌린지") { viewModel.showingChallenge = true }
+                .keyboardShortcut("d", modifiers: [.command, .option])
+            Button("업적") { viewModel.showingAchievements = true }
+                .keyboardShortcut("t", modifiers: [.command, .option])
 
             Divider()
 

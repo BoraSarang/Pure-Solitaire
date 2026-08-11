@@ -227,6 +227,15 @@ final class FreeCellGame {
 - **VM `startDailyDeal()`**: `DailyDeal.gameNumber(for: Date(), variant:)` → `requestNewGame(number:variant:)` 경유(진행 중 확인 다이얼로그 + 통계/자동플레이/딜 연출 재사용).
 - **진입점**: 사이드바 "데일리 딜"(calendar, ⌘D) + 게임 메뉴 "데일리 딜"(⌘D). 승리/통계는 일반 게임과 동일 처리(시드가 게임 번호로 기록).
 
+### 3.19 데일리 챌린지 + 업적 (v3.17)
+- **데일리 챌린지** (`GameCore/ChallengeStore.swift`):
+  - `DailyChallenge.challengeVariant(for:)` — 날짜를 전체 변형 순환으로 매핑(1일 1변형, 결정적). 시드는 `DailyDeal.gameNumber` 재사용.
+  - 별점: `DailyChallenge.stars(variant:isWin:seconds:moves:)` — 승리 1 + 시간 목표 1 + 이동 목표 1 (변형별 `timeTarget`/`moveTarget` 상수표).
+  - 저장: `ChallengeStore`(UserDefaults, `challenge.result.{dateKey}`) — `dateKey`는 로컬 달력 YYYY-MM-DD. 같은 날짜 더 높은 별점 우선 갱신.
+- **업적** (`GameCore/Achievement.swift`): `Achievement.Kind` 10종 — `Achievement.isUnlocked(_:stats:challengeStars:)` 순수 판정(StatsSnapshot = 총 게임/승리/최고 연승/완주 변형 수/최단 시간). 저장 `AchievementStore`(UserDefaults 배열, `recordUnlock` 중복 방지 + 신규 여부 반환).
+- **VM 연동**: `startChallenge()`(오늘 변형+시드로 `requestNewGame`) / `recordChallengeIfToday()`(승리 시 오늘 챌린지면 별점 저장) / `refreshAchievements()`(신규 잠금 해제 반환). `checkState()` 승리 분기에서 호출.
+- **UI**: ChallengeView 시트(오늘 변형·시드·별점 3개 목표·완료 상태) / AchievementsView 시트(배지 그리드, 잠금 회색+조건, 해제 풀컬러). 사이드바 "챌린지"(⌥⌘D) "업적"(⌥⌘T).
+
 ## 4. UI 설계 (SwiftUI)
 
 ### 4.1 카드 커스텀 벡터 렌더링

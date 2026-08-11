@@ -114,6 +114,12 @@ struct SideBarView: View {
 
     private var infoGroup: some View {
         VStack(spacing: 6) {
+            SideBarButton(icon: "calendar.badge.checkmark", title: "챌린지", shortcut: "⌥⌘D", fg: fg) {
+                vm.showingChallenge = true
+            }
+            SideBarButton(icon: "trophy.fill", title: "업적", shortcut: "⌥⌘T", fg: fg) {
+                vm.showingAchievements = true
+            }
             SideBarButton(icon: "chart.bar.fill", title: "통계", shortcut: "⌘T", fg: fg) {
                 vm.showingStats = true
             }
