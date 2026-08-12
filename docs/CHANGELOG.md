@@ -1,5 +1,17 @@
 # CHANGELOG — 변경 이력
 
+## [3.20.0] — 2026-08-12 — [macos] — Winnable 딜 (솔버 코어)
+### 변경 (T-202)
+- **FreeCellSolver 추가** (`GameCore/FreeCellSolver.swift`): FreeCell 계열 4종(freecell/bakersGame/seaTower/superFreeCell) 승리 가능 여부 판정. 안전 홈 이동(AutoPlay 규칙) 자동 적용으로 상태 압축 + 반복 DFS(명시적 스택) + 휴리스틱 이동 순서(홈 이동 0 → 프리셀→열 → 빈 열 K → 그룹 2+ → 빈 열 비-K → 단일 → 열→프리셀 → 홈 꺼내기) + 방문 상태 집합(사이클 방지) + 수퍼무브(그룹) 이동 생성.
+- **예산 게이트**: 노드/시간/깊이 예산. 예산 초과는 "미확정"(false) 처리로 긴 대기 방지. **깊이 예산 초과 시 가지치기(continue)로 수정** — 기존 `return false`(전체 탐색 즉시 포기)는 DFS 백트래킹을 막아 게임 #3/#10/#20을 오판하는 버그였음.
+- **기본 예산 상향**: nodeLimit 400,000 / timeLimit 4.0s / depthLimit 20,000 (기존 200k/1.5s — 짧아 미확정 다발).
+- **API**: `isWinnable(gameNumber:variant:budget:)`, `firstWinnableGameNumber(from:variant:budget:maxAttempts:)`, `isFreeCellFamily(_:)`.
+- **알려진 한계**: MS 딜 #1/#50/#500은 기본 예산 내 미확정(해는 존재할 가능성이 높으나 탐색 경로가 깊어 예산 초과) — 후속 휴리스틱 개선 예정.
+### 검증
+- `swift build`(debug) 경고 0건, 단위 테스트 **219개** 통과(FreeCellSolverTests 5개 신규 — 대표 MS 딜 풀림/예산 내 판정/예산 0 미확정/미지원 변형/첫 Winnable 번호)
+- 문서: PLAN_v3.20/TODO
+- T-203~T-205(옵션/VM/UI 연동)은 미완료 — 다음 커밋 예정
+
 ## [3.19.0] — 2026-08-12 — [macos] — 점수 체계
 ### 변경 (T-198~T-200)
 - **점수 체계 추가**: 표준 Klondike 점수 기준 + 변형별 상수(`GameCore/Scoring.swift` 순수 계산). 이동 점수(스톡 드로 +5, 홈 이동 +10, 홈에서 꺼내기 -15, 웨이스트 재활용 -100, 뒤집기 +5, 피라미드/골프/트리피크스 제거 점수)를 이동마다 누적. 승리 보너스(Klondike 계열 500 / Spider 800 / 제거 기반 300) + Klondike 시간 패널티(10초당 -2).

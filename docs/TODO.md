@@ -45,13 +45,19 @@
 - [x] T-194: VM scorpion 상태 + init 복원 + newGame/apply/applyRaw/undo/redo/canUndo/canRedo/current*/persist/hint/자동완성 가드
 - [x] T-195: GameSaver scorpion 저장/복원(clear 포함)
 - [x] T-196: GameBoardView scorpionTopRow(예비 더미) + 열 렌더/탭/드래그/힌트 소스 분기 + GamePreviewCard
-- [ ] T-197: 회귀(207 = 198+9) + swift build 경고 0 + 문서
+- [x] T-197: 회귀(207 = 198+9) + swift build 경고 0 + 문서
 
 ## v3.19 — 점수 체계 (진행중 — 2026-08-12, PLAN_v3.19_macos.md)
 - [x] T-198: Scoring(이동/승리/시간 점수, 변형별 상수) + ScoringTests 7개
 - [x] T-199: VM score 누적(이동+스파이더 완성 보너스) + finalScore + undo/redo 롤백 + 새 게임 초기화
 - [x] T-200: gameInfoView 현재 점수 + WinBanner 최종 점수 + StatsView 기록 점수
-- [ ] T-201: 회귀(214 = 207+7) + swift build 경고 0 + 문서
+- [x] T-201: 회귀(214 = 207+7) + swift build 경고 0 + 문서
+
+## v3.20 — Winnable 딜 (진행중 — 2026-08-12, PLAN_v3.20_macos.md)
+- [~] T-202: `FreeCellSolver` — 상태공간 DFS(휴리스틱 + 방문 집합 + 노드/시간/깊이 예산) + `isWinnable(gameNumber:variant:)` + `firstWinnableGameNumber(from:variant:)` + FreeCellSolverTests 5개 — **솔버 완료 (깊이 예산 가지치기 버그 수정, 기본 예산 400k/4s 상향)**, 일부 딜(#1/#50/#500)은 예산 초과 미확정
+- [ ] T-203: `GameVariant.optionDefinitions` — FreeCell 계열 4종에 `winnable` 옵션("일반"/"승리 보장") 추가
+- [ ] T-204: VM — `isWinnableEnabled`(옵션 읽기) + `newGame(number:variant:)`에서 적용: 풀리는 번호 탐색 후 그 번호로 실제 시작(표시·저장·통계 반영)
+- [ ] T-205: 게임 번호 시트 안내 문구 + 회귀(219+신규) + `swift build`(경고 0) + 문서
 
 ## v1.0 — 프리셀 MVP
 
