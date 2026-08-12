@@ -236,6 +236,17 @@ final class FreeCellGame {
 - **VM 연동**: `startChallenge()`(오늘 변형+시드로 `requestNewGame`) / `recordChallengeIfToday()`(승리 시 오늘 챌린지면 별점 저장) / `refreshAchievements()`(신규 잠금 해제 반환). `checkState()` 승리 분기에서 호출.
 - **UI**: ChallengeView 시트(오늘 변형·시드·별점 3개 목표·완료 상태) / AchievementsView 시트(배지 그리드, 잠금 회색+조건, 해제 풀컬러). 사이드바 "챌린지"(⌥⌘D) "업적"(⌥⌘T).
 
+### 3.20 Scorpion 변형 (v3.18)
+- **게임** (`GameCore/ScorpionGame.swift`): `columns: [[ColumnCard]]`(7열×7장) + `reserve: [Card]`(3장). `reserveDealt` 플래그로 예비 딜 1회 제한.
+  - 딜: `DealGenerator.scorpionDeal(gameNumber:)` — 앞 4열 밑 3장 뒤집힘+위 4장 앞면, 뒤 3열 전부 앞면. 나머지 3장 예비.
+  - 규칙: `canPlaceOnColumn`(같은 수트 + 정확히 한 단계 낮은 카드, 빈 열은 K만) / `movableGroup(from:startIndex:)`(앞면 카드와 그 위 전부, 위 카드 순서 무관).
+  - 승리: `completedSequencesCount` — 각 열이 같은 수트 K→A 13장 완성 시퀀스인 열이 4개면 `isWon`.
+  - `canAutoFinish = false`(홈셀 기반 자동완성 미지원).
+- **Move 확장**: `case dealReserve` — 스톡 클릭 시 예비 3장을 열 0,1,2에 앞면 딜(1회만). 다른 게임의 `canMove`/`apply` switch에 false 분기 추가.
+- **VM 연동**: `scorpion: ScorpionGame?` — `variant`/`current*`/`canUndo`/`canRedo`/`apply`/`applyRaw`/`persist`/init 복원/`makeScorpionMove`/`tapScorpionStock`/`tapScorpionColumn`/`isScorpionSelected`. 자동 플레이·자동 완성 제외 가드.
+- **저장**: `GameSaver` `persistence.savedScorpion`.
+- **UI**: `scorpionTopRow`(완성 n/4 표시 + 예비 더미) / `scorpionColumnView`(Klondike 열 패턴, 뒤집힘 카드) / 탭·드래그·힌트 소스 분기. GamePreviewCard에 `.scorpion`(열형, 예비 1더미).
+
 ## 4. UI 설계 (SwiftUI)
 
 ### 4.1 카드 커스텀 벡터 렌더링

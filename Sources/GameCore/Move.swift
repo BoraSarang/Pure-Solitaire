@@ -36,6 +36,8 @@ public enum Move: Equatable, Sendable {
     case pyramidRemoveSingle(card: Card)
     /// TriPeaks: 노출 피크 카드를 웨이스트로 제거 (웨이스트 맨 위와 정확히 1 랭크 차이, 카드)
     case triPeaksRemove(card: Card)
+    /// Scorpion: 예비 3장을 열 0,1,2에 앞면으로 딜 (1회만)
+    case dealReserve
 
     /// 홈셀로 이동하는 동작인지 여부
     public var isHomeMove: Bool {

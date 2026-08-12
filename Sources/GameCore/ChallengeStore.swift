@@ -24,7 +24,7 @@ public enum DailyChallenge {
         switch variant {
         case .freecell, .bakersGame, .seaTower, .superFreeCell: return 480
         case .klondike, .yukon: return 540
-        case .spider, .fortyThieves: return 600
+        case .spider, .fortyThieves, .scorpion: return 600
         case .golf, .pyramid, .triPeaks: return 420
         }
     }
@@ -38,6 +38,7 @@ public enum DailyChallenge {
         case .golf: return 80
         case .pyramid: return 90
         case .triPeaks: return 100
+        case .scorpion: return 240
         }
     }
 

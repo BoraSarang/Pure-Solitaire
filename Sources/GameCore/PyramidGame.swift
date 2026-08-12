@@ -103,7 +103,7 @@ public struct PyramidGame: Equatable, Sendable, Codable {
         case .columnToColumn, .columnToFreeCell, .freeCellToColumn, .columnToHome,
              .freeCellToHome, .homeToColumn, .homeToFreeCell, .recycleStock,
              .wasteToColumn, .wasteToFoundation, .flipColumnCard, .dealFromStock,
-             .columnToWaste, .triPeaksRemove:
+             .columnToWaste, .triPeaksRemove, .dealReserve:
             return false
         }
     }

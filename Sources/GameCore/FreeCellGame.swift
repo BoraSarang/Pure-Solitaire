@@ -61,7 +61,7 @@ public struct FreeCellGame: Equatable, Sendable, Codable {
         case .bakersGame, .klondike, .spider, .yukon, .fortyThieves: freeCellCountBakers
         case .seaTower: 4
         case .superFreeCell: 6
-        case .golf, .pyramid, .triPeaks: 0
+        case .golf, .pyramid, .triPeaks, .scorpion: 0
         }
     }
 
@@ -230,7 +230,7 @@ public struct FreeCellGame: Equatable, Sendable, Codable {
 
         // Klondike/Spider/Golf/Pyramid 전용 이동은 프리셀 게임에서 발생하지 않음
         case .drawFromStock, .recycleStock, .wasteToColumn, .wasteToFoundation, .flipColumnCard, .dealFromStock, .columnToWaste,
-             .pyramidRemovePair, .pyramidRemoveWastePair, .pyramidRemoveSingle, .triPeaksRemove:
+             .pyramidRemovePair, .pyramidRemoveWastePair, .pyramidRemoveSingle, .triPeaksRemove, .dealReserve:
             return false
         }
     }
@@ -280,7 +280,7 @@ public struct FreeCellGame: Equatable, Sendable, Codable {
 
         // Klondike/Spider/Golf/Pyramid 전용 이동은 프리셀 게임에서 발생하지 않음 (apply는 canMove 통과 시에만 도달)
         case .drawFromStock, .recycleStock, .wasteToColumn, .wasteToFoundation, .flipColumnCard, .dealFromStock, .columnToWaste,
-             .pyramidRemovePair, .pyramidRemoveWastePair, .pyramidRemoveSingle, .triPeaksRemove:
+             .pyramidRemovePair, .pyramidRemoveWastePair, .pyramidRemoveSingle, .triPeaksRemove, .dealReserve:
             break
         }
     }

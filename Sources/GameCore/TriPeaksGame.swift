@@ -102,7 +102,7 @@ public struct TriPeaksGame: Equatable, Sendable, Codable {
         case .columnToColumn, .columnToFreeCell, .freeCellToColumn, .columnToHome,
              .freeCellToHome, .homeToColumn, .homeToFreeCell, .recycleStock,
              .wasteToColumn, .wasteToFoundation, .flipColumnCard, .dealFromStock,
-             .columnToWaste, .pyramidRemovePair, .pyramidRemoveWastePair, .pyramidRemoveSingle:
+             .columnToWaste, .pyramidRemovePair, .pyramidRemoveWastePair, .pyramidRemoveSingle, .dealReserve:
             return false
         }
     }

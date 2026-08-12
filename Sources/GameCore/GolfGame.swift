@@ -74,7 +74,7 @@ public struct GolfGame: Equatable, Sendable, Codable {
         case .columnToColumn, .columnToFreeCell, .freeCellToColumn, .columnToHome,
              .freeCellToHome, .homeToColumn, .homeToFreeCell, .recycleStock,
              .wasteToColumn, .wasteToFoundation, .flipColumnCard, .dealFromStock,
-             .pyramidRemovePair, .pyramidRemoveWastePair, .pyramidRemoveSingle, .triPeaksRemove:
+             .pyramidRemovePair, .pyramidRemoveWastePair, .pyramidRemoveSingle, .triPeaksRemove, .dealReserve:
             return false
         }
     }

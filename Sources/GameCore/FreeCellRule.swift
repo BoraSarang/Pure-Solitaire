@@ -7,7 +7,7 @@ public enum FreeCellRule {
             guard card.rank == topCard.rank.previous else { return false }
             switch variant {
             case .freecell, .klondike, .superFreeCell, .yukon: return card.color != topCard.color
-            case .bakersGame, .seaTower, .fortyThieves: return card.suit == topCard.suit
+            case .bakersGame, .seaTower, .fortyThieves, .scorpion: return card.suit == topCard.suit
             case .spider: return true
             case .golf, .pyramid, .triPeaks: return false
             }
@@ -41,7 +41,7 @@ public enum FreeCellRule {
                 let sameColorRule: Bool
                 switch variant {
                 case .freecell, .klondike, .superFreeCell, .yukon: sameColorRule = card.color != top.color
-                case .bakersGame, .seaTower, .fortyThieves: sameColorRule = card.suit == top.suit
+                case .bakersGame, .seaTower, .fortyThieves, .scorpion: sameColorRule = card.suit == top.suit
                 case .spider: sameColorRule = true
                 case .golf, .pyramid, .triPeaks: sameColorRule = false
                 }

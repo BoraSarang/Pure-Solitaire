@@ -15,6 +15,7 @@ final class GameSaver {
         static let savedGolf = "persistence.savedGolf"
         static let savedPyramid = "persistence.savedPyramid"
         static let savedTriPeaks = "persistence.savedTriPeaks"
+        static let savedScorpion = "persistence.savedScorpion"
     }
 
     private let defaults: UserDefaults
@@ -187,6 +188,22 @@ final class GameSaver {
 
     func clearTriPeaks() {
         defaults.removeObject(forKey: Keys.savedTriPeaks)
+    }
+
+    // MARK: - Scorpion
+
+    /// Scorpion 게임 저장 (전체 상태 + undo/redo 스택 포함)
+    func save(_ scorpion: ScorpionGame) {
+        store(scorpion, forKey: Keys.savedScorpion)
+    }
+
+    /// 저장된 Scorpion 게임 복구. 없거나 디코딩 실패 시 nil.
+    func restoreScorpion() -> ScorpionGame? {
+        load(ScorpionGame.self, forKey: Keys.savedScorpion)
+    }
+
+    func clearScorpion() {
+        defaults.removeObject(forKey: Keys.savedScorpion)
     }
 
     // MARK: - 제네릭 직렬화 헬퍼

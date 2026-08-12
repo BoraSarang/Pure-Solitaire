@@ -132,7 +132,7 @@ public struct FortyThievesGame: Equatable, Sendable, Codable {
         case .columnToFreeCell, .freeCellToColumn, .freeCellToHome,
              .homeToColumn, .homeToFreeCell, .flipColumnCard,
              .recycleStock, .dealFromStock, .columnToWaste,
-             .pyramidRemovePair, .pyramidRemoveWastePair, .pyramidRemoveSingle, .triPeaksRemove:
+             .pyramidRemovePair, .pyramidRemoveWastePair, .pyramidRemoveSingle, .triPeaksRemove, .dealReserve:
             return false
         }
     }

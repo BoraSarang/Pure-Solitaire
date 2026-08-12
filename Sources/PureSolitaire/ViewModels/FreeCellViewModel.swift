@@ -17,6 +17,7 @@ final class FreeCellViewModel: ObservableObject {
     @Published private(set) var golf: GolfGame?
     @Published private(set) var pyramid: PyramidGame?
     @Published private(set) var triPeaks: TriPeaksGame?
+    @Published private(set) var scorpion: ScorpionGame?
     @Published var gameNumberText: String
     @Published private(set) var selection: Selection?
     @Published var showingGameNumber = false
@@ -105,14 +106,15 @@ final class FreeCellViewModel: ObservableObject {
         if golf != nil { return .golf }
         if pyramid != nil { return .pyramid }
         if triPeaks != nil { return .triPeaks }
+        if scorpion != nil { return .scorpion }
         return game.variant
     }
     var variantDisplayName: String { variant.displayName }
 
     /// 현재 게임의 게임번호 / 이동 수 (Spider/Klondike/Yukon/FortyThieves/Golf/Pyramid/TriPeaks 분기)
-    var currentGameNumber: Int { spider?.gameNumber ?? klondike?.gameNumber ?? yukon?.gameNumber ?? fortyThieves?.gameNumber ?? golf?.gameNumber ?? pyramid?.gameNumber ?? triPeaks?.gameNumber ?? game.gameNumber }
-    var currentMoveCount: Int { spider?.moveCount ?? klondike?.moveCount ?? yukon?.moveCount ?? fortyThieves?.moveCount ?? golf?.moveCount ?? pyramid?.moveCount ?? triPeaks?.moveCount ?? game.moveCount }
-    var currentIsWon: Bool { spider?.isWon ?? klondike?.isWon ?? yukon?.isWon ?? fortyThieves?.isWon ?? golf?.isWon ?? pyramid?.isWon ?? triPeaks?.isWon ?? game.isWon }
+    var currentGameNumber: Int { spider?.gameNumber ?? klondike?.gameNumber ?? yukon?.gameNumber ?? fortyThieves?.gameNumber ?? golf?.gameNumber ?? pyramid?.gameNumber ?? triPeaks?.gameNumber ?? scorpion?.gameNumber ?? game.gameNumber }
+    var currentMoveCount: Int { spider?.moveCount ?? klondike?.moveCount ?? yukon?.moveCount ?? fortyThieves?.moveCount ?? golf?.moveCount ?? pyramid?.moveCount ?? triPeaks?.moveCount ?? scorpion?.moveCount ?? game.moveCount }
+    var currentIsWon: Bool { spider?.isWon ?? klondike?.isWon ?? yukon?.isWon ?? fortyThieves?.isWon ?? golf?.isWon ?? pyramid?.isWon ?? triPeaks?.isWon ?? scorpion?.isWon ?? game.isWon }
     var currentIsPaused: Bool { isPaused }
 
     // 통계 노출 (현재 변형 + 전체 합계)
@@ -196,6 +198,12 @@ final class FreeCellViewModel: ObservableObject {
             startElapsedTimer()
         } else if let restored = gameSaver.restoreTriPeaks() {
             triPeaks = restored
+            game = FreeCellGame(gameNumber: restored.gameNumber)
+            gameNumberText = String(restored.gameNumber)
+            gameStartedAt = Date()
+            startElapsedTimer()
+        } else if let restored = gameSaver.restoreScorpion() {
+            scorpion = restored
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
             gameStartedAt = Date()
@@ -479,6 +487,16 @@ final class FreeCellViewModel: ObservableObject {
             fortyThieves = nil
             golf = nil
             pyramid = nil
+            scorpion = nil
+        case .scorpion:
+            scorpion = ScorpionGame(gameNumber: safeNumber)
+            klondike = nil
+            spider = nil
+            yukon = nil
+            fortyThieves = nil
+            golf = nil
+            pyramid = nil
+            triPeaks = nil
         default:
             game = FreeCellGame(gameNumber: safeNumber, variant: variant)
             klondike = nil
@@ -488,6 +506,7 @@ final class FreeCellViewModel: ObservableObject {
             golf = nil
             pyramid = nil
             triPeaks = nil
+            scorpion = nil
         }
         gameNumberText = String(safeNumber)
         selection = nil
@@ -588,6 +607,8 @@ final class FreeCellViewModel: ObservableObject {
             ok = pyramid?.apply(move) == true
         } else if triPeaks != nil {
             ok = triPeaks?.apply(move) == true
+        } else if scorpion != nil {
+            ok = scorpion?.apply(move) == true
         } else {
             ok = game.apply(move)
         }
@@ -968,6 +989,33 @@ final class FreeCellViewModel: ObservableObject {
     /// TriPeaks 피크 카드가 선택 상태인지 (탭 즉시 제거 방식 — 항상 false)
     func isTriPeaksSelected(index: Int) -> Bool { false }
 
+    // MARK: - Scorpion 상호작용
+
+    /// 스톡(예비) 클릭: 1회만 열 0,1,2에 앞면 딜
+    func tapScorpionStock() {
+        guard scorpion != nil else { return }
+        apply(.dealReserve)
+    }
+
+    /// Scorpion 타블로 카드 클릭 (뒤집힌 카드는 선택 불가)
+    func tapScorpionColumn(column: Int, cardIndex: Int) {
+        guard let s = scorpion, s.columns.indices.contains(column) else { return }
+        let cards = s.columns[column]
+        guard cards.indices.contains(cardIndex), cards[cardIndex].faceUp else { return }
+        handleColumnTap(
+            column: column,
+            cardIndex: cardIndex,
+            columnCardCount: cards.count,
+            movableCount: s.movableGroup(from: column, startIndex: cardIndex)?.count ?? 0
+        )
+    }
+
+    /// Scorpion 카드가 선택 상태인지
+    func isScorpionSelected(column: Int, cardIndex: Int) -> Bool {
+        guard let sel = selection, sel.source == .column(column), sel.cardCount == cardIndex + 1 else { return false }
+        return true
+    }
+
     // MARK: - Spider 상호작용
 
     /// 스톡 클릭: 각 열에 1장씩 앞면 딜
@@ -1098,6 +1146,11 @@ final class FreeCellViewModel: ObservableObject {
                 stats.recordLoss(variant)
                 showMessage("이동 가능한 수가 없습니다. 새 게임을 시작하세요.")
             }
+        } else if let s = scorpion {
+            if !s.hasAnyMove {
+                stats.recordLoss(variant)
+                showMessage("이동 가능한 수가 없습니다. 새 게임을 시작하세요.")
+            }
         } else if !game.hasAnyMove {
             stats.recordLoss(variant)
             showMessage("이동 가능한 수가 없습니다. 새 게임을 시작하세요.")
@@ -1121,6 +1174,8 @@ final class FreeCellViewModel: ObservableObject {
             gameSaver.save(p)
         } else if let t = triPeaks {
             gameSaver.save(t)
+        } else if let s = scorpion {
+            gameSaver.save(s)
         } else {
             switch game.variant {
             case .seaTower: gameSaver.saveSeaTower(game)
@@ -1141,6 +1196,7 @@ final class FreeCellViewModel: ObservableObject {
         gameSaver.clearGolf()
         gameSaver.clearPyramid()
         gameSaver.clearTriPeaks()
+        gameSaver.clearScorpion()
     }
 
     func canMove(cardAt source: CardSource, cardCount: Int, to destination: Destination) -> Bool {
@@ -1168,6 +1224,9 @@ final class FreeCellViewModel: ObservableObject {
         if let t = triPeaks {
             return t.canMove(move)
         }
+        if let s = scorpion {
+            return s.canMove(move)
+        }
         return game.canMove(move)
     }
 
@@ -1193,6 +1252,9 @@ final class FreeCellViewModel: ObservableObject {
         if triPeaks != nil {
             return makeTriPeaksMove(from: source, cardCount: cardCount, to: destination)
         }
+        if scorpion != nil {
+            return makeScorpionMove(from: source, cardCount: cardCount, to: destination)
+        }
         return makeFreeCellMove(from: source, cardCount: cardCount, to: destination)
     }
 
@@ -1215,6 +1277,17 @@ final class FreeCellViewModel: ObservableObject {
         switch (source, destination) {
         case let (.column(from), .column(to)):
             guard s.canMove(.columnToColumn(from: from, to: to, cardCount: cardCount)) else { return nil }
+            return .columnToColumn(from: from, to: to, cardCount: cardCount)
+        default:
+            return nil
+        }
+    }
+
+    /// Scorpion 이동 생성 (열 → 열)
+    private func makeScorpionMove(from source: CardSource, cardCount: Int, to destination: Destination) -> Move? {
+        switch (source, destination) {
+        case let (.column(from), .column(to)):
+            guard scorpion?.canMove(.columnToColumn(from: from, to: to, cardCount: cardCount)) == true else { return nil }
             return .columnToColumn(from: from, to: to, cardCount: cardCount)
         default:
             return nil
@@ -1363,6 +1436,8 @@ final class FreeCellViewModel: ObservableObject {
             pyramid?.undo()
         } else if triPeaks != nil {
             triPeaks?.undo()
+        } else if scorpion != nil {
+            scorpion?.undo()
         } else {
             game.undo()
         }
@@ -1388,6 +1463,8 @@ final class FreeCellViewModel: ObservableObject {
             pyramid?.redo()
         } else if triPeaks != nil {
             triPeaks?.redo()
+        } else if scorpion != nil {
+            scorpion?.redo()
         } else {
             game.redo()
         }
@@ -1411,11 +1488,11 @@ final class FreeCellViewModel: ObservableObject {
     }
 
     func canUndo() -> Bool {
-        spider?.canUndo ?? klondike?.canUndo ?? yukon?.canUndo ?? fortyThieves?.canUndo ?? golf?.canUndo ?? pyramid?.canUndo ?? triPeaks?.canUndo ?? game.canUndo
+        spider?.canUndo ?? klondike?.canUndo ?? yukon?.canUndo ?? fortyThieves?.canUndo ?? golf?.canUndo ?? pyramid?.canUndo ?? triPeaks?.canUndo ?? scorpion?.canUndo ?? game.canUndo
     }
 
     func canRedo() -> Bool {
-        spider?.canRedo ?? klondike?.canRedo ?? yukon?.canRedo ?? fortyThieves?.canRedo ?? golf?.canRedo ?? pyramid?.canRedo ?? triPeaks?.canRedo ?? game.canRedo
+        spider?.canRedo ?? klondike?.canRedo ?? yukon?.canRedo ?? fortyThieves?.canRedo ?? golf?.canRedo ?? pyramid?.canRedo ?? triPeaks?.canRedo ?? scorpion?.canRedo ?? game.canRedo
     }
 
     // MARK: - 힌트 / 자동 플레이
@@ -1436,6 +1513,8 @@ final class FreeCellViewModel: ObservableObject {
             return p.hintCandidates()
         } else if let t = triPeaks {
             return t.hintCandidates()
+        } else if let s = scorpion {
+            return s.hintCandidates()
         } else {
             return game.hintCandidates()
         }
@@ -1533,6 +1612,9 @@ final class FreeCellViewModel: ObservableObject {
                 moves = []
             } else if triPeaks != nil {
                 // 트리피크스는 자동 플레이 없음 (제거 기반 — 홈 이동 개념 부적합)
+                moves = []
+            } else if scorpion != nil {
+                // 스콜피온은 자동 플레이 없음 (홈셀 없음)
                 moves = []
             } else {
                 moves = AutoPlay.safeAutoPlayMoves(in: game)
@@ -1648,6 +1730,9 @@ final class FreeCellViewModel: ObservableObject {
         if triPeaks != nil {
             return triPeaks?.apply(move) == true
         }
+        if scorpion != nil {
+            return scorpion?.apply(move) == true
+        }
         return game.apply(move)
     }
 
@@ -1689,6 +1774,8 @@ final class FreeCellViewModel: ObservableObject {
             return "피라미드 K 제거 (\(card.shortDescription))"
         case .triPeaksRemove(let card):
             return "피크 → 웨이스트 제거 (\(card.shortDescription))"
+        case .dealReserve:
+            return "예비 카드 → 열 1·2·3 딜"
         }
     }
 

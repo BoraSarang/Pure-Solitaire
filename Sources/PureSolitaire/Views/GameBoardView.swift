@@ -19,6 +19,7 @@ struct GameBoardView: View {
         if vm.yukon != nil { return YukonGame.columnCount }
         if vm.fortyThieves != nil { return FortyThievesGame.columnCount }
         if vm.golf != nil { return GolfGame.columnCount }
+        if vm.scorpion != nil { return ScorpionGame.columnCount }
         return FreeCellGame.columnCount(for: vm.game.variant)
     }
 
@@ -104,6 +105,7 @@ struct GameBoardView: View {
         .animation(.easeInOut(duration: settings.animationSpeed), value: vm.golf)
         .animation(.easeInOut(duration: settings.animationSpeed), value: vm.pyramid)
         .animation(.easeInOut(duration: settings.animationSpeed), value: vm.triPeaks)
+        .animation(.easeInOut(duration: settings.animationSpeed), value: vm.scorpion)
     }
 
     // MARK: - 크기 계산
@@ -118,6 +120,8 @@ struct GameBoardView: View {
         } else if vm.fortyThieves != nil {
             colFactor = 10.7
         } else if vm.golf != nil {
+            colFactor = 7.7
+        } else if vm.scorpion != nil {
             colFactor = 7.7
         } else if vm.pyramid != nil {
             colFactor = 10.7
@@ -147,6 +151,8 @@ struct GameBoardView: View {
             maxCount = f.columns.map(\.count).max() ?? 0
         } else if let g = vm.golf {
             maxCount = g.columns.map(\.count).max() ?? 0
+        } else if let s = vm.scorpion {
+            maxCount = s.columns.map(\.count).max() ?? 0
         } else if vm.pyramid == nil && vm.triPeaks == nil {
             maxCount = vm.game.columns.map(\.count).max() ?? 0
         }
@@ -184,6 +190,8 @@ struct GameBoardView: View {
                 pyramidTopRow(cardSize: cardSize)
             } else if vm.triPeaks != nil {
                 triPeaksTopRow(cardSize: cardSize)
+            } else if vm.scorpion != nil {
+                scorpionTopRow(cardSize: cardSize)
             } else {
                 HStack(spacing: 2) {
                     HStack(spacing: 2) {
@@ -599,6 +607,40 @@ struct GameBoardView: View {
         .accessibilityLabel("완성 수트 \(completed)/8")
     }
 
+    /// Scorpion 상단 행: 예비 더미 1개(우) + 완성 시퀀스 표시(좌)
+    private func scorpionTopRow(cardSize: CGSize) -> some View {
+        let completed = vm.scorpion?.completedSequencesCount ?? 0
+        return ZStack {
+            HStack(spacing: 2) {
+                Text("완성 \(completed)/4")
+                    .font(.caption2)
+                    .foregroundStyle(settings.feltTextBase.opacity(0.65))
+                    .frame(width: 120)
+                Spacer()
+                scorpionReservePile(cardSize: cardSize)
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("예비 \(vm.scorpion?.reserve.count ?? 0)장, 완성 시퀀스 \(completed)/4")
+    }
+
+    /// Scorpion 예비 더미 (남은 카드가 있고 아직 딜 전이면 뒷면 묶음)
+    private func scorpionReservePile(cardSize: CGSize) -> some View {
+        let hasReserve = !(vm.scorpion?.reserve.isEmpty ?? true) && !(vm.scorpion?.reserveDealt ?? true)
+        return CardView(
+            card: Card(suit: .spades, rank: .ace),
+            style: settings.cardStyle,
+            isHighlighted: true,
+            showBack: true,
+            cardBack: settings.cardBack,
+            accessibilityHintText: "누르면 예비 3장을 열 1·2·3에 딜"
+        )
+        .opacity(hasReserve ? 1 : 0.3)
+        .frame(width: cardSize.width, height: cardSize.height)
+        .onTapGesture { vm.tapScorpionStock() }
+        .contentShape(Rectangle())
+    }
+
     private var gameInfoView: some View {
         VStack(spacing: 3) {
             Text("\(vm.variantDisplayName)")
@@ -812,6 +854,8 @@ struct GameBoardView: View {
             fortyThievesColumnView(column, cardSize: cardSize, overlap: overlap)
         } else if vm.golf != nil {
             golfColumnView(column, cardSize: cardSize, overlap: overlap)
+        } else if vm.scorpion != nil {
+            scorpionColumnView(column, cardSize: cardSize, overlap: overlap)
         } else {
             freeCellColumnView(column, cardSize: cardSize, overlap: overlap)
         }
@@ -957,9 +1001,43 @@ struct GameBoardView: View {
         .accessibilityLabel("열 \(column + 1)")
     }
 
+    /// Scorpion 타블로 열 (뒤집힌 카드 + 그룹 이동)
+    private func scorpionColumnView(_ column: Int, cardSize: CGSize, overlap: CGFloat) -> some View {
+        let cards = vm.scorpion?.columns[column] ?? []
+        return VStack(spacing: 0) {
+            if cards.isEmpty {
+                CardView(card: nil, style: settings.cardStyle, isHighlighted: true)
+                    .frame(width: cardSize.width, height: cardSize.height)
+            } else {
+                ForEach(Array(cards.enumerated()), id: \.offset) { i, cc in
+                    CardView(
+                        card: cc.card,
+                        style: settings.cardStyle,
+                        isSelected: vm.isScorpionSelected(column: column, cardIndex: i),
+                        isHintSource: isScorpionHintSource(column: column, cardIndex: i, card: cc.card),
+                        showBack: !cc.faceUp,
+                        cardBack: settings.cardBack,
+                        accessibilityHintText: cc.faceUp ? "누르면 선택, 두 번 누르면 이동" : "뒤집힌 카드"
+                    )
+                    .frame(width: cardSize.width, height: cardSize.height)
+                    .offset(y: -overlap * CGFloat(i))
+                    .zIndex(Double(i))
+                    .onTapGesture {
+                        handleScorpionCardTap(column: column, cardIndex: i)
+                    }
+                    .contentShape(Rectangle())
+                }
+            }
+        }
+        .frame(width: cardSize.width)
+        .frame(maxHeight: .infinity, alignment: .top)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("열 \(column + 1)")
+    }
+
     /// Forty Thieves 타블로 열 (전부 앞면, 같은 수트 시퀀스 이동)
-    private func fortyThievesColumnView(_ column: Int, cardSize: CGSize, overlap: CGFloat) -> some View {
-        let cards = vm.fortyThieves?.columns[column] ?? []
+    private func fortyThievesColumnView(_ column: Int, cardSize: CGSize, overlap: CGFloat) -> some View {        let cards = vm.fortyThieves?.columns[column] ?? []
         return VStack(spacing: 0) {
             if cards.isEmpty {
                 CardView(card: nil, style: settings.cardStyle, isHighlighted: true)
@@ -1169,6 +1247,20 @@ struct GameBoardView: View {
         }
     }
 
+    private func isScorpionHintSource(column: Int, cardIndex: Int, card: Card) -> Bool {
+        guard let s = vm.scorpion else { return false }
+        return vm.displayedHintMoves.contains { move in
+            switch move {
+            case let .columnToColumn(from, _, count):
+                guard from == column else { return false }
+                let fromBottom = s.columns[column].count - 1 - cardIndex
+                return fromBottom < count
+            default:
+                return false
+            }
+        }
+    }
+
     // MARK: - 드래그 상태
 
     private struct DragState {
@@ -1298,7 +1390,7 @@ struct GameBoardView: View {
         case let .triPeaksRemove(card):
             guard let idx = triPeaksIndex(of: card) else { return nil }
             return (.triPeaks(idx), 1, 0, .waste)
-        case .drawFromStock, .recycleStock, .dealFromStock, .flipColumnCard:
+        case .drawFromStock, .recycleStock, .dealFromStock, .flipColumnCard, .dealReserve:
             return nil
         }
     }
@@ -1310,6 +1402,7 @@ struct GameBoardView: View {
         if let y = vm.yukon { return y.columns[col].map(\.card) }
         if let f = vm.fortyThieves { return Array(f.columns[col]) }
         if let g = vm.golf { return Array(g.columns[col]) }
+        if let s = vm.scorpion { return s.columns[col].map(\.card) }
         return Array(vm.game.columns[col])
     }
 
@@ -1395,6 +1488,14 @@ struct GameBoardView: View {
             vm.tapSpiderColumn(column: column, cardIndex: cardIndex)
         } double: {
             // 스파이더: 더블클릭은 첫 클릭에서 이미 선택 처리됨 (홈 이동 없음)
+        }
+    }
+
+    private func handleScorpionCardTap(column: Int, cardIndex: Int) {
+        handleTap(identifier: "x\(column)-\(cardIndex)") {
+            vm.tapScorpionColumn(column: column, cardIndex: cardIndex)
+        } double: {
+            // 스콜피온: 더블클릭은 첫 클릭에서 이미 선택 처리됨 (홈 이동 없음)
         }
     }
 
@@ -1500,6 +1601,10 @@ struct GameBoardView: View {
                 // 유콘 상단은 홈셀만 — 드래그 소스 없음 (홈셀에서 꺼내기 없음)
                 return nil
             }
+            if vm.scorpion != nil {
+                // 스콜피온 상단은 예비 더미만 — 드래그 소스 없음 (탭으로 딜)
+                return nil
+            }
             for i in 0..<FreeCellGame.homeCount {
                 let x = 14 + CGFloat(i) * left
                 if point.x >= x, point.x <= x + cardSize.width {
@@ -1590,6 +1695,21 @@ struct GameBoardView: View {
             // 골프는 맨 아래 카드만 제거 가능 (카드 1장 드래그)
             guard i == lastIndex else { return nil }
             return (.column(col), 1, i)
+        }
+        if let s = vm.scorpion {
+            let cards = s.columns[col]
+            guard !cards.isEmpty else { return nil }
+            let lastIndex = cards.count - 1
+            let yOffset = point.y - columnsStartY
+            guard yOffset >= 0 else { return nil }
+            let lastCardBottom = CGFloat(lastIndex) * step + cardSize.height
+            guard yOffset <= lastCardBottom else { return nil }
+            let i = min(Int(yOffset / step), lastIndex)
+            guard cards[i].faceUp else { return nil }
+            let fromBottom = cards.count - 1 - i
+            let run = s.movableGroup(from: col, startIndex: i) ?? []
+            guard fromBottom < run.count else { return nil }
+            return (.column(col), fromBottom + 1, i)
         }
         let cards = vm.game.columns[col]
         guard !cards.isEmpty else { return nil }

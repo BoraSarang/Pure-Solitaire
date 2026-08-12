@@ -22,6 +22,8 @@ public enum GameVariant: String, Codable, CaseIterable, Sendable {
     case pyramid
     /// TriPeaks — 1덱 52장, 3개 피크(각 4줄)+스톡 21장+웨이스트 1장, 웨이스트와 1 랭크 차이인 노출 카드 제거
     case triPeaks
+    /// Scorpion — 1덱 52장, 7열×7장+예비 3장, 같은 수트 내림차순+그룹 이동, 빈 열 K만, 홈 없음(열에 K→A 완성)
+    case scorpion
 
     public var displayName: String {
         switch self {
@@ -36,6 +38,7 @@ public enum GameVariant: String, Codable, CaseIterable, Sendable {
         case .golf: "Golf"
         case .pyramid: "Pyramid"
         case .triPeaks: "TriPeaks"
+        case .scorpion: "Scorpion"
         }
     }
 

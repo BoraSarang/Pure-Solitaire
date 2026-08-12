@@ -109,6 +109,17 @@ struct GamePreviewLayout {
                 hasFaceDown: false,
                 stockPiles: 0
             )
+        case .scorpion:
+            return GamePreviewLayout(
+                kind: .columns,
+                columns: ScorpionGame.columnCount,
+                homes: 0,
+                freeCells: 0,
+                hasStock: true,
+                hasWaste: false,
+                hasFaceDown: true,
+                stockPiles: 1
+            )
         }
     }
 }

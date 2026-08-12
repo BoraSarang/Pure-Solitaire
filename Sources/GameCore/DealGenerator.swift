@@ -184,4 +184,28 @@ public enum DealGenerator {
         }
         return columns
     }
+
+    /// Scorpion 딜: 52장 셔플 → 7열 × 7장(49장) + 예비 3장.
+    /// 앞 4열(0~3): 밑 3장 뒤집힘 + 위 4장 앞면 / 뒤 3열(4~6): 전부 앞면.
+    /// 반환: (columns: [[ColumnCard]], reserve: [Card])
+    public static func scorpionDeal(gameNumber: Int) -> (columns: [[KlondikeGame.ColumnCard]], reserve: [Card]) {
+        let shuffled = shuffledCards(gameNumber: gameNumber)
+        var columns = Array(repeating: [KlondikeGame.ColumnCard](), count: 7)
+        var index = 0
+        for col in 0..<7 {
+            var pile: [KlondikeGame.ColumnCard] = []
+            let faceDownCount = col < 4 ? 3 : 0
+            for _ in 0..<faceDownCount {
+                pile.append(KlondikeGame.ColumnCard(card: shuffled[index], faceUp: false))
+                index += 1
+            }
+            for _ in faceDownCount..<7 {
+                pile.append(KlondikeGame.ColumnCard(card: shuffled[index], faceUp: true))
+                index += 1
+            }
+            columns[col] = pile
+        }
+        let reserve = Array(shuffled[index...])
+        return (columns, reserve)
+    }
 }

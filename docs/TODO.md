@@ -39,6 +39,14 @@
 - [x] T-190: VM + ChallengeView/AchievementsView + 사이드바/메뉴/시트 연결
 - [ ] T-191: 회귀(183+15) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.17.0) + 문서
 
+## v3.18 — Scorpion 변형 (진행중 — 2026-08-12, PLAN_v3.18_macos.md)
+- [x] T-192: ScorpionGame(7열×7장+예비 3장, 그룹 이동, 빈 열 K, 승리 K→A 4열) + scorpionDeal + dealReserve + 단위 테스트 9개
+- [x] T-193: GameVariant .scorpion(displayName "Scorpion", 옵션 없음)
+- [x] T-194: VM scorpion 상태 + init 복원 + newGame/apply/applyRaw/undo/redo/canUndo/canRedo/current*/persist/hint/자동완성 가드
+- [x] T-195: GameSaver scorpion 저장/복원(clear 포함)
+- [x] T-196: GameBoardView scorpionTopRow(예비 더미) + 열 렌더/탭/드래그/힌트 소스 분기 + GamePreviewCard
+- [ ] T-197: 회귀(207 = 198+9) + swift build 경고 0 + 문서
+
 ## v1.0 — 프리셀 MVP
 
 ### Phase 1: GameCore (플랫폼 독립 로직)
