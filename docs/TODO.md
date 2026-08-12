@@ -39,7 +39,7 @@
 - [x] T-190: VM + ChallengeView/AchievementsView + 사이드바/메뉴/시트 연결
 - [x] T-191: 회귀(183+15) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.20.0 빌드본) + 문서
 
-## v3.18 — Scorpion 변형 (진행중 — 2026-08-12, PLAN_v3.18_macos.md)
+## v3.18 — Scorpion 변형 (완료 — 2026-08-12, PLAN_v3.18_macos.md)
 - [x] T-192: ScorpionGame(7열×7장+예비 3장, 그룹 이동, 빈 열 K, 승리 K→A 4열) + scorpionDeal + dealReserve + 단위 테스트 9개
 - [x] T-193: GameVariant .scorpion(displayName "Scorpion", 옵션 없음)
 - [x] T-194: VM scorpion 상태 + init 복원 + newGame/apply/applyRaw/undo/redo/canUndo/canRedo/current*/persist/hint/자동완성 가드
@@ -47,17 +47,19 @@
 - [x] T-196: GameBoardView scorpionTopRow(예비 더미) + 열 렌더/탭/드래그/힌트 소스 분기 + GamePreviewCard
 - [x] T-197: 회귀(207 = 198+9) + swift build 경고 0 + 문서
 
-## v3.19 — 점수 체계 (진행중 — 2026-08-12, PLAN_v3.19_macos.md)
+## v3.19 — 점수 체계 (완료 — 2026-08-12, PLAN_v3.19_macos.md)
 - [x] T-198: Scoring(이동/승리/시간 점수, 변형별 상수) + ScoringTests 7개
 - [x] T-199: VM score 누적(이동+스파이더 완성 보너스) + finalScore + undo/redo 롤백 + 새 게임 초기화
 - [x] T-200: gameInfoView 현재 점수 + WinBanner 최종 점수 + StatsView 기록 점수
 - [x] T-201: 회귀(214 = 207+7) + swift build 경고 0 + 문서
 
-## v3.20 — Winnable 딜 (진행중 — 2026-08-12, PLAN_v3.20_macos.md)
-- [~] T-202: `FreeCellSolver` — 상태공간 DFS(휴리스틱 + 방문 집합 + 노드/시간/깊이 예산) + `isWinnable(gameNumber:variant:)` + `firstWinnableGameNumber(from:variant:)` + FreeCellSolverTests 5개 — **솔버 완료 (깊이 예산 가지치기 버그 수정, 기본 예산 400k/4s 상향, 휴리스틱 개선으로 #1/#2 해결 — 11/13 true)**, #50은 해 존재(1.5M/10s 확인)하나 기본 예산 초과, #500은 5M/60s에서도 미해결 — 후속 과제
+## v3.20 — Winnable 딜 (완료 — 2026-08-12, PLAN_v3.20_macos.md, 릴리스 v3.20.0)
+- [x] T-202: `FreeCellSolver` — 상태공간 DFS(휴리스틱 + 방문 집합 + 노드/시간/깊이 예산) + `isWinnable(gameNumber:variant:)` + `firstWinnableGameNumber(from:variant:)` + FreeCellSolverTests 5개 — **솔버 완료 (깊이 예산 가지치기 버그 수정, 기본 예산 400k/4s 상향, 휴리스틱 개선으로 #1/#2 해결 — 11/13 true)**, #50은 해 존재(1.5M/10s 확인)하나 기본 예산 초과, #500은 5M/60s에서도 미해결 — 후속 과제
 - [x] T-203: `GameVariant.optionDefinitions` — FreeCell 계열 4종에 `winnable` 옵션("일반"/"승리 보장") 추가 + GameOptionTests 갱신
 - [x] T-204: VM — `isWinnableEnabled(for:)`(옵션 읽기) + `newGame(number:variant:)`에서 적용: 풀리는 번호 탐색(WinnableSearchBudget 100k/1.0s) 후 그 번호로 실제 시작(표시·저장·통계 반영)
-- [~] T-205: 게임 번호 시트 안내 문구 + 회귀(220) + `swift build`(경고 0) + 문서 — **코드+테스트 완료(220 통과), 문서/커밋 대기**
+- [x] T-205: 게임 번호 시트 안내 문구 + 회귀(220) + `swift build`(경고 0) + 문서
+- [x] CI 수정: `DailyDealTests` 타임존 독립화(UTC 캘린더 고정 — KST/UTC 회귀값 불일치 해소) + `release.yml` 테스트를 `swift test -c release`로 변경(debug에서 FreeCell #2 예산 초과 회피)
+- [x] 릴리스 v3.20.0: 태그 + GitHub Release (`Pure-Solitaire-3.20.0-macos.zip` 4.2MB, Release 워크플로우 성공)
 - [ ] T-206: 솔버 휴리스틱 추가 개선 — #50(기본 예산 초과, 해는 존재) / #500(난제) 기본 예산 내 해결 — 예산 유지 결정으로 보류
 
 ## v1.0 — 프리셀 MVP

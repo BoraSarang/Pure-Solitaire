@@ -14,6 +14,12 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/BoraSarang/Pure-Solitaire/releases"><img src="https://img.shields.io/github/v/release/BoraSarang/Pure-Solitaire?label=최신 릴리스&color=2ea44f" alt="최신 릴리스"></a>
+  <a href="https://github.com/BoraSarang/Pure-Solitaire/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/BoraSarang/Pure-Solitaire/release.yml?label=빌드&color=2ea44f" alt="빌드 상태"></a>
+  <a href="https://github.com/BoraSarang/Pure-Solitaire"><img src="https://img.shields.io/github/repo-size/BoraSarang/Pure-Solitaire?label=저장소&color=2ea44f" alt="저장소 크기"></a>
+</p>
+
+<p align="center">
   ✦ 제작자 <a href="https://github.com/BoraSarang">BoRaSaRang</a> &nbsp;·&nbsp;
   ✉️ 문의 <a href="mailto:leeborasarang@gmail.com">leeborasarang@gmail.com</a>
 </p>
@@ -88,7 +94,7 @@ GitHub Releases에서 최신 `.app` 번들을 받거나, 소스에서 직접 빌
 ```bash
 # 빌드 · 테스트
 swift build -c release
-swift test
+swift test -c release
 
 # .app 번들을 ~/Applications 에 설치하고 실행
 ./scripts/build_and_run.sh release

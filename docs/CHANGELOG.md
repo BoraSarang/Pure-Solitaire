@@ -1,5 +1,15 @@
 # CHANGELOG — 변경 이력
 
+## [3.20.0] — 2026-08-12 — [macos] — 릴리스 + CI 테스트 안정화
+### 변경
+- **GitHub Release v3.20.0 배포**: 태그 + GitHub Actions Release 워크플로우로 `Pure-Solitaire-3.20.0-macos.zip` (4.2MB) 생성.
+- **DailyDealTests 타임존 독립화**: 회귀 테스트의 날짜 헬퍼를 UTC 그레고리안 캘린더로 고정하고 `gameNumber(for:variant:calendar:)`에 명시 전달 — 로컬(KST)에선 통과하지만 CI(UTC)에선 날짜 순번이 달라져 실패하던 문제 해소. 회귀값을 UTC 기준(31_149 freecell / 173_480 klondike)으로 갱신.
+- **Release 워크플로우 테스트 모드 변경**: `swift test`(debug) → `swift test -c release`. debug 빌드는 최적화가 없어 FreeCell #2가 기본 예산(400k/4s)을 넘겨 `testWinnableStandardDeals`가 실패했음. release 모드는 로컬 검증과 동일 조건.
+### 검증
+- `swift test -c release` 220개 전부 통과(9.8s), DailyDealTests 5개 결정적 통과
+- GitHub Actions Release 성공(2m9s), 랜딩 페이지 배포 성공(사용자 제공 보드 스크린샷 반영)
+- 문서: PLAN_v3.20/TODO/CHANGELOG/session
+
 ## [3.20.0] — 2026-08-12 — [macos] — Winnable 딜 (솔버 코어)
 ### 변경 (T-202)
 - **FreeCellSolver 추가** (`GameCore/FreeCellSolver.swift`): FreeCell 계열 4종(freecell/bakersGame/seaTower/superFreeCell) 승리 가능 여부 판정. 안전 홈 이동(AutoPlay 규칙) 자동 적용으로 상태 압축 + 반복 DFS(명시적 스택) + 휴리스틱 이동 순서(홈 이동 0 → 프리셀→열 → 빈 열 K → 그룹 2+ → 빈 열 비-K → 단일 → 열→프리셀 → 홈 꺼내기) + 방문 상태 집합(사이클 방지) + 수퍼무브(그룹) 이동 생성.

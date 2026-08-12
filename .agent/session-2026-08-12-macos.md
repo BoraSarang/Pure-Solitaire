@@ -233,3 +233,39 @@
 
 ### 8. E2E/k6
 - 해당 없음
+
+## v3.20.0 릴리스 + CI 테스트 안정화 (마무리)
+
+### 1. 무엇을
+- **랜딩 페이지 이미지 교체**: 사용자 제공 `/Users/lee/Desktop/board.png` → `docs/screenshots/macos/v3.20/board.png` (1798×1786, 커밋 18ef53a). GitHub Pages 배포가 인프라 오류(self-signed certificate)로 실패 → `workflow_dispatch` 수동 재배포 → 페이지 이미지 해시 일치 확인(ff7611b).
+- **DailyDealTests 타임존 독립화**: 로컬(KST)에선 통과했지만 CI(UTC)에선 실패하던 `testFixedRegressionValues` 수정 — date 헬퍼를 UTC 그레고리안으로 고정, `gameNumber(for:variant:calendar:)`에 명시 전달, 회귀값을 UTC 기준(31149 freecell / 173480 klondike)으로 갱신. 커밋 59487b0.
+- **Release 워크플로우 테스트 모드 변경**: `swift test`(debug)가 CI에서 FreeCell #2를 기본 예산 내 미해결로 판정해 실패 → `swift test -c release`로 변경(로컬 검증과 동일 조건). 커밋 c9204dc.
+- **릴리스 v3.20.0**: 태그 재생성(3회) → Release 워크플로우 성공(2m9s) → `Pure-Solitaire-3.20.0-macos.zip` (4.2MB) 업로드. 릴리스 URL: https://github.com/BoraSarang/Pure-Solitaire/releases/tag/v3.20.0
+- **문서 마무리**: TODO.md(v3.18/19/20 완료 전환 + CI 수정·릴리스 항목), CHANGELOG.md(릴리스+CI 안정화 항목), PLAN_v3.20(후속 섹션).
+
+### 2. 플랫폼
+- macos (SwiftUI + GameCore + GitHub Actions)
+
+### 3. 빌드/테스트 결과
+- `swift test -c release` 220개 전부 통과(9.8s), DailyDealTests 5개 결정적 통과(KST/UTC 무관).
+- GitHub Actions: Release 성공, Pages 배포 성공.
+
+### 4. 남은 TODO
+- [ ] T-206: #50(해 존재 확인)/#500 기본 예산 내 해결 — 보류
+- [ ] 수동 플레이 검증 (v3.15~v3.20 일괄, 사용자 지시로 계속 지연 중)
+- [ ] docs/tests/ v3.15~3.19 테스트 가이드 미작성 (v3.10~3.14만 존재)
+
+### 5. 다음 에이전트 전달 로그
+- main 최신 커밋 c9204dc, v3.20.0 태그 = c9204dc. working tree clean.
+- CI 실패 2종(타임존·debug 예산)은 각각 위 수정으로 해소 — 재발 시 DailyDealTests UTC 캘린더 / release.yml `swift test -c release` 확인.
+- v3.20.0 릴리스 자산 4.2MB 정상. 랜딩 이미지 최신 반영.
+- 에러코드 없음.
+
+### 6. 문서 업데이트 목록
+- TODO.md (v3.18/19/20 완료 + CI 수정/릴리스), CHANGELOG.md (릴리스+CI 안정화), PLAN_v3.20 (후속 섹션), 세션 로그
+
+### 7. 오프라인 큐 상태
+- 해당 없음
+
+### 8. E2E/k6
+- 해당 없음

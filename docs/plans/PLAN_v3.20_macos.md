@@ -38,7 +38,14 @@ Sources/PureSolitaire/Views/SettingsView.swift            (optionDefinitions 자
 - [x] T-202: `FreeCellSolver` — 상태공간 DFS(휴리스틱 + 방문 집합 + 노드/시간/깊이 예산) + `isWinnable(gameNumber:variant:)` + `firstWinnableGameNumber(from:variant:)` + 단위 테스트 5개(대표 MS 딜 풀림/예산 내 판정/예산 0 미확정/미지원 변형/첫 Winnable 번호). **깊이 예산 초과를 가지치기(continue)로 처리** — 기존 `return false`는 백트래킹 차단으로 오판 유발. 기본 예산 nodeLimit 400k/timeLimit 4.0s/depthLimit 20k. 알려진 한계: #1/#50/#500 예산 내 미확정.
 - [x] T-203: `GameVariant.optionDefinitions` — FreeCell 계열 4종에 `winnable` 옵션("일반"/"승리 보장") 추가 (GameOptionTests +1)
 - [x] T-204: VM — `isWinnableEnabled(for:)`(옵션 읽기) + `newGame(number:variant:)`에서 적용: 풀리는 번호 탐색(WinnableSearchBudget 100k/1.0s, maxAttempts 50) 후 그 번호로 실제 시작(표시·저장·통계 반영)
-- [x] T-205: 게임 번호 시트 안내 문구 + 회귀(220) + `swift build`(경고 0) + 문서
+- [x] T-205: 게임 번호 시트 안내 문구 + 회귀(220) + `swift build`(경고 0) + 문서 — **완료 (v3.20.0 릴리스 포함)**
+
+### v3.20.0 릴리스 후속 (2026-08-12)
+
+- CI 테스트 실패 2건 수정 완료:
+  1. `DailyDealTests` 타임존 의존 — UTC 캘린더 고정으로 KST/UTC 회귀값 불일치 해소 (로컬 220개 통과)
+  2. `release.yml` 테스트를 `swift test -c release`로 변경 — debug 빌드에서 FreeCell #2가 기본 예산 초과하던 문제 회피
+- GitHub Release v3.20.0 완료: `Pure-Solitaire-3.20.0-macos.zip` (4.2MB)
 
 ## 5. 테스트 계획
 
