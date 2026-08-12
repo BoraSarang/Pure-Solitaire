@@ -12,6 +12,15 @@
 - 문서: PLAN_v3.20/TODO
 - T-203~T-205(옵션/VM/UI 연동)은 미완료 — 다음 커밋 예정
 
+## [3.20.0] — 2026-08-12 — [macos] — Winnable 옵션 연동 (T-203~T-205)
+### 변경
+- **winnable 옵션 추가** (`GameVariant.optionDefinitions`): FreeCell 계열 4종에 "승리 보장" 토글("일반"/"승리 보장"). GameOptionsStore 자동 반영 — 게임 번호 시트에 세그먼트 자동 렌더링.
+- **VM 연동** (`FreeCellViewModel`): `isWinnableEnabled(for:)`로 옵션 읽기. `newGame(number:variant:)`에서 승리 보장이 켜져 있으면 `FreeCellSolver.firstWinnableGameNumber(from:variant:budget:maxAttempts:)`(WinnableSearchBudget 100k/1.0s, 최대 50회)로 풀리지 않는 번호를 건너뛰고 다음 풀리는 번호로 시작. 실제 시작 번호가 표시·통계(`setLastGameNumber`)에 반영.
+- **시트 안내 문구** (`GameNumberSheet`): 승리 보장 선택 시 "풀리지 않는 번호는 다음 풀리는 번호로 시작됩니다" 안내 표시.
+### 검증
+- `swift build`(debug) 경고 0건, 단위 테스트 **220개** 통과(GameOptionTests +1 — FreeCell 계열 winnable 옵션 정의)
+- 문서: PLAN_v3.20/TODO
+
 ## [3.19.0] — 2026-08-12 — [macos] — 점수 체계
 ### 변경 (T-198~T-200)
 - **점수 체계 추가**: 표준 Klondike 점수 기준 + 변형별 상수(`GameCore/Scoring.swift` 순수 계산). 이동 점수(스톡 드로 +5, 홈 이동 +10, 홈에서 꺼내기 -15, 웨이스트 재활용 -100, 뒤집기 +5, 피라미드/골프/트리피크스 제거 점수)를 이동마다 누적. 승리 보너스(Klondike 계열 500 / Spider 800 / 제거 기반 300) + Klondike 시간 패널티(10초당 -2).

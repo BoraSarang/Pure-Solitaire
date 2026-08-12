@@ -93,6 +93,19 @@ final class FreeCellViewModel: ObservableObject {
         return 3
     }
 
+    /// 승리 보장 옵션 — GameOptionsStore 기반 (FreeCell 계열 4종만 정의)
+    func isWinnableEnabled(for variant: GameVariant) -> Bool {
+        guard let def = variant.optionDefinitions.first(where: { $0.id == "winnable" }) else { return false }
+        return gameOptions.selectedID(for: variant, option: def) == "guaranteed"
+    }
+
+    /// Winnable 탐색용 예산 — 새 게임 시작 시 단발 호출이므로 실제 판정 예산보다 보수적
+    private static let winnableSearchBudget = FreeCellSolver.Budget(
+        nodeLimit: 100_000,
+        timeLimit: 1.0,
+        depthLimit: 20_000
+    )
+
     /// 변형별 승리 기록 (최신순)
     var winRecords: [RecordStore.GameRecord] {
         recordStore.records(for: variant)
@@ -442,6 +455,18 @@ final class FreeCellViewModel: ObservableObject {
 
     func newGame(number: Int, variant: GameVariant, spiderDifficulty: SpiderGame.Difficulty) {
         let safeNumber = min(max(number, DealGenerator.minGameNumber), DealGenerator.maxGameNumber)
+        // 승리 보장 옵션 — FreeCell 계열에서 시작 번호부터 풀리는 번호를 탐색해 실제 시작 번호로 사용
+        var startNumber = safeNumber
+        if FreeCellSolver.isFreeCellFamily(variant), isWinnableEnabled(for: variant) {
+            if let found = FreeCellSolver.firstWinnableGameNumber(
+                from: safeNumber,
+                variant: variant,
+                budget: Self.winnableSearchBudget,
+                maxAttempts: 50
+            ) {
+                startNumber = found
+            }
+        }
         switch variant {
         case .klondike:
             klondike = KlondikeGame(gameNumber: safeNumber, drawMode: klondikeDrawMode)
@@ -504,7 +529,7 @@ final class FreeCellViewModel: ObservableObject {
             pyramid = nil
             triPeaks = nil
         default:
-            game = FreeCellGame(gameNumber: safeNumber, variant: variant)
+            game = FreeCellGame(gameNumber: startNumber, variant: variant)
             klondike = nil
             spider = nil
             yukon = nil
@@ -514,7 +539,7 @@ final class FreeCellViewModel: ObservableObject {
             triPeaks = nil
             scorpion = nil
         }
-        gameNumberText = String(safeNumber)
+        gameNumberText = String(startNumber)
         selection = nil
         highlightedMove = nil
         hintCandidates = []
@@ -525,7 +550,7 @@ final class FreeCellViewModel: ObservableObject {
         redoScoreHistory = []
         clearAllHints()
         dismissMessage()
-        stats.setLastGameNumber(safeNumber, for: variant)
+        stats.setLastGameNumber(startNumber, for: variant)
         stats.recordStarted(variant)
         gameStartedAt = Date()
         startElapsedTimer()

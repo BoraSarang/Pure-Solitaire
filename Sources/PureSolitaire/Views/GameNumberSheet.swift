@@ -23,6 +23,13 @@ struct GameNumberSheet: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
+            if isWinnableGuaranteed {
+                Text("승리 보장이 켜져 있어 풀리지 않는 번호는\n다음 풀리는 번호로 시작됩니다.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+
             GameSelectorView(selection: $selectedVariant, boardColor: boardColor)
                 .frame(width: 440, height: 420)
 
@@ -65,6 +72,14 @@ struct GameNumberSheet: View {
         variant.optionDefinitions.reduce(into: [:]) { result, option in
             result[option.id] = vm.gameOptions.selectedID(for: variant, option: option)
         }
+    }
+
+    /// FreeCell 계열에서 "승리 보장"이 선택된 경우 안내 문구 표시
+    private var isWinnableGuaranteed: Bool {
+        guard FreeCellSolver.isFreeCellFamily(selectedVariant),
+              let def = selectedVariant.optionDefinitions.first(where: { $0.id == "winnable" }),
+              optionSelections[def.id] == "guaranteed" else { return false }
+        return true
     }
 
     private func optionBinding(for id: String, fallback: String) -> Binding<String> {

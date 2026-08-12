@@ -64,6 +64,17 @@ public enum GameVariant: String, Codable, CaseIterable, Sendable {
                     }
                 )
             ]
+        case .freecell, .bakersGame, .seaTower, .superFreeCell:
+            return [
+                GameOption(
+                    id: "winnable",
+                    title: "승리 보장",
+                    choices: [
+                        GameOptionChoice(id: "normal", title: "일반"),
+                        GameOptionChoice(id: "guaranteed", title: "승리 보장"),
+                    ]
+                )
+            ]
         default:
             return []
         }

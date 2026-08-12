@@ -55,9 +55,9 @@
 
 ## v3.20 — Winnable 딜 (진행중 — 2026-08-12, PLAN_v3.20_macos.md)
 - [~] T-202: `FreeCellSolver` — 상태공간 DFS(휴리스틱 + 방문 집합 + 노드/시간/깊이 예산) + `isWinnable(gameNumber:variant:)` + `firstWinnableGameNumber(from:variant:)` + FreeCellSolverTests 5개 — **솔버 완료 (깊이 예산 가지치기 버그 수정, 기본 예산 400k/4s 상향)**, 일부 딜(#1/#50/#500)은 예산 초과 미확정
-- [ ] T-203: `GameVariant.optionDefinitions` — FreeCell 계열 4종에 `winnable` 옵션("일반"/"승리 보장") 추가
-- [ ] T-204: VM — `isWinnableEnabled`(옵션 읽기) + `newGame(number:variant:)`에서 적용: 풀리는 번호 탐색 후 그 번호로 실제 시작(표시·저장·통계 반영)
-- [ ] T-205: 게임 번호 시트 안내 문구 + 회귀(219+신규) + `swift build`(경고 0) + 문서
+- [x] T-203: `GameVariant.optionDefinitions` — FreeCell 계열 4종에 `winnable` 옵션("일반"/"승리 보장") 추가 + GameOptionTests 갱신
+- [x] T-204: VM — `isWinnableEnabled(for:)`(옵션 읽기) + `newGame(number:variant:)`에서 적용: 풀리는 번호 탐색(WinnableSearchBudget 100k/1.0s) 후 그 번호로 실제 시작(표시·저장·통계 반영)
+- [~] T-205: 게임 번호 시트 안내 문구 + 회귀(220) + `swift build`(경고 0) + 문서 — **코드 완료, 문서/커밋 대기**
 
 ## v1.0 — 프리셀 MVP
 

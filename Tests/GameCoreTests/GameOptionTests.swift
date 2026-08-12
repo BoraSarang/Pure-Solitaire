@@ -38,10 +38,27 @@ final class GameOptionTests: XCTestCase {
         XCTAssertEqual(draw.choices.map(\.id), ["1", "3"])
     }
 
+    // MARK: - FreeCell 계열 옵션 (승리 보장)
+
+    func testFreeCellFamilyWinnableOptionDefinitions() {
+        let freeCellFamily: [GameVariant] = [.freecell, .bakersGame, .seaTower, .superFreeCell]
+        for variant in freeCellFamily {
+            let options = variant.optionDefinitions
+            XCTAssertEqual(options.count, 1, "\(variant)는 winnable 옵션 1개")
+            guard let winnable = options.first else { continue }
+
+            XCTAssertEqual(winnable.id, "winnable")
+            XCTAssertEqual(winnable.title, "승리 보장")
+            XCTAssertEqual(winnable.choices.map(\.id), ["normal", "guaranteed"])
+            XCTAssertEqual(winnable.choices.map(\.title), ["일반", "승리 보장"])
+        }
+    }
+
     // MARK: - 옵션 없는 변형
 
     func testOtherVariantsHaveNoOptions() {
-        for variant in GameVariant.allCases where variant != .spider && variant != .klondike {
+        let withOptions: Set<GameVariant> = [.spider, .klondike, .freecell, .bakersGame, .seaTower, .superFreeCell]
+        for variant in GameVariant.allCases where !withOptions.contains(variant) {
             XCTAssertTrue(variant.optionDefinitions.isEmpty, "\(variant)는 옵션이 없어야 함")
         }
     }

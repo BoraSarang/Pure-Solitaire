@@ -36,9 +36,9 @@ Sources/PureSolitaire/Views/SettingsView.swift            (optionDefinitions 자
 ## 4. 구현 단계
 
 - [x] T-202: `FreeCellSolver` — 상태공간 DFS(휴리스틱 + 방문 집합 + 노드/시간/깊이 예산) + `isWinnable(gameNumber:variant:)` + `firstWinnableGameNumber(from:variant:)` + 단위 테스트 5개(대표 MS 딜 풀림/예산 내 판정/예산 0 미확정/미지원 변형/첫 Winnable 번호). **깊이 예산 초과를 가지치기(continue)로 처리** — 기존 `return false`는 백트래킹 차단으로 오판 유발. 기본 예산 nodeLimit 400k/timeLimit 4.0s/depthLimit 20k. 알려진 한계: #1/#50/#500 예산 내 미확정.
-- [ ] T-203: `GameVariant.optionDefinitions` — FreeCell 계열 4종에 `winnable` 옵션("일반"/"승리 보장") 추가
-- [ ] T-204: VM — `isWinnableEnabled`(옵션 읽기) + `newGame(number:variant:)`에서 적용: 풀리는 번호 탐색 후 그 번호로 실제 시작(표시·저장·통계 반영)
-- [ ] T-205: 게임 번호 시트 안내 문구 + 회귀(214+신규) + `swift build`(경고 0) + 문서
+- [x] T-203: `GameVariant.optionDefinitions` — FreeCell 계열 4종에 `winnable` 옵션("일반"/"승리 보장") 추가 (GameOptionTests +1)
+- [x] T-204: VM — `isWinnableEnabled(for:)`(옵션 읽기) + `newGame(number:variant:)`에서 적용: 풀리는 번호 탐색(WinnableSearchBudget 100k/1.0s, maxAttempts 50) 후 그 번호로 실제 시작(표시·저장·통계 반영)
+- [x] T-205: 게임 번호 시트 안내 문구 + 회귀(220) + `swift build`(경고 0) + 문서
 
 ## 5. 테스트 계획
 
