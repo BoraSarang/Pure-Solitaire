@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pure Solitaire · 순수한 솔리테어</title>
-<meta name="description" content="맥을 위해 재탄생한 군더더기 없는 클래식 카드 게임 모음. 광고 없이, 로그인 없이, 마이크로소프트 정통 규칙 그대로 11가지 게임을 즐기세요.">
+<meta name="description" content="맥을 위해 재탄생한 군더더기 없는 클래식 카드 게임 모음. 광고 없이, 로그인 없이, 마이크로소프트 정통 규칙 그대로 12가지 게임을 즐기세요.">
 <style>
   :root {
     --felt: #1e5c3a;
@@ -64,8 +64,8 @@
     <div class="badges">
       <span class="badge">macOS 네이티브</span>
       <span class="badge">Swift 6 + SwiftUI</span>
-      <span class="badge">11가지 게임 형식</span>
-      <span class="badge">단위 테스트 171개</span>
+      <span class="badge">12가지 게임 형식</span>
+      <span class="badge">단위 테스트 220개</span>
     </div>
     <div class="creator">
       ✦ 제작자 <a href="https://github.com/BoraSarang">BoRaSaRang</a> &nbsp;·&nbsp;
@@ -74,14 +74,14 @@
   </div>
 
   <figure class="shot">
-    <img src="docs/screenshots/v3.12/board.png" alt="게임 보드 미리보기">
-    <figcaption>FreeCell · Klondike · Spider · Forty Thieves 등 11가지 게임</figcaption>
+    <img src="docs/screenshots/macos/v3.20/board.png" alt="게임 보드 미리보기">
+    <figcaption>FreeCell · Klondike · Spider · Scorpion 등 12가지 게임</figcaption>
   </figure>
 
   <section>
-    <h2>🎮 지원 게임 (11종)</h2>
+    <h2>🎮 지원 게임 (12종)</h2>
     <ul class="games">
-      <li><strong>FreeCell</strong><span>MS 정통 규칙 · 수퍼무브</span></li>
+      <li><strong>FreeCell</strong><span>MS 정통 규칙 · 수퍼무브 · 승리 보장</span></li>
       <li><strong>Baker's Game</strong><span>같은 수트로만 정리</span></li>
       <li><strong>Klondike</strong><span>스톡·웨이스트·스톡 재활용</span></li>
       <li><strong>Spider</strong><span>10열 + 스톡 · 난이도 4단계</span></li>
@@ -92,6 +92,7 @@
       <li><strong>Golf</strong><span>웨이스트와 1 차이 제거</span></li>
       <li><strong>Pyramid</strong><span>합 13인 노출 카드 제거</span></li>
       <li><strong>TriPeaks</strong><span>3개 봉우리 · 합 13</span></li>
+      <li><strong>Scorpion</strong><span>7열×7장 + 예비 더미 · 그룹 이동</span></li>
     </ul>
   </section>
 
@@ -99,20 +100,26 @@
     <h2>✨ 주요 기능</h2>
     <ul class="features">
       <li><strong>게임 번호 기반 딜</strong> — 1~1,000,000 사이 번호로 MS와 동일 배치 재현 (게임 #1/#617 검증)</li>
+      <li><strong>승리 보장 (Winnable)</strong> — FreeCell 계열은 내장 솔버가 풀리는 번호만 자동 선택</li>
+      <li><strong>데일리 딜 &amp; 챌린지</strong> — 날짜 시드 고정 · 매일 새로운 딜 · 별점 3점(승리/시간/이동)</li>
+      <li><strong>업적 10개</strong> — 첫 승리부터 50승·5연승·변형 완주·별 3까지 배지</li>
+      <li><strong>점수 체계</strong> — 이동마다 점수 누적 · 승리 보너스 · 통계 기록</li>
       <li><strong>직관적인 조작</strong> — 드래그 &amp; 드롭, 클릭 이동, 더블클릭 홈 자동 이동</li>
       <li><strong>무제한 실행 취소/다시 실행</strong> — 상태 스냅샷 기반으로 크래시에 안전</li>
-      <li><strong>자동 플레이 &amp; 힌트</strong> — 안전한 카드 자동 이동 + 드래그 경로 애니메이션</li>
+      <li><strong>자동 플레이 &amp; 힌트</strong> — 안전한 카드 자동 이동 + 전체 힌트 + 드래그 애니메이션</li>
       <li><strong>승리 연출</strong> — 파티클(컨페티) + 사운드 시퀀스 + 배너</li>
       <li><strong>통계 &amp; 기록</strong> — 게임별 통계·최단 승리·최근 승리 기록 자동 저장</li>
-      <li><strong>커스터마이징</strong> — 카드 스타일 · 뒷면 패턴 · 배경색 · 보드 줌 · BGM 볼륨</li>
+      <li><strong>커스터마이징</strong> — 카드 스타일 4종 · 뒷면 패턴 5종 · 배경색 · 커스텀 배경(사진) · 보드 줌 · BGM 볼륨</li>
     </ul>
   </section>
 
   <section>
     <h2>⌨️ 주요 단축키</h2>
     <p style="color:#e8ede9">
-      <span class="kbd">⌘N</span> 새 게임 · <span class="kbd">⇧⌘N</span> 게임 번호 선택 · <span class="kbd">⌘Z</span> 실행 취소 ·
-      <span class="kbd">⇧⌘Z</span> 다시 실행 · <span class="kbd">⌘H</span> 힌트 · <span class="kbd">⌘+</span>/<span class="kbd">⌘-</span> 보드 줌
+      <span class="kbd">⌘N</span> 새 게임 · <span class="kbd">⌘G</span> 게임 번호 · <span class="kbd">⌘D</span> 데일리 딜 ·
+      <span class="kbd">⌥⌘D</span> 챌린지 · <span class="kbd">⌥⌘T</span> 업적 · <span class="kbd">⌘Z</span> 실행 취소 ·
+      <span class="kbd">⇧⌘Z</span> 다시 실행 · <span class="kbd">⌘H</span> 힌트 · <span class="kbd">⇧⌘H</span> 전체 힌트 ·
+      <span class="kbd">⌘+</span>/<span class="kbd">⌘-</span> 보드 줌
     </p>
   </section>
 
