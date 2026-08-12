@@ -51,7 +51,7 @@ Sources/PureSolitaire/Views/ContentView.swift             시트 프레젠테이
 - [x] T-188: `DailyChallenge`(변형/시드/별점 기준) + `ChallengeStore`(완료 상태 저장) + 단위 테스트
 - [x] T-189: `Achievement` 모델 + 판정 + `AchievementStore` + 단위 테스트
 - [x] T-190: VM(`startChallenge`/`recordChallengeIfToday`/업적 상태) + ChallengeView/AchievementsView + 사이드바/메뉴/시트 연결
-- [ ] T-191: 회귀(183+신규) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.17.0) + 문서
+- [x] T-191: 회귀(183+신규) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.20.0 빌드본 확인) + 문서
 
 ## 5. 테스트 계획
 

@@ -21,23 +21,23 @@
 - [x] T-177: SideBar "전체 힌트" 토글 버튼(isActive) + GameCommands ⇧⌘H 메뉴 + 빈 상태 처리
 - [x] T-178: 회귀(178개 유지) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.14.0, PID 27391) + 문서
 
-## v3.15 — 커스텀 배경/카드면 (진행중 — 2026-08-09, PLAN_v3.15_macos.md)
+## v3.15 — 커스텀 배경/카드면 (완료 — 2026-08-12, PLAN_v3.15_macos.md)
 - [x] T-180: 커스텀 배경 — 저장/선택/제거/렌더(경로→Image) + feltTextBase 처리 + GameBoardView/ContentView 분기
 - [x] T-181: 카드 뒷면 2종(오션/숲) tint/accent + 미리보기 자동 반영
 - [x] T-182: 카드 앞면 2종(레트로/딥) CardView 스타일 분기 + 픽커 자동 반영
-- [ ] T-183: 회귀(178개 유지) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.15.0) + 문서
+- [x] T-183: 회귀(178개 유지) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.20.0 빌드본) + 문서
 
-## v3.16 — 데일리 딜 (진행중 — 2026-08-12, PLAN_v3.16_macos.md)
+## v3.16 — 데일리 딜 (완료 — 2026-08-12, PLAN_v3.16_macos.md)
 - [x] T-184: DailyDeal 날짜→시드 매핑 + 단위 테스트 5개
 - [x] T-185: startDailyDeal() VM 진입점
 - [x] T-186: 사이드바 "데일리 딜" 버튼(⌘D) + 게임 메뉴 항목
-- [ ] T-187: 회귀(178+5) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.16.0) + 문서
+- [x] T-187: 회귀(178+5) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.20.0 빌드본) + 문서
 
-## v3.17 — 데일리 챌린지 + 업적 (진행중 — 2026-08-12, PLAN_v3.17_macos.md)
+## v3.17 — 데일리 챌린지 + 업적 (완료 — 2026-08-12, PLAN_v3.17_macos.md)
 - [x] T-188: DailyChallenge(변형/시드/별점) + ChallengeStore(완료 저장) + 테스트
 - [x] T-189: Achievement 모델 + 판정 + AchievementStore + 테스트
 - [x] T-190: VM + ChallengeView/AchievementsView + 사이드바/메뉴/시트 연결
-- [ ] T-191: 회귀(183+15) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.17.0) + 문서
+- [x] T-191: 회귀(183+15) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.20.0 빌드본) + 문서
 
 ## v3.18 — Scorpion 변형 (진행중 — 2026-08-12, PLAN_v3.18_macos.md)
 - [x] T-192: ScorpionGame(7열×7장+예비 3장, 그룹 이동, 빈 열 K, 승리 K→A 4열) + scorpionDeal + dealReserve + 단위 테스트 9개

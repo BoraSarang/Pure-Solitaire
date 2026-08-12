@@ -51,8 +51,8 @@
 - **진입**: 사이드바 "챌린지"(⌥⌘D) / "업적"(⌥⌘T) + 게임 메뉴 항목. ChallengeView(오늘 변형·시드·별점 목표·완료 표시)와 AchievementsView(배지 그리드, 잠금/해제 표시) 시트. 승리 시 활성 챌린지가 오늘 것이면 별점 자동 기록 + 업적 잠금 해제 갱신.
 ### 검증
 - `swift build`(debug) 경고 0건, 단위 테스트 **198개** 통과(챌린지/업적 15개 신규)
+- release 설치·실행 (VERSION 3.20.0 빌드본, 창 "Pure Solitaire — TriPeaks 586112" + 보드 a11y 요소 41개 렌더 확인)
 - 문서: PLAN_v3.17/TODO/CHANGELOG/DESIGN
-- 수동 검증은 v3.15~v3.19 일괄로 지연
 
 ## [3.16.0] — 2026-08-12 — [macos] — 데일리 딜
 ### 변경 (T-184~T-186)
@@ -62,8 +62,8 @@
 - **Winnable**: 사용자 결정으로 v3.16에서 제외(후속 버전에서 재검토).
 ### 검증
 - `swift build`(debug) 경고 0건, 단위 테스트 **183개** 통과(DailyDeal 5개 신규)
+- release 설치·실행 (VERSION 3.20.0 빌드본 확인)
 - 문서: PLAN_v3.16/TODO/CHANGELOG/DESIGN
-- 수동 검증은 v3.15~v3.19 일괄로 지연
 
 ## [3.15.0] — 2026-08-12 — [macos] — 커스텀 배경/카드면
 ### 변경 (T-180~T-182)
@@ -72,8 +72,8 @@
 - **카드 앞면 2종 추가 (T-182)**: 클래식/심플 + **레트로/딥**. `CardStyle` 확장 — 레트로는 세리프+아이보리 배경, 딥은 다크 배경+밝은 면색(심볼/랭크 대비). `SuitSymbolView`에 foreground 주입, `MiniCardFaceView` 동일 분기.
 ### 검증
 - `swift build`(debug) 경고 0건, 단위 테스트 **178개** 통과(표시/설정 계층 — GameCore 무변경)
+- release 설치·실행 (VERSION 3.20.0 빌드본 확인)
 - 문서: PLAN_v3.15/TODO/CHANGELOG/DESIGN
-- 수동 검증은 v3.15~v3.19 일괄로 지연
 
 ## [3.14.0] — 2026-08-09 — [macos] — 전체 힌트 강조
 ### 변경 (T-175~T-177)

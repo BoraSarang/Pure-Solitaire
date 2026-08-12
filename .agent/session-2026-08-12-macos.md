@@ -198,3 +198,38 @@
 
 ### 8. E2E/k6
 - 해당 없음
+
+## v3.15~v3.17 문서 마무리 + release 검증 (T-183/T-187/T-191)
+
+### 1. 무엇을
+- **VERSION 상향**: `scripts/build_and_run.sh`/`gen_info_plist.py`의 고정 버전 3.12.1 → **3.20.0** (그동안 커밋 누락됨 — 설치본도 v3.14.0이었음).
+- **release 빌드·설치·실행**: `./scripts/build_and_run.sh release` — 빌드/테스트 220개 통과 + `.app` 번들 구성 + ad-hoc 서명 + `~/Applications` 설치 + `open` 실행.
+- **실행 검증**: PID 확인 + System Events AX 덤프 — 창 "Pure Solitaire — TriPeaks 586112" (900×1130), 보드 그룹 a11y 요소 41개 렌더 확인 (이미지 지원 불가 모델 — a11y 텍스트 검증 대체).
+- **문서 마무리**: PLAN_v3.15/16/17 T-183/187/191 체크 완료, TODO.md v3.15~3.17 "완료" 전환, CHANGELOG 3.15~3.17 검증 항목에 release 설치·실행 반영.
+
+### 2. 플랫폼
+- macos (SwiftUI + GameCore)
+
+### 3. 빌드/테스트 결과
+- `./scripts/build_and_run.sh release`: 빌드 성공 + 테스트 220개 통과 + 설치·실행 성공. VERSION 3.20.0 확인.
+- 실행: PID 30898, 창 제목 "Pure Solitaire — TriPeaks 586112", 보드 a11y 요소 41개(카드/버튼/텍스트).
+
+### 4. 남은 TODO
+- [ ] 수동 플레이 검증 (v3.15~v3.20 일괄, 사용자 지시로 계속 지연 중)
+- [ ] T-206: #50(해 존재 확인)/#500 기본 예산 내 해결 — 보류
+- [ ] docs/tests/ v3.15~3.19 테스트 가이드는 미작성 (v3.10~3.14만 존재)
+
+### 5. 다음 에이전트 전달 로그
+- 커밋 예정: `docs(macos): v3.15~3.17 문서 마무리 + release 설치·실행 검증 (T-183/187/191)`
+- build_and_run.sh VERSION이 이제 3.20.0 — 다음 버전 작업 시 함께 상향 필요.
+- a11y 검증 osascript: `tell application "System Events"` + `UI elements of window 1` (게임 보드 렌더 확인).
+- 에러코드 없음.
+
+### 6. 문서 업데이트 목록
+- PLAN_v3.15/16/17 (T 체크), TODO.md (v3.15~3.17 완료), CHANGELOG (3.15~3.17 검증 항목), 세션 로그
+
+### 7. 오프라인 큐 상태
+- 해당 없음
+
+### 8. E2E/k6
+- 해당 없음

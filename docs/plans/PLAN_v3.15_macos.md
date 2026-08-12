@@ -46,7 +46,7 @@ Sources/PureSolitaire/Views/CardView.swift             카드 스타일 4종 분
 - [x] T-180: 커스텀 배경 — 저장/선택/제거/렌더(경로→Image) + feltTextBase 처리 + GameBoardView/ContentView 분기
 - [x] T-181: 카드 뒷면 2종(오션/숲) tint/accent + 미리보기 자동 반영
 - [x] T-182: 카드 앞면 2종(레트로/딥) CardView 스타일 분기 + 픽커 자동 반영
-- [ ] T-183: 회귀(178개 유지) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.15.0) + 문서
+- [x] T-183: 회귀(178개 유지) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.20.0 빌드본, 창+보드 a11y 요소 렌더 확인) + 문서
 
 ## 5. 테스트 계획
 

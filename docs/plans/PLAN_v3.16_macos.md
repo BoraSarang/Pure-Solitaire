@@ -36,7 +36,7 @@ Sources/PureSolitaire/Views/GameCommands.swift   게임 메뉴 "데일리 딜" �
 - [x] T-184: `DailyDeal.gameNumber(for:variant:)` — 결정적 혼합 + 범위 클램프 + 단위 테스트(같은 날짜 같은 번호 / 다른 날짜 다른 번호 / 변형별 다름 / 범위)
 - [x] T-185: `startDailyDeal()` — `requestNewGame(number:variant:)` 경유
 - [x] T-186: 사이드바 버튼 + GameCommands 메뉴 (⌘D)
-- [ ] T-187: 회귀(178+신규) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.16.0) + 문서
+- [x] T-187: 회귀(178+신규) + swift build(debug·release) 경고 0 + release 설치·실행(VERSION 3.20.0 빌드본 확인) + 문서
 
 ## 5. 테스트 계획
 
