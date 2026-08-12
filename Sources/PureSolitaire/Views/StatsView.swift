@@ -165,6 +165,11 @@ struct StatsView: View {
                         Text("게임 \(record.gameNumber)")
                             .monospacedDigit()
                         Spacer()
+                        if let score = record.score {
+                            Text("\(score)점")
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                        }
                         if record.moves > 0 {
                             Text("\(record.moves) 이동")
                                 .foregroundStyle(.secondary)

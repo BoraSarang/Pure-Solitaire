@@ -1,7 +1,6 @@
 # 세션 로그 — 2026-08-12 (macos)
 
 ## v3.18 Scorpion 변형 구현 (T-192~T-196)
-
 ### 1. 무엇을 (T-192~T-196)
 - **T-192**: `Sources/GameCore/ScorpionGame.swift` 생성 — 7열×7장 + 예비 3장, 같은 수트+1랭크/그룹 이동/빈 열 K만/승리 K→A 4열, `Move.dealReserve` 1회 딜, undo/redo/hint. `DealGenerator.scorpionDeal`. `ScorpionGameTests.swift` 9개.
 - **T-193**: `GameVariant.swift`에 `.scorpion`(displayName "Scorpion"). GameVariant 전환 switch 전부 갱신 — FreeCellRule(같은 수트), FreeCellGame(freeCellCount 0 + dealReserve false), TriPeaks/Pyramid/Golf/FortyThieves(canMove false), ChallengeStore(timeTarget 600/moveTarget 240).
@@ -35,3 +34,33 @@
 
 ### 8. E2E/k6
 - 해당 없음 (macOS 앱)
+
+## v3.19 점수 체계 구현 (T-198~T-200)
+
+### 1. 무엇을 (T-198~T-200)
+- **T-198**: `Sources/GameCore/Scoring.swift` — 이동 점수(스톡 +5/홈 +10/홈에서 -15/재활용 -100/뒤집기 +5/제거 계열)/승리 보너스(500·800·300)/Klondike 시간 패널티(10초당 -2)/finalScore. `ScoringTests.swift` 7개.
+- **T-199**: VM — `score`/`finalScore` published, `scoreGain(for:)`(이동+스파이더 완성 ×100), `scoreHistory`/`redoScoreHistory` 스택으로 undo/redo 롤백, newGame 초기화, checkState 승리 시 finalScore+GameRecord.score 저장. `RecordStore.GameRecord.score: Int?` 추가(기존 데이터 호환).
+- **T-200**: gameInfoView "점수 N", WinBanner "최종 점수 N점"(ContentView), StatsView 최근 승리 목록에 점수.
+
+### 2. 플랫폼
+- macos (SwiftUI + GameCore)
+
+### 3. 빌드/테스트 결과
+- `swift build` 경고 0건, 단위 테스트 **214개 통과** = 207 + Scoring 7.
+
+### 4. 남은 TODO
+- v3.18 T-197 / v3.19 T-201: 문서 갱신은 완료, 커밋 대기
+- 수동 검증 v3.15~v3.19 일괄 지연 (사용자 지시)
+
+### 5. 다음 에이전트 전달 로그
+- 커밋 예정 2건: `feat(macos): v3.18 Scorpion`(이미 커밋 abb81a3) → `feat(macos): v3.19 점수 체계`
+- 자동 플레이/자동 완성 이동은 score 미포함 (설계상)
+
+### 6. 문서 업데이트 목록
+- PLAN_v3.19, TODO, CHANGELOG([3.19.0]), DESIGN(§3.21)
+
+### 7. 오프라인 큐 상태
+- 해당 없음
+
+### 8. E2E/k6
+- 해당 없음

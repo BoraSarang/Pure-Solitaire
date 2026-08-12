@@ -24,7 +24,7 @@ struct ContentView: View {
                 ConfettiView()
                     .ignoresSafeArea()
                     .transition(.opacity)
-                WinBanner(gameNumber: vm.currentGameNumber)
+                WinBanner(gameNumber: vm.currentGameNumber, score: vm.finalScore)
                     .padding(.bottom, 90)
                     .transition(.scale.combined(with: .opacity))
             }
@@ -102,6 +102,7 @@ struct MessageBanner: View {
 /// 승리 배너 — 에모지와 글자를 분리해 타입체크 부하 분산
 struct WinBanner: View {
     let gameNumber: Int
+    let score: Int
 
     var body: some View {
         VStack(spacing: 8) {
@@ -112,6 +113,10 @@ struct WinBanner: View {
             Text("게임 \(gameNumber) 클리어")
                 .font(.title3)
                 .foregroundStyle(.white.opacity(0.9))
+            Text("최종 점수 \(score)점")
+                .font(.title3.bold())
+                .foregroundStyle(.white)
+                .monospacedDigit()
         }
         .padding(.horizontal, 40)
         .padding(.vertical, 24)

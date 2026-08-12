@@ -47,6 +47,12 @@
 - [x] T-196: GameBoardView scorpionTopRow(예비 더미) + 열 렌더/탭/드래그/힌트 소스 분기 + GamePreviewCard
 - [ ] T-197: 회귀(207 = 198+9) + swift build 경고 0 + 문서
 
+## v3.19 — 점수 체계 (진행중 — 2026-08-12, PLAN_v3.19_macos.md)
+- [x] T-198: Scoring(이동/승리/시간 점수, 변형별 상수) + ScoringTests 7개
+- [x] T-199: VM score 누적(이동+스파이더 완성 보너스) + finalScore + undo/redo 롤백 + 새 게임 초기화
+- [x] T-200: gameInfoView 현재 점수 + WinBanner 최종 점수 + StatsView 기록 점수
+- [ ] T-201: 회귀(214 = 207+7) + swift build 경고 0 + 문서
+
 ## v1.0 — 프리셀 MVP
 
 ### Phase 1: GameCore (플랫폼 독립 로직)

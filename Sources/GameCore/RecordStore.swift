@@ -9,21 +9,23 @@ public final class RecordStore {
         public let seconds: Double
         public let date: Date
         public let moves: Int
+        public let score: Int?
 
-        public init(gameNumber: Int, variant: GameVariant, seconds: Double, moves: Int = 0, date: Date = Date()) {
+        public init(gameNumber: Int, variant: GameVariant, seconds: Double, moves: Int = 0, score: Int? = nil, date: Date = Date()) {
             self.id = UUID()
             self.gameNumber = gameNumber
             self.variant = variant
             self.seconds = seconds
             self.moves = moves
+            self.score = score
             self.date = date
         }
 
         private enum CodingKeys: String, CodingKey {
-            case id, gameNumber, variant, seconds, date, moves
+            case id, gameNumber, variant, seconds, date, moves, score
         }
 
-        /// 기존 저장 데이터(moves 없음) 호환 — 없으면 0
+        /// 기존 저장 데이터(moves/score 없음) 호환 — 없으면 0/nil
         public init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             id = try c.decode(UUID.self, forKey: .id)
@@ -32,6 +34,7 @@ public final class RecordStore {
             seconds = try c.decode(Double.self, forKey: .seconds)
             date = try c.decode(Date.self, forKey: .date)
             moves = try c.decodeIfPresent(Int.self, forKey: .moves) ?? 0
+            score = try c.decodeIfPresent(Int.self, forKey: .score)
         }
     }
 

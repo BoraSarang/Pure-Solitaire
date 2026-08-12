@@ -659,6 +659,10 @@ struct GameBoardView: View {
                 .font(.caption2)
                 .foregroundStyle(settings.feltTextBase.opacity(0.6))
                 .monospacedDigit()
+            Text("점수 \(vm.score)")
+                .font(.caption2)
+                .foregroundStyle(settings.feltTextBase.opacity(0.6))
+                .monospacedDigit()
             HStack(spacing: 3) {
                 Text(formatTime(vm.elapsedSeconds))
                     .font(.caption2)

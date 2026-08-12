@@ -247,6 +247,12 @@ final class FreeCellGame {
 - **저장**: `GameSaver` `persistence.savedScorpion`.
 - **UI**: `scorpionTopRow`(완성 n/4 표시 + 예비 더미) / `scorpionColumnView`(Klondike 열 패턴, 뒤집힘 카드) / 탭·드래그·힌트 소스 분기. GamePreviewCard에 `.scorpion`(열형, 예비 1더미).
 
+### 3.21 점수 체계 (v3.19)
+- **Scoring** (`GameCore/Scoring.swift`): 순수 계산 — `moveScore(for:variant:)`(이동 점수), `winBonus(for:)`(변형별 500/800/300), `timeBonus(seconds:variant:)`(Klondike 10초당 -2), `finalScore(moveTotal:variant:seconds:)`.
+- **VM**: `score`(현재 누적) + `finalScore`(승리 시). `apply` 성공 시 `scoreGain(for:)` 누적(이동 점수 + 스파이더 완성 증가분×100) + `scoreHistory`/`redoScoreHistory` 스택으로 undo/redo 롤백. `newGame`에서 0 초기화. `checkState()` 승리 분기에서 `finalScore` 계산 후 `GameRecord.score`로 저장.
+- **저장**: `RecordStore.GameRecord.score: Int?` — decodeIfPresent로 기존 데이터 호환.
+- **UI**: 게임 정보(이동 수 옆) "점수 N", 승리 배너 "최종 점수 N점", 통계 상세 최근 승리 목록에 점수. 자동 플레이/자동 완성 이동은 스코어 미포함.
+
 ## 4. UI 설계 (SwiftUI)
 
 ### 4.1 카드 커스텀 벡터 렌더링

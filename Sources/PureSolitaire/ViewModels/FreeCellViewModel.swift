@@ -37,6 +37,12 @@ final class FreeCellViewModel: ObservableObject {
     @Published private(set) var lastHomeCard: Card?
     @Published private(set) var elapsedSeconds: TimeInterval = 0
     @Published private(set) var isPaused = false
+    @Published private(set) var score = 0
+    /// 승리 보너스를 포함한 최종 점수 (승리 시 계산, 승리 UI 표시용)
+    @Published private(set) var finalScore = 0
+    private var spiderSuitsBeforeMove = 0
+    private var scoreHistory: [Int] = []
+    private var redoScoreHistory: [Int] = []
     private var homePulseTask: Task<Void, Never>?
     private var elapsedTimer: Timer?
     private var pauseAccumulated: TimeInterval = 0
@@ -513,6 +519,10 @@ final class FreeCellViewModel: ObservableObject {
         highlightedMove = nil
         hintCandidates = []
         hintIndex = 0
+        score = 0
+        finalScore = 0
+        scoreHistory = []
+        redoScoreHistory = []
         clearAllHints()
         dismissMessage()
         stats.setLastGameNumber(safeNumber, for: variant)
@@ -594,6 +604,7 @@ final class FreeCellViewModel: ObservableObject {
     func apply(_ move: Move) -> Bool {
         let ok: Bool
         if spider != nil {
+            spiderSuitsBeforeMove = spider?.completedSuits ?? 0
             ok = spider?.apply(move) == true
         } else if klondike != nil {
             ok = klondike?.apply(move) == true
@@ -617,6 +628,10 @@ final class FreeCellViewModel: ObservableObject {
         dismissMessage()
         clearAllHints()
         highlightedMove = nil
+        // 점수 누적: 이동 점수 + 스파이더 완성 보너스(증가분)
+        let gained = scoreGain(for: move)
+        score += gained
+        scoreHistory.append(gained)
         SoundPlayer.shared.play(move.isHomeMove ? .home : .move, enabled: settings.soundEnabled, volume: settings.soundVolume)
         if move.isHomeMove {
             pulseHomeCard(for: move)
@@ -1098,14 +1113,18 @@ final class FreeCellViewModel: ObservableObject {
             refreshAchievements()
             if let start = gameStartedAt {
                 let seconds = Date().timeIntervalSince(start)
+                finalScore = Scoring.finalScore(moveTotal: score, variant: variant, seconds: seconds)
                 stats.recordWinTime(seconds, for: variant)
                 recordStore.record(RecordStore.GameRecord(
                     gameNumber: currentGameNumber,
                     variant: variant,
                     seconds: seconds,
-                    moves: currentMoveCount
+                    moves: currentMoveCount,
+                    score: finalScore
                 ), for: variant)
                 gameStartedAt = nil
+            } else {
+                finalScore = Scoring.finalScore(moveTotal: score, variant: variant, seconds: 0)
             }
             clearSave()
             SoundPlayer.shared.playWinSequence(volume: settings.soundVolume)
@@ -1441,6 +1460,11 @@ final class FreeCellViewModel: ObservableObject {
         } else {
             game.undo()
         }
+        // 점수 롤백: 마지막 이동 점수 차감 + redo 스택 보관
+        if let last = scoreHistory.popLast() {
+            score -= last
+            redoScoreHistory.append(last)
+        }
         selection = nil
         dismissMessage()
         highlightedMove = nil
@@ -1467,6 +1491,11 @@ final class FreeCellViewModel: ObservableObject {
             scorpion?.redo()
         } else {
             game.redo()
+        }
+        // 점수 복원: undo로 되돌린 이동 점수 재적용
+        if let last = redoScoreHistory.popLast() {
+            score += last
+            scoreHistory.append(last)
         }
         selection = nil
         dismissMessage()
@@ -1704,6 +1733,17 @@ final class FreeCellViewModel: ObservableObject {
         }
         let safe = AutoPlay.safeAutoPlayMoves(in: game)
         return safe.isEmpty ? game.hintCandidates().filter { $0.isHomeMove } : safe
+    }
+    /// 이동 1회 점수 획득분 — 이동 점수 + 스파이더 완성 보너스(증가분, apply 직후 상태 기준)
+    private func scoreGain(for move: Move) -> Int {
+        var gain = Scoring.moveScore(for: move, variant: variant)
+        if let s = spider {
+            let completed = s.completedSuits - spiderSuitsBeforeMove
+            if completed > 0 {
+                gain += Scoring.spiderCompleteBonus * completed
+            }
+        }
+        return gain
     }
 
     /// 자동 플레이용: 소리/펄스 없이 순수 적용 (재귀 방지)
