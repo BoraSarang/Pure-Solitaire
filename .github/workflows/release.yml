@@ -18,7 +18,7 @@ jobs:
         run: swift build -c release
 
       - name: Run tests
-        run: swift test
+        run: swift test -c release
 
       - name: Package .app bundle
         run: bash scripts/package_release.sh "${GITHUB_REF_NAME#v}"
