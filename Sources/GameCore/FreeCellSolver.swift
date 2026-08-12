@@ -237,26 +237,33 @@ public enum FreeCellSolver {
             return moves.sorted { priority($0, in: s) < priority($1, in: s) }
         }
 
-        /// 이동 우선순위 (낮을수록 먼저 시도)
-        /// 0 홈 이동 / 1 프리셀→열(프리셀 정리) / 2 빈 열로 K /
-        /// 3 그룹 이동(크기 2+) / 4 빈 열로 비-K / 5 단일 열→열(빈 열 있을 때만) /
-        /// 6 열→프리셀 / 9 홈에서 꺼내기
+        /// 이동 우선순위 (낮을수록 먼저 시도) — 연속 점수로 tie 최소화
+        /// 0 홈 이동 / 10 프리셀→열(프리셀 정리) / 20 빈 열로 K /
+        /// 30+드러나는 카드 랭크 홈 카드 드러내기(A=31..K=43) / 50 그룹 이동(크기 2+) /
+        /// 60 빈 열로 비-K / 70 단일 열→열(빈 열 있을 때만) / 80 열→프리셀 /
+        /// 90 단일 열→열(빈 열 없음) / 99 홈에서 꺼내기
         func priority(_ move: Move, in s: SolverState) -> Int {
             switch move {
             case .columnToHome: return 0
-            case .freeCellToColumn: return 1
+            case .freeCellToColumn: return 10
             case let .columnToColumn(from, to, cardCount):
                 let empty = s.columns[to].isEmpty
                 if empty {
-                    if variant == .seaTower { return 3 }
-                    return s.columns[from].last?.rank == .king ? 2 : 4
+                    if variant == .seaTower { return 50 }
+                    return s.columns[from].last?.rank == .king ? 20 : 60
                 }
-                if cardCount >= 2 { return 3 }
+                // 이동으로 새 카드가 드러나고 그 카드가 홈으로 갈 수 있으면 우선
+                // (빈 열이 있을 때만 — 빈 열이 없으면 빈 열 만들기 우선)
                 let emptyCols = s.columns.filter { $0.isEmpty }.count
-                return emptyCols > 0 ? 5 : 8
-            case .columnToFreeCell: return 6
-            case .homeToColumn, .homeToFreeCell: return 9
-            default: return 6
+                if emptyCols > 0, cardCount < s.columns[from].count {
+                    let revealed = s.columns[from][s.columns[from].count - cardCount - 1]
+                    if canMoveToHome(revealed, in: s) { return 30 + revealed.rank.rawValue }
+                }
+                if cardCount >= 2 { return 50 }
+                return emptyCols > 0 ? 70 : 90
+            case .columnToFreeCell: return 80
+            case .homeToColumn, .homeToFreeCell: return 99
+            default: return 80
             }
         }
 

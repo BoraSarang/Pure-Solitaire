@@ -5,10 +5,11 @@
 - **FreeCellSolver 추가** (`GameCore/FreeCellSolver.swift`): FreeCell 계열 4종(freecell/bakersGame/seaTower/superFreeCell) 승리 가능 여부 판정. 안전 홈 이동(AutoPlay 규칙) 자동 적용으로 상태 압축 + 반복 DFS(명시적 스택) + 휴리스틱 이동 순서(홈 이동 0 → 프리셀→열 → 빈 열 K → 그룹 2+ → 빈 열 비-K → 단일 → 열→프리셀 → 홈 꺼내기) + 방문 상태 집합(사이클 방지) + 수퍼무브(그룹) 이동 생성.
 - **예산 게이트**: 노드/시간/깊이 예산. 예산 초과는 "미확정"(false) 처리로 긴 대기 방지. **깊이 예산 초과 시 가지치기(continue)로 수정** — 기존 `return false`(전체 탐색 즉시 포기)는 DFS 백트래킹을 막아 게임 #3/#10/#20을 오판하는 버그였음.
 - **기본 예산 상향**: nodeLimit 400,000 / timeLimit 4.0s / depthLimit 20,000 (기존 200k/1.5s — 짧아 미확정 다발).
+- **휴리스틱 개선**: 이동 우선순위를 연속 점수로 세분화(홈 0 → 프리셀→열 → 빈 열 K → 홈 카드 드러내기[빈 열 있을 때만, 드러난 카드 랭크에 비례 31..43] → 그룹 2+ → 빈 열 비-K → 단일 → 열→프리셀 → 홈 꺼내기). 빈 열 조건부 "드러내기 우선"으로 **MS 딜 #1과 #2를 기본 예산 내 동시 해결** — 기존 10/13 → 11/13 true.
 - **API**: `isWinnable(gameNumber:variant:budget:)`, `firstWinnableGameNumber(from:variant:budget:maxAttempts:)`, `isFreeCellFamily(_:)`.
-- **알려진 한계**: MS 딜 #1/#50/#500은 기본 예산 내 미확정(해는 존재할 가능성이 높으나 탐색 경로가 깊어 예산 초과) — 후속 휴리스틱 개선 예정.
+- **알려진 한계**: MS 딜 #50(해는 존재 — 1.5M/10s에서 확인)과 #500(5M/60s에서도 미해결)은 기본 예산 내 미확정 — 후속 과제.
 ### 검증
-- `swift build`(debug) 경고 0건, 단위 테스트 **219개** 통과(FreeCellSolverTests 5개 신규 — 대표 MS 딜 풀림/예산 내 판정/예산 0 미확정/미지원 변형/첫 Winnable 번호)
+- `swift build`(debug) 경고 0건, 단위 테스트 **219개** 통과(FreeCellSolverTests 5개 신규 — 대표 MS 딜 풀림/예산 내 판정/예산 0 미확정/미지원 변형/첫 Winnable 번호) → 이후 휴리스틱 개선으로 대표 딜에 #1/#2 추가
 - 문서: PLAN_v3.20/TODO
 - T-203~T-205(옵션/VM/UI 연동)은 미완료 — 다음 커밋 예정
 

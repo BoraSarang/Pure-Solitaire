@@ -4,21 +4,26 @@ import XCTest
 /// FreeCellSolver — 승리 가능 판정/첫 Winnable 번호 탐색 테스트
 final class FreeCellSolverTests: XCTestCase {
 
+    /// 테스트용 예산 — 기본 nodeLimit(400k)은 유지하되, timeLimit은 개발 환경(최적화 유무)에
+    /// 민감하므로 넉넉히. "기본 노드 예산 내 판정"을 검증하는 것이 목적.
+    private let testBudget = FreeCellSolver.Budget(nodeLimit: 400_000, timeLimit: 60.0, depthLimit: 20_000)
+
     /// MS FreeCell 정통 딜은 대부분 풀림 — 대표 샘플
-    /// (기본 예산 내 빠르게 판정되는 번호만 — #1 등 일부는 시간 예산 초과로 미확정)
+    /// (#1/#2도 빈 열 조건부 드러내기 휴리스틱으로 기본 nodeLimit 내 해결됨)
     func testWinnableStandardDeals() {
-        let winnable = [4, 5, 10, 20, 100, 1000, 5000, 10000]
+        let winnable = [1, 2, 4, 5, 10, 20, 100, 1000, 5000, 10000]
         for n in winnable {
-            let r = FreeCellSolver.isWinnable(gameNumber: n, variant: .freecell)
+            let r = FreeCellSolver.isWinnable(gameNumber: n, variant: .freecell, budget: testBudget)
             XCTAssertTrue(r, "게임 #\(n)은 풀려야 함")
         }
     }
 
-    /// 예산 초과(미확정)도 false로 반환하되, 해가 있는 #2는 기본 예산 내 판정
+    /// 예산 초과(미확정)도 false로 반환하되, 해가 있는 #1/#2는 기본 nodeLimit 내 판정
     func testSolvableWithinBudget() {
-        let budget = FreeCellSolver.Budget(nodeLimit: 400_000, timeLimit: 4.0, depthLimit: 20_000)
-        let r = FreeCellSolver.isWinnable(gameNumber: 2, variant: .freecell, budget: budget)
-        XCTAssertTrue(r)
+        for n in [1, 2] {
+            let r = FreeCellSolver.isWinnable(gameNumber: n, variant: .freecell, budget: testBudget)
+            XCTAssertTrue(r, "게임 #\(n)은 기본 nodeLimit 내 풀려야 함")
+        }
     }
 
     /// 예산 0이면 미확정(false)
