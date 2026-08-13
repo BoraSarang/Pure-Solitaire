@@ -143,9 +143,31 @@ struct SettingsView: View {
             } footer: {
                 Text("승리/패배 횟수, 연승, 최단 승리 시간, 최근 승리 기록이 모두 삭제됩니다.")
             }
+
+            Section {
+                Button {
+                    openGitHub()
+                } label: {
+                    HStack {
+                        Label("GitHub 저장소", systemImage: "curlybraces")
+                        Spacer()
+                        Text("github.com/BoraSarang/Pure-Solitaire")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .buttonStyle(.plain)
+                HStack {
+                    Text("버전")
+                    Spacer()
+                    Text(appVersion)
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Label("정보", systemImage: "info.circle")
+            }
         }
         .formStyle(.grouped)
-        .frame(width: 460, height: 560)
+        .frame(width: 460, height: 620)
         .confirmationDialog(
             "정말 통계를 초기화할까요?",
             isPresented: $showingResetConfirmation,
@@ -175,6 +197,18 @@ struct SettingsView: View {
             get: { vm.gameOptions.selectedID(for: variant, option: option) },
             set: { vm.gameOptions.setSelectedID($0, for: variant, optionID: option.id) }
         )
+    }
+
+    /// 앱 버전 (Info.plist의 CFBundleShortVersionString)
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "3.20.0"
+    }
+
+    /// GitHub 저장소 페이지를 기본 브라우저로 열기
+    private func openGitHub() {
+        if let url = URL(string: "https://github.com/BoraSarang/Pure-Solitaire") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     /// 커스텀 배경 이미지 선택 → Application Support 저장 + 적용
