@@ -2034,6 +2034,9 @@ final class FreeCellViewModel: ObservableObject {
                 }
                 self.autoSolveMoves = result.moves
                 self.autoSolveIndex = 0
+                // 솔버 해는 초기 상태 기준 — 진행/교착 상태면 첫 이동부터 실패하므로
+                // 리플레이처럼 재생 전 초기 상태로 리셋 (종료/중단 시 스냅샷으로 복원).
+                self.game = FreeCellGame(gameNumber: targetNumber, variant: targetVariant)
                 self.startAutoSolveTimer(speed: speed)
                 self.showMessage("자동 풀어 보기: \(result.moves.count) 수를 재생합니다.")
             }
