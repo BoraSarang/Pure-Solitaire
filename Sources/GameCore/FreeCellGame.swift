@@ -285,6 +285,14 @@ public struct FreeCellGame: Equatable, Sendable, Codable {
         }
     }
 
+    /// 자동 풀어 보기 재생 전용 적용 — 유효성은 검사하되 undo 스택/이동 수에 남기지 않음.
+    /// (시연용: 재생 종료 시 원래 상태로 복원되므로 기록을 오염시키지 않는다.)
+    public mutating func applyForReplay(_ move: Move) -> Bool {
+        guard canMove(move) else { return false }
+        applyUnchecked(move)
+        return true
+    }
+
     /// 해당 카드를 놓을 홈셀 인덱스 (canMoveToHome이 true일 때만 호출)
     public func homeIndex(for card: Card) -> Int? {
         if variant == .superFreeCell {

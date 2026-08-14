@@ -110,6 +110,26 @@ final class FreeCellGameTests: XCTestCase {
         XCTAssertEqual(game, after)
     }
 
+    /// 자동 풀어 보기 재생 전용 적용 — 상태는 변경하되 undo 스택/이동 수에는 남지 않음
+    func testApplyForReplayDoesNotPolluteHistory() {
+        var game = FreeCellGame(gameNumber: 1)
+        let top0 = game.columns[0].last!
+        let after = game
+
+        XCTAssertTrue(game.applyForReplay(.columnToFreeCell(columnIndex: 0, freeCellIndex: 0, card: top0)))
+        XCTAssertEqual(game.freeCells[0], top0)
+        XCTAssertEqual(game.moveCount, 0, "재생 적용은 이동 수를 증가시키지 않아야 함")
+        XCTAssertFalse(game.canUndo, "재생 적용은 undo 기록을 만들지 않아야 함")
+        XCTAssertFalse(game.canRedo)
+
+        // 유효성 검사는 수행 — 무효 이동은 거부
+        let fake = Card(suit: .spades, rank: .king)
+        XCTAssertFalse(game.applyForReplay(.columnToFreeCell(columnIndex: 0, freeCellIndex: 0, card: fake)))
+        // 상태 복원 가능성 검증 (스냅샷으로 완전 복구)
+        game = after
+        XCTAssertEqual(game, FreeCellGame(gameNumber: 1))
+    }
+
     /// 수퍼무브 검증: 빈 프리셀 4개 + 빈 열 0개 → 이동 가능 시퀀스는 1장
     func testSupermoveCapacityInGame() {
         var game = FreeCellGame(gameNumber: 1)

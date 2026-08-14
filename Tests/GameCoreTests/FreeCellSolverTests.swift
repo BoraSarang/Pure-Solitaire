@@ -67,10 +67,10 @@ final class FreeCellSolverTests: XCTestCase {
             }
             var game = FreeCellGame(gameNumber: n, variant: .freecell)
             var applied = 0
-            for move in solution {
+            for move in solution.moves {
                 if game.apply(move) { applied += 1 }
             }
-            XCTAssertTrue(game.isWon, "게임 #\(n)은 풀이 적용 후 승리 상태여야 함 (적용 \(applied)/\(solution.count))")
+            XCTAssertTrue(game.isWon, "게임 #\(n)은 풀이 적용 후 승리 상태여야 함 (적용 \(applied)/\(solution.moves.count))")
         }
     }
 
@@ -82,10 +82,10 @@ final class FreeCellSolverTests: XCTestCase {
         }
         var game = FreeCellGame(gameNumber: 1, variant: .freecell)
         var validCount = 0
-        for move in solution {
+        for move in solution.moves {
             if game.canMove(move), game.apply(move) { validCount += 1 }
         }
-        XCTAssertTrue(game.isWon, "모든 이동이 유효해 승리 도달해야 함 (유효 \(validCount)/\(solution.count))")
+        XCTAssertTrue(game.isWon, "모든 이동이 유효해 승리 도달해야 함 (유효 \(validCount)/\(solution.moves.count))")
     }
 
     /// 불가능한 게임(#11982 — MS FreeCell 32000딜 중 유일한 미해결. 20M/240s에서도 미해결 확인됨)은 nil.
@@ -114,9 +114,9 @@ final class FreeCellSolverTests: XCTestCase {
         }
         var game = FreeCellGame(gameNumber: 50, variant: .freecell)
         var applied = 0
-        for move in solution {
+        for move in solution.moves {
             if game.apply(move) { applied += 1 }
         }
-        XCTAssertTrue(game.isWon, "게임 #50 풀이가 승리 상태에 도달해야 함 (적용 \(applied)/\(solution.count))")
+        XCTAssertTrue(game.isWon, "게임 #50 풀이가 승리 상태에 도달해야 함 (적용 \(applied)/\(solution.moves.count))")
     }
 }

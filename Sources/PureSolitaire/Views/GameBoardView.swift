@@ -61,36 +61,48 @@ struct GameBoardView: View {
                 }
                 hintDragOverlay(cardSize: size, boardSize: geo.size)
                     .zIndex(90)
+
+                // 자동 풀어 보기/리플레이 재생 오버레이 — 재생 중 조작 잠금 + 진행 표시
+                if vm.isAutoSolving || vm.isReplaying {
+                    PlaybackOverlayView()
+                        .zIndex(200)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .contentShape(Rectangle())
+                        .allowsHitTesting(true)
+                }
             }
             .frame(width: geo.size.width, height: geo.size.height)
             .contentShape(Rectangle())
             .onContinuousHover { phase in
+                if vm.isAutoSolving || vm.isReplaying { return }
                 if case .active(let loc) = phase {
                     drag?.location = loc
                 }
             }
             .gesture(
-                DragGesture(minimumDistance: 2)
-                    .onChanged { value in
-                        if drag == nil {
-                            cancelHintDrag()
-                            guard let hit = dragSource(at: value.location, boardSize: geo.size, cardSize: size) else { return }
-                            let grabPoint = cardBoardOrigin(hit.source, topIndex: hit.topIndex, cardSize: size, boardSize: geo.size)
-                            drag = DragState(
-                                source: hit.source,
-                                cardCount: hit.cardCount,
-                                topIndex: hit.topIndex,
-                                startLocation: value.location,
-                                location: value.location,
-                                startCardOrigin: grabPoint
-                            )
-                        } else {
-                            drag?.location = value.location
+                vm.isAutoSolving || vm.isReplaying
+                    ? DragGesture().onChanged { _ in }.onEnded { _ in }
+                    : DragGesture(minimumDistance: 2)
+                        .onChanged { value in
+                            if drag == nil {
+                                cancelHintDrag()
+                                guard let hit = dragSource(at: value.location, boardSize: geo.size, cardSize: size) else { return }
+                                let grabPoint = cardBoardOrigin(hit.source, topIndex: hit.topIndex, cardSize: size, boardSize: geo.size)
+                                drag = DragState(
+                                    source: hit.source,
+                                    cardCount: hit.cardCount,
+                                    topIndex: hit.topIndex,
+                                    startLocation: value.location,
+                                    location: value.location,
+                                    startCardOrigin: grabPoint
+                                )
+                            } else {
+                                drag?.location = value.location
+                            }
                         }
-                    }
-                    .onEnded { _ in
-                        finishDrag(boardSize: geo.size, cardSize: size)
-                    }
+                        .onEnded { _ in
+                            finishDrag(boardSize: geo.size, cardSize: size)
+                        }
             )
             .onChange(of: vm.hintAnimationTick) { _ in
                 runHintDragAnimation(boardSize: geo.size, cardSize: size)

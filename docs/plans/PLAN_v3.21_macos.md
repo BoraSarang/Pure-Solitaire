@@ -44,10 +44,10 @@ Sources/PureSolitaire/Views/GameBoardView.swift            재생 오버레이/�
     3. **IDDFS 도입 시도 → 실패**: 깊이 제한을 100→200→… 점진 증가하며 visited를 단계마다 초기화하면, FreeCell의 거대한 상태 공간 때문에 첫 단계(깊이 100) 탐색이 시간 예산을 소진해 이후 단계 진행 불가. **단일 DFS로 회귀**.
     4. **진행(홈 카드 증가) 없는 경로 가지치기**: 단일 DFS가 깊이 60k까지 하강하며 비현실적으로 긴 경로(#1: 31666, #2: 60029, #100: 2052 이동)를 우연히 찾는 문제 발견. `Frame`에 `homeCount`/`stagnantDepth` 추가 — 홈 카드가 `maxStagnantDepth`(80) 이동 이상 증가 없으면 그 경로 백트래킹. → **#1: 950, #2: 415 이동**으로 단축, 모두 유효.
     5. **실측 결과 (2026-08-14)**: #50은 유효 해 703 이동 존재하나 **16.6초** 소요(재생 예산 15초 초과). #10은 2553 이동 해가 **134초** 소요 — 재생 예산으로 사실상 불가능. 이전 "1.5M/10s에서 풀림" 기록은 무효 이동 기반 가짜 해로 판단. → 재생 예산 `timeLimit` 15→**20초**로 조정(#50 해결), #10은 "난이도 높음(미해결)"으로 분류(자동 풀어 보기 안내 문구).
-- [ ] T-211: 난이도 판정 `Difficulty`(GameCore) — `Difficulty.for(solution:)`(노드/깊이 기반). `solve`에 노드/깊이 소요 반환 추가. 테스트.
-- [ ] T-212: VM 자동 풀어 보기 — `startAutoSolve()`(백그라운드 solve → 메인 재생), `pauseAutoSolve`/`cancelAutoSolve`, 재생 스냅샷 복원, FreeCell 계열만 활성. 재생은 `applyRaw` 아닌 전용 적용(재생 기록에 남지 않음) + 타이머/속도(빠름 0.15s/보통 0.35s/느림 0.7s).
-- [ ] T-213: 내 이동 리플레이 — VM이 완료 게임의 `[Move]` 전방 기록 유지, 재생 UI(기존 애니메이션 재사용). 테스트 불가(UI) — 빌드 검증.
-- [ ] T-214: GameBoardView/사이드바 재생 오버레이 — 버튼("자동 풀어 보기"/"리플레이"), 속도 선택, 일시정지/중단, 조작 잠금, 진행 표시.
+- [x] T-211: 난이도 판정 `Difficulty`(GameCore) — `SolveResult`(moves+nodeCount+depth) 반환으로 `solve` 확장, `Difficulty.for(nodeCount:)`(노드 <20k 쉬움, <150k 보통, 그 외 어려움) + `for(result:)`. 미해결(예산 초과)은 `unmeasured`. DifficultyTests 4개 통과. FreeCellSolverTests는 `.moves` 접근으로 갱신 — 11개 통과.
+- [x] T-212: VM 자동 풀어 보기 — `startAutoSolve()`(백그라운드 `solve` with `replayBudget` → 메인에서 타이머 순차 재생), `pauseAutoSolve`/`resumeAutoSolve`/`cancelAutoSolve`, `FreeCellGame.applyForReplay`(undo 스택/이동 수에 남기지 않는 시연 적용), 재생 전 스냅샷 보존 + 종료/중단/새 게임 시 원래 상태 복원, 속도(빠름 0.15s/보통 0.35s/느림 0.7s), 진행률. undo/redo는 재생 중 가드. `applyForReplay` 단위 테스트 통과. 전체 231개 회귀 통과.
+- [x] T-213: 내 이동 리플레이 — VM이 전방 이동 기록(`moveHistory`, 자동 플레이/자동 완성 포함)을 apply/applyRaw/undo/redo와 동기화, 승리 시 `completedMoveHistory` 확정. `startReplay`(승리 상태 스냅샷 → 시작 상태로 되돌려 처음부터 재생) / `pause`/`resume`/`cancel` + 스냅샷 복원. 테스트 불가(UI) — 빌드 검증 + 전체 231개 회귀 통과.
+- [x] T-214: GameBoardView/사이드바 재생 오버레이 — `PlaybackOverlayView`(신규: 진행률 + 속도 3단계 + 일시정지/재개 + 중단), 재생 중 조작 잠금(DragGesture 비활성 + 오버레이 히트 차단), 사이드바 "자동 풀어 보기"⇧⌘P/"내 이동 리플레이"⇧⌘R 버튼 + GameCommands 단축키. 빌드 검증 + 전체 231개 회귀 통과.
 - [ ] T-215: DailyChallenge 9판 — `DailyChallenge.deals(for date:) -> [(variant, number)]`(12종 중 9개 결정적 샘플링). 테스트: 결정성/9개/중복 없음/월 변경 시 변화.
 - [ ] T-216: ChallengeStore 판별 기록 — `Result`를 9판 배열로 저장(날짜키별 `[result]`), 기존 단건 저장 호환(이전 데이터 로드 시 단건 → 9판 구조 변환). 테스트.
 - [ ] T-217: 3개월 달력 + 월 통계 — `CalendarMonth` 계산(월 경계/연 경계), 날짜별 완료 집계, 월 합계. VM/ChallengeView 연동. 테스트(날짜 산술).

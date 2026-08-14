@@ -40,6 +40,18 @@ final class FreeCellViewModel: ObservableObject {
     @Published private(set) var score = 0
     /// 승리 보너스를 포함한 최종 점수 (승리 시 계산, 승리 UI 표시용)
     @Published private(set) var finalScore = 0
+    /// 자동 풀어 보기 재생 중 여부 (FreeCell 계열만 활성)
+    @Published private(set) var isAutoSolving = false
+    /// 자동 풀어 보기 재생 속도 (PLAN: 빠름 0.15s / 보통 0.35s / 느림 0.7s)
+    @Published var autoSolveSpeed: AutoSolveSpeed = .normal
+    /// 자동 풀어 보기 진행률 0~1 (재생 UI 진행 표시용)
+    @Published private(set) var autoSolveProgress: Double = 0
+    /// 내 이동 리플레이 재생 중 여부
+    @Published private(set) var isReplaying = false
+    /// 내 이동 리플레이 진행률 0~1
+    @Published private(set) var replayProgress: Double = 0
+    /// 완료 게임의 전방 이동 기록 (승리 시 리플레이로 사용)
+    @Published private(set) var completedMoveHistory: [Move]?
     private var spiderSuitsBeforeMove = 0
     private var scoreHistory: [Int] = []
     private var redoScoreHistory: [Int] = []
@@ -52,6 +64,17 @@ final class FreeCellViewModel: ObservableObject {
     private var gameStartedAt: Date?
     private var newGameVariantRequest: GameVariant?
     private var newGameNumberRequest: Int?
+    private var autoSolveMoves: [Move] = []
+    private var autoSolveIndex = 0
+    private var autoSolveSnapshot: FreeCellGame?
+    private var autoSolveTask: Task<Void, Never>?
+    private var autoSolveTimer: Timer?
+    private var moveHistory: [Move] = []
+    private var redoMoveHistory: [Move] = []
+    private var replayMoves: [Move] = []
+    private var replayIndex = 0
+    private var replaySnapshot: FreeCellGame?
+    private var replayTimer: Timer?
 
     /// 현재 게임 소요 시간 (초, 승리 전까지 증가)
     var activeElapsedSeconds: TimeInterval? {
@@ -454,6 +477,9 @@ final class FreeCellViewModel: ObservableObject {
     }
 
     func newGame(number: Int, variant: GameVariant, spiderDifficulty: SpiderGame.Difficulty) {
+        // 자동 풀어 보기/리플레이 진행 중이면 정리 (새 게임으로 전환)
+        cancelAutoSolve(restore: false, message: nil)
+        cancelReplaySilently()
         let safeNumber = min(max(number, DealGenerator.minGameNumber), DealGenerator.maxGameNumber)
         // 승리 보장 옵션 — FreeCell 계열에서 시작 번호부터 풀리는 번호를 탐색해 실제 시작 번호로 사용
         var startNumber = safeNumber
@@ -548,6 +574,9 @@ final class FreeCellViewModel: ObservableObject {
         finalScore = 0
         scoreHistory = []
         redoScoreHistory = []
+        moveHistory = []
+        redoMoveHistory = []
+        completedMoveHistory = nil
         clearAllHints()
         dismissMessage()
         stats.setLastGameNumber(startNumber, for: variant)
@@ -657,6 +686,9 @@ final class FreeCellViewModel: ObservableObject {
         let gained = scoreGain(for: move)
         score += gained
         scoreHistory.append(gained)
+        // 전방 이동 기록 (리플레이용) — 자동 플레이/자동 완성 포함
+        moveHistory.append(move)
+        redoMoveHistory.removeAll()
         SoundPlayer.shared.play(move.isHomeMove ? .home : .move, enabled: settings.soundEnabled, volume: settings.soundVolume)
         if move.isHomeMove {
             pulseHomeCard(for: move)
@@ -1133,6 +1165,8 @@ final class FreeCellViewModel: ObservableObject {
         let isWon = currentIsWon
         if isWon {
             stopElapsedTimer()
+            // 리플레이용 전방 기록 확정 (자동 플레이/자동 완성 이동 포함)
+            completedMoveHistory = moveHistory
             stats.recordWin(variant, moves: currentMoveCount)
             recordChallengeIfToday()
             refreshAchievements()
@@ -1466,6 +1500,7 @@ final class FreeCellViewModel: ObservableObject {
     // MARK: - 실행 취소 / 다시 실행
 
     func undo() {
+        guard !isAutoSolving else { return }
         if spider != nil {
             spider?.undo()
         } else if klondike != nil {
@@ -1490,6 +1525,10 @@ final class FreeCellViewModel: ObservableObject {
             score -= last
             redoScoreHistory.append(last)
         }
+        // 전방 이동 기록 롤백 (리플레이용)
+        if let last = moveHistory.popLast() {
+            redoMoveHistory.append(last)
+        }
         selection = nil
         dismissMessage()
         highlightedMove = nil
@@ -1498,6 +1537,7 @@ final class FreeCellViewModel: ObservableObject {
     }
 
     func redo() {
+        guard !isAutoSolving else { return }
         if spider != nil {
             spider?.redo()
         } else if klondike != nil {
@@ -1521,6 +1561,10 @@ final class FreeCellViewModel: ObservableObject {
         if let last = redoScoreHistory.popLast() {
             score += last
             scoreHistory.append(last)
+        }
+        // 전방 이동 기록 복원 (리플레이용)
+        if let last = redoMoveHistory.popLast() {
+            moveHistory.append(last)
         }
         selection = nil
         dismissMessage()
@@ -1771,34 +1815,34 @@ final class FreeCellViewModel: ObservableObject {
         return gain
     }
 
-    /// 자동 플레이용: 소리/펄스 없이 순수 적용 (재귀 방지)
+    /// 자동 플레이/자동 완성용: 소리/펄스 없이 순수 적용 (재귀 방지). 전방 기록에는 포함 (리플레이 시청용).
     @discardableResult
     private func applyRaw(_ move: Move) -> Bool {
+        let ok: Bool
         if spider != nil {
-            return spider?.apply(move) == true
+            ok = spider?.apply(move) == true
+        } else if klondike != nil {
+            ok = klondike?.apply(move) == true
+        } else if yukon != nil {
+            ok = yukon?.apply(move) == true
+        } else if fortyThieves != nil {
+            ok = fortyThieves?.apply(move) == true
+        } else if golf != nil {
+            ok = golf?.apply(move) == true
+        } else if pyramid != nil {
+            ok = pyramid?.apply(move) == true
+        } else if triPeaks != nil {
+            ok = triPeaks?.apply(move) == true
+        } else if scorpion != nil {
+            ok = scorpion?.apply(move) == true
+        } else {
+            ok = game.apply(move)
         }
-        if klondike != nil {
-            return klondike?.apply(move) == true
+        if ok {
+            moveHistory.append(move)
+            redoMoveHistory.removeAll()
         }
-        if yukon != nil {
-            return yukon?.apply(move) == true
-        }
-        if fortyThieves != nil {
-            return fortyThieves?.apply(move) == true
-        }
-        if golf != nil {
-            return golf?.apply(move) == true
-        }
-        if pyramid != nil {
-            return pyramid?.apply(move) == true
-        }
-        if triPeaks != nil {
-            return triPeaks?.apply(move) == true
-        }
-        if scorpion != nil {
-            return scorpion?.apply(move) == true
-        }
-        return game.apply(move)
+        return ok
     }
 
     private func moveDescription(_ move: Move) -> String {
@@ -1842,6 +1886,257 @@ final class FreeCellViewModel: ObservableObject {
         case .dealReserve:
             return "예비 카드 → 열 1·2·3 딜"
         }
+    }
+
+    // MARK: - 자동 풀어 보기 (FreeCell 계열 4종)
+
+    /// 자동 풀어 보기 재생 속도 — 이동 간 대기 시간
+    enum AutoSolveSpeed: Double, CaseIterable {
+        case fast = 0.15
+        case normal = 0.35
+        case slow = 0.7
+    }
+
+    /// FreeCell 계열이고 진행 중(미승리)일 때만 활성
+    var canAutoSolve: Bool {
+        FreeCellSolver.isFreeCellFamily(variant) && !currentIsWon && !isAutoSolving
+    }
+
+    /// 자동 풀어 보기 일시정지 상태 (재생 중이지만 타이머가 멈춘 상태)
+    var isAutoSolvePaused: Bool {
+        isAutoSolving && autoSolveTimer == nil
+    }
+
+    /// 리플레이 일시정지 상태
+    var isReplayPaused: Bool {
+        isReplaying && replayTimer == nil
+    }
+
+    /// 재생 속도 변경 — 재생 중이면 타이머를 새 간격으로 재시작해 즉시 반영
+    func updateAutoSolveSpeed(_ speed: AutoSolveSpeed) {
+        autoSolveSpeed = speed
+        if isAutoSolving, autoSolveTimer != nil {
+            startAutoSolveTimer(speed: speed)
+        }
+        if isReplaying, replayTimer != nil {
+            startReplayTimer(speed: speed)
+        }
+    }
+
+    /// 자동 풀어 보기 시작 — 현재 판을 솔버가 처음부터 끝까지 푸는 과정을 재생.
+    /// 재생은 시연이므로 시작 시 스냅샷을 보존하고, 종료/중단 시 원래 상태로 복원한다. (PLAN 결정)
+    func startAutoSolve() {
+        guard canAutoSolve else { return }
+        let targetVariant = variant
+        let targetNumber = currentGameNumber
+        let speed = autoSolveSpeed
+
+        autoSolveSnapshot = game
+        isAutoSolving = true
+        autoSolveProgress = 0
+        autoSolveMoves = []
+        autoSolveIndex = 0
+        selection = nil
+        highlightedMove = nil
+        dismissMessage()
+        showMessage("풀이를 찾고 있습니다…")
+
+        autoSolveTask = Task.detached(priority: .userInitiated) {
+            let result = FreeCellSolver.solve(
+                gameNumber: targetNumber,
+                variant: targetVariant,
+                budget: FreeCellSolver.replayBudget
+            )
+            await MainActor.run {
+                guard let result else {
+                    self.cancelAutoSolve(restore: true, message: "이 판은 풀이를 찾지 못했습니다.")
+                    return
+                }
+                self.autoSolveMoves = result.moves
+                self.autoSolveIndex = 0
+                self.startAutoSolveTimer(speed: speed)
+                self.showMessage("자동 풀어 보기: \(result.moves.count) 수를 재생합니다.")
+            }
+        }
+    }
+
+    /// 일시정지 (재생 상태 유지, 타이머만 중지)
+    func pauseAutoSolve() {
+        guard isAutoSolving else { return }
+        autoSolveTimer?.invalidate()
+        autoSolveTimer = nil
+    }
+
+    /// 일시정지 해제 — 남은 이동부터 재개
+    func resumeAutoSolve() {
+        guard isAutoSolving, autoSolveTimer == nil else { return }
+        startAutoSolveTimer(speed: autoSolveSpeed)
+    }
+
+    /// 자동 풀어 보기 중단 — 원래 상태로 복원
+    func cancelAutoSolve() {
+        cancelAutoSolve(restore: true, message: "자동 풀어 보기를 중단했습니다.")
+    }
+
+    private func cancelAutoSolve(restore: Bool, message: String?) {
+        autoSolveTask?.cancel()
+        autoSolveTask = nil
+        autoSolveTimer?.invalidate()
+        autoSolveTimer = nil
+        if restore, let snapshot = autoSolveSnapshot {
+            game = snapshot
+            persist()
+        }
+        autoSolveSnapshot = nil
+        autoSolveMoves = []
+        autoSolveIndex = 0
+        autoSolveProgress = 0
+        isAutoSolving = false
+        if let message {
+            dismissMessage()
+            showMessage(message)
+        }
+    }
+
+    private func startAutoSolveTimer(speed: AutoSolveSpeed) {
+        autoSolveTimer?.invalidate()
+        let interval = speed.rawValue
+        autoSolveTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard let self else { return }
+                guard self.isAutoSolving else { return }
+                guard self.autoSolveIndex < self.autoSolveMoves.count else {
+                    self.finishAutoSolve()
+                    return
+                }
+                let move = self.autoSolveMoves[self.autoSolveIndex]
+                self.autoSolveIndex += 1
+                if self.game.applyForReplay(move) {
+                    self.autoSolveProgress = Double(self.autoSolveIndex) / Double(self.autoSolveMoves.count)
+                }
+            }
+        }
+    }
+
+    /// 재생 완료 — 승리까지 도달했지만 시연이므로 원래 상태로 복원
+    private func finishAutoSolve() {
+        autoSolveTimer?.invalidate()
+        autoSolveTimer = nil
+        let count = autoSolveMoves.count
+        autoSolveTask?.cancel()
+        autoSolveTask = nil
+        if let snapshot = autoSolveSnapshot {
+            game = snapshot
+            persist()
+        }
+        autoSolveSnapshot = nil
+        autoSolveMoves = []
+        autoSolveIndex = 0
+        autoSolveProgress = 1
+        isAutoSolving = false
+        showMessage("자동 풀어 보기 완료: \(count) 수로 해결할 수 있습니다. 원래 상태로 복원했습니다.")
+    }
+
+    // MARK: - 내 이동 리플레이
+
+    /// 완료(승리) 게임이고 FreeCell 계열일 때만 리플레이 가능
+    var canReplay: Bool {
+        FreeCellSolver.isFreeCellFamily(variant) && currentIsWon && !isAutoSolving && !isReplaying
+    }
+
+    /// 리플레이 시작 — 완료 게임의 전방 이동 기록을 승리 직전 상태부터 재생.
+    /// 시연이므로 시작 시 스냅샷 보존, 종료/중단 시 원래(승리) 상태로 복원.
+    func startReplay() {
+        guard canReplay, let history = completedMoveHistory, !history.isEmpty else { return }
+        let speed = autoSolveSpeed
+        let targetVariant = variant
+        let targetNumber = currentGameNumber
+
+        replaySnapshot = game
+        replayMoves = history
+        replayIndex = 0
+        isReplaying = true
+        replayProgress = 0
+        selection = nil
+        highlightedMove = nil
+        dismissMessage()
+        showMessage("리플레이: \(history.count) 수를 재생합니다.")
+        // 승리 상태 → 시작 상태로 되돌려 처음부터 재생
+        game = FreeCellGame(gameNumber: targetNumber, variant: targetVariant)
+        startReplayTimer(speed: speed)
+    }
+
+    /// 일시정지 (재생 상태 유지)
+    func pauseReplay() {
+        guard isReplaying else { return }
+        replayTimer?.invalidate()
+        replayTimer = nil
+    }
+
+    /// 일시정지 해제
+    func resumeReplay() {
+        guard isReplaying, replayTimer == nil else { return }
+        startReplayTimer(speed: autoSolveSpeed)
+    }
+
+    /// 리플레이 중단 — 원래(승리) 상태로 복원
+    func cancelReplay() {
+        guard isReplaying else { return }
+        cancelReplaySilently()
+        dismissMessage()
+        showMessage("리플레이를 중단했습니다.")
+    }
+
+    /// 리플레이 정리 (메시지 없음 — 새 게임 전환 시 사용)
+    private func cancelReplaySilently() {
+        replayTimer?.invalidate()
+        replayTimer = nil
+        if let snapshot = replaySnapshot {
+            game = snapshot
+            persist()
+        }
+        replaySnapshot = nil
+        replayMoves = []
+        replayIndex = 0
+        replayProgress = 0
+        isReplaying = false
+    }
+
+    private func startReplayTimer(speed: AutoSolveSpeed) {
+        replayTimer?.invalidate()
+        let interval = speed.rawValue
+        replayTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard let self else { return }
+                guard self.isReplaying else { return }
+                guard self.replayIndex < self.replayMoves.count else {
+                    self.finishReplay()
+                    return
+                }
+                let move = self.replayMoves[self.replayIndex]
+                self.replayIndex += 1
+                if self.game.applyForReplay(move) {
+                    self.replayProgress = Double(self.replayIndex) / Double(self.replayMoves.count)
+                }
+            }
+        }
+    }
+
+    /// 리플레이 완료 — 승리 상태 도달. 시연이므로 원래(승리) 상태로 복원.
+    private func finishReplay() {
+        replayTimer?.invalidate()
+        replayTimer = nil
+        let count = replayMoves.count
+        if let snapshot = replaySnapshot {
+            game = snapshot
+            persist()
+        }
+        replaySnapshot = nil
+        replayMoves = []
+        replayIndex = 0
+        replayProgress = 1
+        isReplaying = false
+        showMessage("리플레이 완료: \(count) 수를 시청했습니다. 원래 상태로 복원했습니다.")
     }
 
     // MARK: - 게임 번호

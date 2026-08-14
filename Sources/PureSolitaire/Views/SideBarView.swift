@@ -81,6 +81,24 @@ struct SideBarView: View {
 
     private var helpGroup: some View {
         VStack(spacing: 6) {
+            SideBarButton(
+                icon: "play.rectangle.fill",
+                title: "자동 풀어 보기",
+                shortcut: "⇧⌘P",
+                isEnabled: vm.canAutoSolve,
+                fg: fg
+            ) {
+                vm.startAutoSolve()
+            }
+            SideBarButton(
+                icon: "arrow.counterclockwise",
+                title: "내 이동 리플레이",
+                shortcut: "⇧⌘R",
+                isEnabled: vm.canReplay,
+                fg: fg
+            ) {
+                vm.startReplay()
+            }
             SideBarButton(icon: "lightbulb.fill", title: "힌트", shortcut: "⌘H", fg: fg) {
                 vm.hint()
             }

@@ -64,7 +64,11 @@
   - **2026-08-14 진행 중 갱신**: T-210 과정에서 무효 이동 버그 2건 수정(단일/그룹 bottom 카드 기준 + 유효 최대 그룹 탐색) + 진행(홈 카드) 없는 경로 가지치기(`maxStagnantDepth 80`)로 **#50 유효 해 703 이동이 재생 예산(2M/20s) 내 16.6s 해결**, **#500은 이제 기본 예산으로도 풀리는 게임으로 판명** — T-206 목표 대부분 해소됨.
 
 ## v3.21 — 자동 풀어 보기 + 일일 도전 9판/3개월 달력 (진행중)
-- [x] T-210 (진행·코어 완료): `FreeCellSolver.solve(gameNumber:variant:budget:) -> [Move]?` — 이동 수집 DFS + `isWinnable`을 `solve() != nil`로 재구현 + `replayBudget`(2M/20s/60k). **핵심 완료**: 버그 수정(무효 이동) + 진행 가지치기로 유효한 단기 해 생성 — #1 950~3130 / #2 415 / #100 3678 이동 전부 유효, #50 703 이동(replayBudget 16.6s). #10은 유효 해 2553 이동 존재하나 134초 소요(난이도 높음 분류, 재생 예산 밖). #11982(MS 유일 미해결)는 20M/240s에서도 nil 확인. FreeCellSolverTests 11개 전부 통과. **남은 것**: 난이도 판정(T-211)용 노드/깊이 소요 반환 추가.
+- [x] T-210 (진행·코어 완료): `FreeCellSolver.solve(gameNumber:variant:budget:) -> [Move]?` — 이동 수집 DFS + `isWinnable`을 `solve() != nil`로 재구현 + `replayBudget`(2M/20s/60k). **핵심 완료**: 버그 수정(무효 이동) + 진행 가지치기로 유효한 단기 해 생성 — #1 950~3130 / #2 415 / #100 3678 이동 전부 유효, #50 703 이동(replayBudget 16.6s). #10은 유효 해 2553 이동 존재하나 134초 소요(난이도 높음 분류, 재생 예산 밖). #11982(MS 유일 미해결)는 20M/240s에서도 nil 확인. FreeCellSolverTests 11개 전부 통과.
+- [x] T-211: 난이도 판정 — `SolveResult`(moves+nodeCount+depth)로 solve 확장 + `Difficulty`(쉬움/보통/어려움/미측정, 노드 <20k/150k 경계). DifficultyTests 4개 통과.
+- [x] T-212: VM 자동 풀어 보기 — `startAutoSolve`(백그라운드 solve + 타이머 순차 재생) / `pause`/`resume`/`cancel`, `FreeCellGame.applyForReplay`(기록 오염 없음), 스냅샷 복원, 속도 3단계, 진행률. 단위 테스트 + 전체 231개 회귀 통과.
+- [x] T-213: 내 이동 리플레이 — 전방 `moveHistory`(자동 플레이/완성 포함) 동기화 + 승리 시 확정, `startReplay`(시작 상태로 되돌려 재생)/`pause`/`resume`/`cancel` + 스냅샷 복원. 빌드 검증 + 전체 231개 회귀 통과.
+- [x] T-214: 재생 오버레이 UI — `PlaybackOverlayView`(진행률/속도/일시정지/중단) + 재생 중 조작 잠금 + 사이드바·메뉴 버튼(⇧⌘P/⇧⌘R). 빌드 검증 + 전체 231개 회귀 통과. **남은 것**: A 완료 — T-215부터 B(일일 도전 9판).
 
 ## v1.0 — 프리셀 MVP
 

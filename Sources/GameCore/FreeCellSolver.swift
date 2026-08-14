@@ -39,13 +39,13 @@ public enum FreeCellSolver {
         solve(gameNumber: gameNumber, variant: variant, budget: budget) != nil
     }
 
-    /// 풀이 이동 시퀀스 — DFS가 찾은 성공 경로를 처음부터 끝까지 순서대로 반환.
-    /// 미지원 변형/미해결/예산 초과는 nil. (자동 풀어 보기/리플레이용)
+    /// 풀이 이동 시퀀스 + 탐색 소요 — DFS가 찾은 성공 경로를 처음부터 끝까지 순서대로 반환.
+    /// 미지원 변형/미해결/예산 초과는 nil. (자동 풀어 보기/리플레이/난이도 판정용)
     public static func solve(
         gameNumber: Int,
         variant: GameVariant,
         budget: Budget = .standard
-    ) -> [Move]? {
+    ) -> SolveResult? {
         guard isFreeCellFamily(variant) else { return nil }
         let game = FreeCellGame(gameNumber: gameNumber, variant: variant)
         return solve(state: SolverState(from: game), variant: variant, budget: budget)
@@ -127,21 +127,22 @@ public enum FreeCellSolver {
     }
 
     /// 풀이 이동 시퀀스를 수집하는 반복 DFS.
-    /// 성공 시 처음→끝 순서의 유효한 이동 시퀀스를 반환하고, 실패/예산 초과 시 nil.
-    static func solve(state: SolverState, variant: GameVariant, budget: Budget) -> [Move]? {
+    /// 성공 시 처음→끝 순서의 유효한 이동 시퀀스와 소요(노드/깊이)를 반환하고, 실패/예산 초과 시 nil.
+    static func solve(state: SolverState, variant: GameVariant, budget: Budget) -> SolveResult? {
         let start = Date()
 
         // 단일 DFS 호출 — 깊이 제한은 budget.depthLimit 전체. (IDDFS는 FreeCell 상태 공간이
         // 커서 각 깊이 단계가 처음부터 재탐색해야 해서 시간 예산을 소진해 실패 — 단일 DFS로 회귀)
         var nodes = 0
-        return dfs(
+        guard let (path, depth) = dfs(
             depthLimit: budget.depthLimit,
             start: start,
             nodes: &nodes,
             budget: budget,
             state: state,
             variant: variant
-        )
+        ) else { return nil }
+        return SolveResult(moves: path, nodeCount: nodes, depth: depth)
     }
 
     /// 단일 깊이 제한 반복 DFS (명시적 스택) — 승리 경로를 처음→끝 순서로 반환. 실패/예산 초과 nil.
@@ -153,7 +154,7 @@ public enum FreeCellSolver {
         budget: Budget,
         state: SolverState,
         variant: GameVariant
-    ) -> [Move]? {
+    ) -> (path: [Move], depth: Int)? {
         var visited: Set<SolverState> = []
         var stack: [Frame] = []
 
@@ -367,7 +368,7 @@ public enum FreeCellSolver {
         let current = initial.state
         visited.insert(current)
         nodes += 1
-        if isWon(current) { return initial.homeMoves }
+        if isWon(current) { return (initial.homeMoves, 1) }
         stack.append(Frame(state: current, moves: generalMoves(current), nextIndex: 0, appliedMove: nil, homeMoves: initial.homeMoves, homeCount: Self.homeCount(current), stagnantDepth: 0))
 
         while !stack.isEmpty {
@@ -408,7 +409,7 @@ public enum FreeCellSolver {
                 }
                 path.append(move)
                 path.append(contentsOf: normalized.homeMoves)
-                return path
+                return (path, stack.count + 1)
             }
 
             stack.append(Frame(state: normalized.state, moves: generalMoves(normalized.state), nextIndex: 0, appliedMove: move, homeMoves: normalized.homeMoves, homeCount: nextHomeCount, stagnantDepth: newStagnant))

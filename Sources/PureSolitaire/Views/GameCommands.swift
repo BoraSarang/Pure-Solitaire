@@ -66,6 +66,15 @@ struct GameCommands: Commands {
             Button("선택 해제") { viewModel.clearSelection() }
                 .keyboardShortcut(.cancelAction)
                 .disabled(viewModel.selection == nil)
+
+            Divider()
+
+            Button("자동 풀어 보기") { viewModel.startAutoSolve() }
+                .keyboardShortcut("p", modifiers: [.command, .shift])
+                .disabled(!viewModel.canAutoSolve)
+            Button("내 이동 리플레이") { viewModel.startReplay() }
+                .keyboardShortcut("r", modifiers: [.command, .shift])
+                .disabled(!viewModel.canReplay)
             Button("선택 카드 홈으로") { _ = viewModel.moveSelectionToHome() }
                 .keyboardShortcut(" ", modifiers: [])
                 .disabled(viewModel.selection == nil)
