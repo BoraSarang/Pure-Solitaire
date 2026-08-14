@@ -168,6 +168,7 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .frame(width: 460, height: 620)
+        .padding(.horizontal, 16)
         .confirmationDialog(
             "정말 통계를 초기화할까요?",
             isPresented: $showingResetConfirmation,
