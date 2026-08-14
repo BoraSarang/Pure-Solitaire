@@ -14,6 +14,7 @@ struct HomeView: View {
             Divider()
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 24) {
+                    resumeCard
                     quickActions
                     categorySections
                 }
@@ -21,6 +22,42 @@ struct HomeView: View {
             }
         }
         .background(BackgroundLayer(settings: settings))
+    }
+
+    // MARK: - 하던 게임 이어하기
+
+    @ViewBuilder
+    private var resumeCard: some View {
+        if let resumed = vm.restoredVariant {
+            Button {
+                onStartGame()
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "play.fill")
+                        .font(.title3)
+                        .foregroundStyle(Color.accentColor)
+                        .frame(width: 44, height: 44)
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.accentColor.opacity(0.12)))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("하던 게임 이어하기")
+                            .font(.headline)
+                            .foregroundStyle(.primary)
+                        Text("\(resumed.displayName) · 게임 \(vm.currentGameNumber)번 · 이동 \(vm.currentMoveCount)회")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(12)
+                .background(RoundedRectangle(cornerRadius: 12).fill(Color.accentColor.opacity(0.08)))
+                .contentShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("하던 게임 이어하기, \(resumed.displayName) 게임 \(vm.currentGameNumber)번, 이동 \(vm.currentMoveCount)회")
+        }
     }
 
     // MARK: - 상단 헤더

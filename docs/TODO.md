@@ -67,6 +67,7 @@
 - [x] T-222: `GameVariant` 표시 전용 속성 — `GameCategory`(4그룹) + `baseDifficulty`/`categoryOrder` + `homeOrderedVariants`. `allCases` 순서 유지(데일리 셔플/순환 매핑 무영향). GameVariantDisplayTests 4개 통과.
 - [x] T-223: `GameSelectorView` 카테고리 섹션화 + 난이도 뱃지.
 - [x] T-224: `HomeView` 신규 — 타이틀 헤더 + 빠른 진입(데일리/게임 번호/무작위/통계·업적·설정) + 카테고리 그리드.
+- [x] T-224a: 홈 "하던 게임 이어하기" 카드 — VM `restoredVariant` + 클릭 시 복원 게임 표시.
 - [x] T-225: `ContentView` 홈/게임 전환 — VM `showingHome`(기본 true, 앱 시작 시 홈 먼저). 홈에서 창 타이틀 "Pure Solitaire".
 - [x] T-226: 게임 중 난이도 뱃지 — `gameInfoView` 게임 번호 아래 (`vm.variant.baseDifficulty`).
 - [x] T-227: 사이드바 "홈" 버튼(house, ⌘1) + 게임 메뉴 홈(⌘1) + VM `goHome()`.

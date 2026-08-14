@@ -155,6 +155,23 @@ final class FreeCellViewModel: ObservableObject {
     }
     var variantDisplayName: String { variant.displayName }
 
+    /// 복원 가능한 저장 게임의 형식 (홈 화면 "하던 게임 이어하기" 표시용). 없으면 nil.
+    /// init의 복원 우선순위(Spider→Klondike→…→FreeCell/Baker's)와 동일 순서로 확인.
+    var restoredVariant: GameVariant? {
+        if gameSaver.restoreSpider() != nil { return .spider }
+        if gameSaver.restoreKlondike() != nil { return .klondike }
+        if gameSaver.restoreYukon() != nil { return .yukon }
+        if gameSaver.restoreFortyThieves() != nil { return .fortyThieves }
+        if gameSaver.restoreGolf() != nil { return .golf }
+        if gameSaver.restorePyramid() != nil { return .pyramid }
+        if gameSaver.restoreTriPeaks() != nil { return .triPeaks }
+        if gameSaver.restoreScorpion() != nil { return .scorpion }
+        if gameSaver.restoreSeaTower() != nil { return .seaTower }
+        if gameSaver.restoreSuperFreeCell() != nil { return .superFreeCell }
+        if gameSaver.restore() != nil { return .freecell }
+        return nil
+    }
+
     /// 현재 게임의 게임번호 / 이동 수 (Spider/Klondike/Yukon/FortyThieves/Golf/Pyramid/TriPeaks 분기)
     var currentGameNumber: Int { spider?.gameNumber ?? klondike?.gameNumber ?? yukon?.gameNumber ?? fortyThieves?.gameNumber ?? golf?.gameNumber ?? pyramid?.gameNumber ?? triPeaks?.gameNumber ?? scorpion?.gameNumber ?? game.gameNumber }
     var currentMoveCount: Int { spider?.moveCount ?? klondike?.moveCount ?? yukon?.moveCount ?? fortyThieves?.moveCount ?? golf?.moveCount ?? pyramid?.moveCount ?? triPeaks?.moveCount ?? scorpion?.moveCount ?? game.moveCount }

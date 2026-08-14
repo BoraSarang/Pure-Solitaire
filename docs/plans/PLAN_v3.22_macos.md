@@ -73,6 +73,7 @@ Sources/PureSolitaire/Views/GameCommands.swift      홈 단축키
 - [x] T-222: `GameVariant` 표시 전용 속성 — `GameCategory` enum(4그룹) + `category`/`baseDifficulty`/`categoryOrder` + `homeOrderedVariants`(카테고리→난이도→순서 정렬). `allCases` 순서 변경 없음. GameVariantDisplayTests 4개 통과.
 - [x] T-223: `GameSelectorView` 카테고리 섹션화 — `ForEach(GameCategory.allCases)` 섹션, 섹션 내 난이도순 정렬 + 난이도 뱃지(쉬움/보통/어려움 색상). 게임 번호 시트 재사용.
 - [x] T-224: `HomeView` 신규 — 타이틀 헤더 + 빠른 진입(데일리 도전 ⌥⌘D / 게임 번호 ⌘G / 무작위 / 통계·업적·설정) + 카테고리 섹션 그리드(4열, 난이도 뱃지). 타일 클릭 → `onStartGame()` + `requestNewGame(variant:)`.
+- [x] T-224a: 홈 "하던 게임 이어하기" 카드 — VM `restoredVariant`(init 복원 우선순위와 동일 순서로 저장 게임 형식 확인) + HomeView 상단 카드(게임명/번호/이동 표시, 클릭 → `onStartGame()`만 호출 = 복원된 게임 그대로 표시).
 - [x] T-225: `ContentView` 홈/게임 전환 — VM `showingHome` 플래그(기본 true), `showingHome ? HomeView : SideBar+GameBoard`, opacity 전환 애니메이션, 시트/다이얼로그 상위 유지. 홈에서 창 타이틀 "Pure Solitaire".
 - [x] T-226: 게임 중 난이도 표시 — `gameInfoView` 게임 번호 아래 난이도 뱃지(`vm.variant.baseDifficulty`), 접근성 라벨 포함.
 - [x] T-227: 사이드바 "홈" 버튼(house, ⌘1) + GameCommands "게임" 메뉴 홈(⌘1) + VM `goHome()`.
