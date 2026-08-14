@@ -49,6 +49,9 @@ struct SideBarView: View {
 
     private var gameGroup: some View {
         VStack(spacing: 6) {
+            SideBarButton(icon: "house.fill", title: "홈", shortcut: "⌘1", fg: fg) {
+                vm.goHome()
+            }
             SideBarButton(icon: "rectangle.stack.fill", title: "새 게임", shortcut: "⌘N", fg: fg) {
                 vm.requestNewGame()
             }

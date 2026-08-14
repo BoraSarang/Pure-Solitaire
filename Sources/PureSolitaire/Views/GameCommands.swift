@@ -20,6 +20,8 @@ struct GameCommands: Commands {
         }
 
         CommandMenu("게임") {
+            Button("홈") { viewModel.goHome() }
+                .keyboardShortcut("1", modifiers: .command)
             Button("게임 번호...") { viewModel.showingGameNumber = true }
                 .keyboardShortcut("g", modifiers: .command)
             Button("데일리 딜") { viewModel.startDailyDeal() }

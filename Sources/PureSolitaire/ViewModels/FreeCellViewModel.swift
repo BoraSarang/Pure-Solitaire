@@ -25,6 +25,8 @@ final class FreeCellViewModel: ObservableObject {
     @Published var showingSettings = false
     @Published var showingChallenge = false
     @Published var showingAchievements = false
+    /// 홈 화면 표시 여부 — 앱 시작 시 홈 먼저 (T-225)
+    @Published var showingHome = true
     @Published var showingNewGameConfirmation = false
     @Published var showNextGameButton = false
     @Published private(set) var message: String?
@@ -294,6 +296,12 @@ final class FreeCellViewModel: ObservableObject {
     }
 
     // MARK: - 새 게임
+
+    /// 홈 화면으로 이동 — 게임 화면에서 홈 복귀 (T-227)
+    func goHome() {
+        showingHome = true
+        objectWillChange.send()
+    }
 
     func newGame() {
         newGame(number: Int.random(in: DealGenerator.minGameNumber...DealGenerator.maxGameNumber))

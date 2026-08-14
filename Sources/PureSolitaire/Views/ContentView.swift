@@ -7,13 +7,14 @@ struct ContentView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            HStack(spacing: 0) {
-                SideBarView(side: .left)
-                    .frame(maxHeight: .infinity, alignment: .top)
-                GameBoardView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                SideBarView(side: .right)
-                    .frame(maxHeight: .infinity, alignment: .top)
+            Group {
+                if vm.showingHome {
+                    HomeView(onStartGame: { vm.showingHome = false })
+                        .transition(.opacity)
+                } else {
+                    gameScreen
+                        .transition(.opacity)
+                }
             }
             if let message = vm.message {
                 MessageBanner(text: message)
@@ -42,6 +43,7 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.3), value: vm.message)
         .animation(.easeInOut(duration: 0.3), value: vm.showNextGameButton)
         .animation(.spring(response: 0.4, dampingFraction: 0.6), value: vm.currentIsWon)
+        .animation(.easeInOut(duration: 0.2), value: vm.showingHome)
         .confirmationDialog(
             "새 게임을 시작할까요?",
             isPresented: $vm.showingNewGameConfirmation,
@@ -78,10 +80,25 @@ struct ContentView: View {
         .onChange(of: vm.variant) { _ in
             updateWindowTitle()
         }
+        .onChange(of: vm.showingHome) { _ in
+            updateWindowTitle()
+        }
+    }
+
+    /// 게임 화면 — 사이드바 + 보드
+    private var gameScreen: some View {
+        HStack(spacing: 0) {
+            SideBarView(side: .left)
+                .frame(maxHeight: .infinity, alignment: .top)
+            GameBoardView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            SideBarView(side: .right)
+                .frame(maxHeight: .infinity, alignment: .top)
+        }
     }
 
     private func updateWindowTitle() {
-        windowTitle = "Pure Solitaire — \(vm.variantDisplayName) \(vm.currentGameNumber)"
+        windowTitle = vm.showingHome ? "Pure Solitaire" : "Pure Solitaire — \(vm.variantDisplayName) \(vm.currentGameNumber)"
     }
 }
 

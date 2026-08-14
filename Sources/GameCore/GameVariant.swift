@@ -80,3 +80,86 @@ public enum GameVariant: String, Codable, CaseIterable, Sendable {
         }
     }
 }
+
+/// 게임 카테고리 — 홈 화면 그룹 표시용. (T-222)
+public enum GameCategory: String, CaseIterable, Sendable {
+    /// FreeCell 계열 (FreeCell/Baker's/Sea Tower/Super FreeCell)
+    case freeCell
+    /// 스톡 계열 (Klondike/Yukon)
+    case stock
+    /// 스파이더 계열 (Spider/Forty Thieves/Scorpion)
+    case spider
+    /// 카드 제거 (Golf/Pyramid/TriPeaks)
+    case removal
+
+    public var displayName: String {
+        switch self {
+        case .freeCell: "FreeCell 계열"
+        case .stock: "스톡 계열"
+        case .spider: "스파이더 계열"
+        case .removal: "카드 제거"
+        }
+    }
+}
+
+extension GameVariant {
+    /// 카테고리 — 홈 화면 그룹 표시용. (T-222)
+    public var category: GameCategory {
+        switch self {
+        case .freecell, .bakersGame, .seaTower, .superFreeCell: .freeCell
+        case .klondike, .yukon: .stock
+        case .spider, .fortyThieves, .scorpion: .spider
+        case .golf, .pyramid, .triPeaks: .removal
+        }
+    }
+
+    /// 변형별 대표 난이도 (게임 규칙 복잡성 기준 고정값) — 홈 타일/게임 중 난이도 표시용. (T-222)
+    /// FreeCell 계열 실측(`Difficulty.measure`)은 판당 최대 8s라 게임 중 표시엔 변형 고정값 사용.
+    public var baseDifficulty: Difficulty {
+        switch self {
+        case .scorpion, .golf: .easy
+        case .freecell, .bakersGame, .klondike, .spider, .pyramid, .triPeaks: .medium
+        case .seaTower, .superFreeCell, .yukon, .fortyThieves: .hard
+        }
+    }
+
+    /// 카테고리 내 보조 정렬 순서 (개발순 고정) — 동일 난이도일 때 사용. (T-222)
+    public var categoryOrder: Int {
+        switch self {
+        case .freecell: 0
+        case .bakersGame: 1
+        case .seaTower: 2
+        case .superFreeCell: 3
+        case .klondike: 0
+        case .yukon: 1
+        case .scorpion: 0
+        case .spider: 1
+        case .fortyThieves: 2
+        case .golf: 0
+        case .pyramid: 1
+        case .triPeaks: 2
+        }
+    }
+
+    /// 홈 화면 표시 정렬 — 카테고리 → 난이도(쉬움→어려움) → categoryOrder. (T-222)
+    public static var homeOrderedVariants: [GameVariant] {
+        let difficultyRank = { (d: Difficulty) -> Int in
+            switch d {
+            case .easy: 0
+            case .medium: 1
+            case .hard: 2
+            case .unmeasured: 3
+            }
+        }
+        return GameCategory.allCases.flatMap { category in
+            GameVariant.allCases
+                .filter { $0.category == category }
+                .sorted { lhs, rhs in
+                    let ld = difficultyRank(lhs.baseDifficulty)
+                    let rd = difficultyRank(rhs.baseDifficulty)
+                    if ld != rd { return ld < rd }
+                    return lhs.categoryOrder < rhs.categoryOrder
+                }
+        }
+    }
+}

@@ -1,7 +1,7 @@
 import SwiftUI
 import GameCore
 
-/// 게임 선택 그리드 — `GameVariant.allCases`를 미니 보드 미리보기 카드로 3열 배치 (게임 추가 시 자동 확장)
+/// 게임 선택 그리드 — 카테고리 4그룹 섹션 + 그룹 내 난이도순 + 난이도 뱃지 (T-223)
 struct GameSelectorView: View {
     @Binding var selection: GameVariant
     let boardColor: Color
@@ -14,8 +14,32 @@ struct GameSelectorView: View {
 
     var body: some View {
         ScrollView {
+            LazyVStack(alignment: .leading, spacing: 20) {
+                ForEach(GameCategory.allCases, id: \.self) { category in
+                    categorySection(category)
+                }
+            }
+            .padding(6)
+        }
+        .accessibilityLabel("게임 선택")
+    }
+
+    private func categorySection(_ category: GameCategory) -> some View {
+        let variants = GameVariant.allCases
+            .filter { $0.category == category }
+            .sorted { lhs, rhs in
+                let ld = difficultyRank(lhs.baseDifficulty)
+                let rd = difficultyRank(rhs.baseDifficulty)
+                if ld != rd { return ld < rd }
+                return lhs.categoryOrder < rhs.categoryOrder
+            }
+        return VStack(alignment: .leading, spacing: 8) {
+            Text(category.displayName)
+                .font(.subheadline.bold())
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 6)
             LazyVGrid(columns: columns, spacing: 16) {
-                ForEach(GameVariant.allCases, id: \.self) { variant in
+                ForEach(variants, id: \.self) { variant in
                     GameTile(
                         variant: variant,
                         isSelected: selection == variant,
@@ -25,13 +49,20 @@ struct GameSelectorView: View {
                     }
                 }
             }
-            .padding(6)
         }
-        .accessibilityLabel("게임 선택")
+    }
+
+    private func difficultyRank(_ d: Difficulty) -> Int {
+        switch d {
+        case .easy: 0
+        case .medium: 1
+        case .hard: 2
+        case .unmeasured: 3
+        }
     }
 }
 
-/// 개별 게임 타일 — 미리보기 카드 + 게임명
+/// 개별 게임 타일 — 미리보기 카드 + 게임명 + 난이도 뱃지
 private struct GameTile: View {
     let variant: GameVariant
     let isSelected: Bool
@@ -47,6 +78,7 @@ private struct GameTile: View {
                 .font(.caption.weight(.medium))
                 .foregroundStyle(isSelected ? Color.blue : Color.secondary)
                 .lineLimit(1)
+            difficultyBadge
         }
         .padding(6)
         .contentShape(RoundedRectangle(cornerRadius: 10))
@@ -55,7 +87,34 @@ private struct GameTile: View {
         .scaleEffect(hovered && !isSelected ? 1.04 : 1)
         .animation(.easeOut(duration: 0.15), value: hovered)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(variant.displayName) 게임")
+        .accessibilityLabel("\(variant.displayName) 게임, 난이도 \(difficultyText)")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private var difficultyText: String {
+        switch variant.baseDifficulty {
+        case .easy: "쉬움"
+        case .medium: "보통"
+        case .hard: "어려움"
+        case .unmeasured: "미측정"
+        }
+    }
+
+    private var difficultyColor: Color {
+        switch variant.baseDifficulty {
+        case .easy: .green
+        case .medium: .orange
+        case .hard: .red
+        case .unmeasured: .gray
+        }
+    }
+
+    private var difficultyBadge: some View {
+        Text(difficultyText)
+            .font(.system(size: 9, weight: .bold))
+            .padding(.horizontal, 6)
+            .padding(.vertical, 1)
+            .background(Capsule().fill(difficultyColor.opacity(0.15)))
+            .foregroundStyle(difficultyColor)
     }
 }

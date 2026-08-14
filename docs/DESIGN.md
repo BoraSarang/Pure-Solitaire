@@ -245,6 +245,12 @@ final class FreeCellGame {
 - **3개월 달력/월 통계** (`GameCore/CalendarMonth.swift`): `CalendarMonth`(월·연 경계, firstWeekday, dayCount) + `MonthSummary`(완료/총/별/변형 분포, 완료율·별 획득률) + `MonthBadge`(25% 브론즈/50% 실버/75% 골드/100% 다이아).
 - **챌린지 시트 UI**: ChallengeView 전면 재작성 — 3개월 달력(◀▶, 날짜별 ★완료) + 날짜 선택 9판 목록(순번/변형/게임 번호/난이도 태그/별, 미래 비활성) + 월 통계 하단 + 월 배지. VM `startChallenge(deal:)`(특정 판 시작, `activeChallengeDeal`) + `recordChallengeIfToday` 판별 매칭 + 난이도 백그라운드 순차 측정 캐시(`ensureDealDifficulties`, `Task.detached`, onDisappear 취소).
 
+### 3.22 홈 화면 + 게임 카테고리/난이도 그룹화 + 게임 중 난이도 (v3.22)
+- **표시 전용 정렬** (`GameCore/GameVariant.swift`): `GameCategory`(freeCell/stock/spider/removal) + `baseDifficulty`(변형 고정: 쉬움 Golf·Scorpion / 보통 FreeCell·Baker's·Klondike·Spider·Pyramid·TriPeaks / 어려움 Sea Tower·Super FreeCell·Yukon·Forty Thieves) + `categoryOrder`(동일 난이도 보조) + `homeOrderedVariants`(카테고리→난이도→순서). **`allCases` 순서는 enum 선언 그대로 유지** — 데일리 셔플(`deals(for:)`)과 단건 순환 매핑(`variant(for:)`의 인덱스)이 의존하므로 표시 전용 속성으로만 정렬.
+- **홈 화면** (`HomeView`): VM `showingHome`(기본 true — 앱 시작 시 홈 먼저). 타이틀 헤더 + 빠른 진입(데일리 ⌥⌘D/게임 번호 ⌘G/무작위/통계·업적·설정) + 카테고리 섹션 그리드(4열, 난이도 뱃지). 타일 클릭 → `onStartGame()` + `requestNewGame(variant:)`. ContentView가 `showingHome ? HomeView : SideBar+GameBoard` 전환. 홈에서 창 타이틀 "Pure Solitaire".
+- **게임 중 난이도**: `gameInfoView` 게임 번호 아래 뱃지(`vm.variant.baseDifficulty`). FreeCell 계열 실측(`Difficulty.measure`)은 판당 최대 8s라 게임 중 표시엔 변형 고정값 사용(실측은 데일리 판별 목록에만).
+- **복귀 경로**: 사이드바 좌측 첫 버튼 "홈"(house, ⌘1) + 게임 메뉴 홈(⌘1) + VM `goHome()`.
+
 ### 3.20 Scorpion 변형 (v3.18)
 - **게임** (`GameCore/ScorpionGame.swift`): `columns: [[ColumnCard]]`(7열×7장) + `reserve: [Card]`(3장). `reserveDealt` 플래그로 예비 딜 1회 제한.
   - 딜: `DealGenerator.scorpionDeal(gameNumber:)` — 앞 4열 밑 3장 뒤집힘+위 4장 앞면, 뒤 3열 전부 앞면. 나머지 3장 예비.

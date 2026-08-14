@@ -667,6 +667,7 @@ struct GameBoardView: View {
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
+            difficultyBadge
             Text("이동 \(vm.currentMoveCount)")
                 .font(.caption2)
                 .foregroundStyle(settings.feltTextBase.opacity(0.6))
@@ -701,7 +702,7 @@ struct GameBoardView: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(vm.variantDisplayName), 게임 번호 \(vm.currentGameNumber), 이동 \(vm.currentMoveCount), 시간 \(formatTime(vm.elapsedSeconds))")
+        .accessibilityLabel("\(vm.variantDisplayName), 게임 번호 \(vm.currentGameNumber), 난이도 \(difficultyBadgeContent.0), 이동 \(vm.currentMoveCount), 시간 \(formatTime(vm.elapsedSeconds))")
     }
 
     private func formatTime(_ seconds: TimeInterval) -> String {
@@ -709,6 +710,26 @@ struct GameBoardView: View {
         let m = total / 60
         let s = total % 60
         return String(format: "%02d:%02d", m, s)
+    }
+
+    /// 난이도 뱃지 (변형 고정값) — 게임 번호 아래 표시 (T-226)
+    private var difficultyBadge: some View {
+        let (text, color) = difficultyBadgeContent
+        return Text(text)
+            .font(.system(size: 9, weight: .bold))
+            .padding(.horizontal, 7)
+            .padding(.vertical, 2)
+            .background(Capsule().fill(color.opacity(0.18)))
+            .foregroundStyle(color)
+    }
+
+    private var difficultyBadgeContent: (String, Color) {
+        switch vm.variant.baseDifficulty {
+        case .easy: ("쉬움", .green)
+        case .medium: ("보통", .orange)
+        case .hard: ("어려움", .red)
+        case .unmeasured: ("미측정", .gray)
+        }
     }
 
     // MARK: - 홈셀 / 프리셀 / 스톡 / 웨이스트

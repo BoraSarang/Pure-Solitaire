@@ -1,5 +1,16 @@
 # CHANGELOG — 변경 이력
 
+## [3.22.0] — 2026-08-14 — [macos] — 홈 화면 + 게임 카테고리/난이도 그룹화 + 게임 중 난이도 (T-222~T-228)
+### 변경
+- **홈 화면 (A)**: 앱 시작 시 게임 선택 화면이 먼저 표시(`showingHome`). 타이틀 헤더 + 빠른 진입(데일리 도전 ⌥⌘D / 게임 번호 ⌘G / 무작위 / 통계·업적·설정) + 카테고리 4그룹 게임 그리드. 타일 클릭 → 해당 변형 게임 진입. 사이드바 "홈"(house, ⌘1) + 게임 메뉴 홈(⌘1)으로 언제든 복귀. 홈에서는 창 타이틀 "Pure Solitaire".
+- **카테고리/난이도 정렬 (B)**: `GameVariant` 표시 전용 속성 추가 — `GameCategory`(FreeCell/스톡/스파이더/카드 제거) + `baseDifficulty`(변형 고정 난이도) + `categoryOrder` + `homeOrderedVariants`(카테고리→난이도→순서). `allCases` 순서는 유지(데일리 셔플/단건 순환 매핑 무영향).
+- **난이도 매핑**: 쉬움(Golf/Scorpion) · 보통(FreeCell/Baker's/Klondike/Spider/Pyramid/TriPeaks) · 어려움(Sea Tower/Super FreeCell/Yukon/Forty Thieves).
+- **게임 중 난이도 표시 (C)**: 게임판 정보 영역 게임 번호 아래 난이도 뱃지(`vm.variant.baseDifficulty`, 쉬움=초록/보통=주황/어려움=빨강) + 접근성 라벨 포함. `GameSelectorView`도 카테고리 섹션 + 난이도 뱃지로 개편.
+### 검증
+- `swift test -c release` **253개 전부 통과**(16.7s) — 기존 249 + GameVariantDisplayTests 4개.
+- `swift build -c release` 경고 0(기존 ScorpionGame 경고 제외). `build_and_run.sh release` 설치·실행 확인 — 창 타이틀 "Pure Solitaire"(홈 표시).
+- 문서: PLAN_v3.22/TODO/CHANGELOG/DESIGN/session
+
 ## [3.21.0] — 2026-08-14 — [macos] — 자동 풀어 보기 + 내 이동 리플레이 + 일일 도전 9판/3개월 달력/난이도 태그/월 배지 (T-210~T-221)
 ### 변경
 - **자동 풀어 보기 (A)**: `FreeCellSolver.solve(gameNumber:variant:budget:) -> SolveResult?` — DFS가 성공 경로 이동 시퀀스를 수집. 무효 이동 버그 2건 수정(단일/그룹 bottom 카드 기준) + 홈 카드 진행 없는 경로 가지치기(`maxStagnantDepth 80`). `isWinnable`은 `solve() != nil`로 재구현. 재생 예산 `replayBudget`(2M/20s/60k) — #50(703 이동/16.6s) 해결, #10은 난이도 높음으로 분류.

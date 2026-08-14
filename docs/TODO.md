@@ -63,7 +63,17 @@
 - [ ] T-206: 솔버 휴리스틱 추가 개선 — #50(기본 예산 초과, 해는 존재) / #500(난제) 기본 예산 내 해결 — 예산 유지 결정으로 보류.
   - **2026-08-14 진행 중 갱신**: T-210 과정에서 무효 이동 버그 2건 수정(단일/그룹 bottom 카드 기준 + 유효 최대 그룹 탐색) + 진행(홈 카드) 없는 경로 가지치기(`maxStagnantDepth 80`)로 **#50 유효 해 703 이동이 재생 예산(2M/20s) 내 16.6s 해결**, **#500은 이제 기본 예산으로도 풀리는 게임으로 판명** — T-206 목표 대부분 해소됨.
 
-## v3.21 — 자동 풀어 보기 + 일일 도전 9판/3개월 달력 (진행중)
+## v3.22 — 홈 화면 + 게임 카테고리/난이도 그룹화 + 게임 중 난이도 (진행중)
+- [x] T-222: `GameVariant` 표시 전용 속성 — `GameCategory`(4그룹) + `baseDifficulty`/`categoryOrder` + `homeOrderedVariants`. `allCases` 순서 유지(데일리 셔플/순환 매핑 무영향). GameVariantDisplayTests 4개 통과.
+- [x] T-223: `GameSelectorView` 카테고리 섹션화 + 난이도 뱃지.
+- [x] T-224: `HomeView` 신규 — 타이틀 헤더 + 빠른 진입(데일리/게임 번호/무작위/통계·업적·설정) + 카테고리 그리드.
+- [x] T-225: `ContentView` 홈/게임 전환 — VM `showingHome`(기본 true, 앱 시작 시 홈 먼저). 홈에서 창 타이틀 "Pure Solitaire".
+- [x] T-226: 게임 중 난이도 뱃지 — `gameInfoView` 게임 번호 아래 (`vm.variant.baseDifficulty`).
+- [x] T-227: 사이드바 "홈" 버튼(house, ⌘1) + 게임 메뉴 홈(⌘1) + VM `goHome()`.
+- [ ] T-228: 회귀(253) + 설치·실행 검증 + 문서 + 릴리스 v3.22.0.
+
+## v3.21 — 자동 풀어 보기 + 일일 도전 9판/3개월 달력 (완료)
+- [x] v3.21.0 릴리스: 태그 + Release 워크플로우 성공 (`Pure-Solitaire-3.21.0-macos.zip` 4.3MB). CI 안정화: `replayBudget` 20→30s, #50 테스트를 빠른 #2로 교체(시간 의존성 제거). 전체 249개 통과.
 - [x] T-210 (진행·코어 완료): `FreeCellSolver.solve(gameNumber:variant:budget:) -> [Move]?` — 이동 수집 DFS + `isWinnable`을 `solve() != nil`로 재구현 + `replayBudget`(2M/20s/60k). **핵심 완료**: 버그 수정(무효 이동) + 진행 가지치기로 유효한 단기 해 생성 — #1 950~3130 / #2 415 / #100 3678 이동 전부 유효, #50 703 이동(replayBudget 16.6s). #10은 유효 해 2553 이동 존재하나 134초 소요(난이도 높음 분류, 재생 예산 밖). #11982(MS 유일 미해결)는 20M/240s에서도 nil 확인. FreeCellSolverTests 11개 전부 통과.
 - [x] T-211: 난이도 판정 — `SolveResult`(moves+nodeCount+depth)로 solve 확장 + `Difficulty`(쉬움/보통/어려움/미측정, 노드 <20k/150k 경계). DifficultyTests 4개 통과.
 - [x] T-212: VM 자동 풀어 보기 — `startAutoSolve`(백그라운드 solve + 타이머 순차 재생) / `pause`/`resume`/`cancel`, `FreeCellGame.applyForReplay`(기록 오염 없음), 스냅샷 복원, 속도 3단계, 진행률. 단위 테스트 + 전체 231개 회귀 통과.
