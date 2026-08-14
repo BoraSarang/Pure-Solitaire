@@ -48,9 +48,9 @@ Sources/PureSolitaire/Views/GameBoardView.swift            재생 오버레이/�
 - [x] T-212: VM 자동 풀어 보기 — `startAutoSolve()`(백그라운드 `solve` with `replayBudget` → 메인에서 타이머 순차 재생), `pauseAutoSolve`/`resumeAutoSolve`/`cancelAutoSolve`, `FreeCellGame.applyForReplay`(undo 스택/이동 수에 남기지 않는 시연 적용), 재생 전 스냅샷 보존 + 종료/중단/새 게임 시 원래 상태 복원, 속도(빠름 0.15s/보통 0.35s/느림 0.7s), 진행률. undo/redo는 재생 중 가드. `applyForReplay` 단위 테스트 통과. 전체 231개 회귀 통과.
 - [x] T-213: 내 이동 리플레이 — VM이 전방 이동 기록(`moveHistory`, 자동 플레이/자동 완성 포함)을 apply/applyRaw/undo/redo와 동기화, 승리 시 `completedMoveHistory` 확정. `startReplay`(승리 상태 스냅샷 → 시작 상태로 되돌려 처음부터 재생) / `pause`/`resume`/`cancel` + 스냅샷 복원. 테스트 불가(UI) — 빌드 검증 + 전체 231개 회귀 통과.
 - [x] T-214: GameBoardView/사이드바 재생 오버레이 — `PlaybackOverlayView`(신규: 진행률 + 속도 3단계 + 일시정지/재개 + 중단), 재생 중 조작 잠금(DragGesture 비활성 + 오버레이 히트 차단), 사이드바 "자동 풀어 보기"⇧⌘P/"내 이동 리플레이"⇧⌘R 버튼 + GameCommands 단축키. 빌드 검증 + 전체 231개 회귀 통과.
-- [ ] T-215: DailyChallenge 9판 — `DailyChallenge.deals(for date:) -> [(variant, number)]`(12종 중 9개 결정적 샘플링). 테스트: 결정성/9개/중복 없음/월 변경 시 변화.
-- [ ] T-216: ChallengeStore 판별 기록 — `Result`를 9판 배열로 저장(날짜키별 `[result]`), 기존 단건 저장 호환(이전 데이터 로드 시 단건 → 9판 구조 변환). 테스트.
-- [ ] T-217: 3개월 달력 + 월 통계 — `CalendarMonth` 계산(월 경계/연 경계), 날짜별 완료 집계, 월 합계. VM/ChallengeView 연동. 테스트(날짜 산술).
+- [x] T-215: DailyChallenge 9판 — `DailyChallenge.deals(for:) -> [Deal]`(12종 중 9개 날짜 시드 결정적 셔플·중복 없음) + 기존 단건 API 호환 유지. 테스트 5개(결정성/9개/부분집합/월 변경/일 변경) 추가 — DailyChallengeTests 9개 통과.
+- [x] T-216: ChallengeStore 판별 기록 — `DealResult`/`DayResult`(dateKey별 9판 배열) 저장 + `recordDeal`(별점 업그레이드만) + 기존 단건→9판 호환 변환. 테스트 4개 추가 — ChallengeStoreTests 8개 통과.
+- [x] T-217: 3개월 달력 + 월 통계 — `CalendarMonth`(월/연 경계, firstWeekday, dayCount, dailyResults) + `MonthSummary`(완료/별/변형 분포) + `MonthBadge`(25/50/75/100%). 테스트 7개 — CalendarMonthTests 통과.
 - [ ] T-218: 챌린지 시트 UI 개편 — 달력(◀▶ 3개월) + 날짜 선택 → 9판 목록(변형/번호/별/완료) + 월 통계/배지. 
 - [ ] T-219: C 난이도 태그 UI — 데일리 도전 판 목록/게임 번호 시트에 난이도 표시.
 - [ ] T-220: D 월간 배지 — 달력 헤더에 월 완료율 배지(브론즈/실버/골드/다이아).

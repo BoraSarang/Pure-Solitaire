@@ -49,6 +49,49 @@ final class DailyChallengeTests: XCTestCase {
         // 3 초과 불가
         XCTAssertEqual(DailyChallenge.stars(variant: .spider, isWin: true, seconds: 1, moves: 1), 3)
     }
+
+    // MARK: - 9판 (T-215)
+
+    /// 같은 날짜 → 같은 9판 (결정성)
+    func testDealsDeterministicSameDate() {
+        let d = date(2026, 8, 12)
+        XCTAssertEqual(DailyChallenge.deals(for: d), DailyChallenge.deals(for: d))
+    }
+
+    /// 9판 구성 — 정확히 9개, 변형 중복 없음, 게임 번호 유효 범위
+    func testDealsCountAndUniqueness() {
+        let deals = DailyChallenge.deals(for: date(2026, 8, 12))
+        XCTAssertEqual(deals.count, DailyChallenge.dealsPerDay)
+        let variants = deals.map(\.variant)
+        XCTAssertEqual(Set(variants).count, deals.count, "변형은 중복 없어야 함")
+        for deal in deals {
+            XCTAssertGreaterThanOrEqual(deal.number, 1)
+            XCTAssertLessThanOrEqual(deal.number, DealGenerator.maxGameNumber)
+        }
+    }
+
+    /// 9판이 12종 중 9개를 샘플링 — 전체 집합에 포함되어야 함
+    func testDealsAreSubsetOfAllVariants() {
+        let deals = DailyChallenge.deals(for: date(2026, 8, 12))
+        let all = Set(GameVariant.allCases)
+        for deal in deals {
+            XCTAssertTrue(all.contains(deal.variant))
+        }
+    }
+
+    /// 월 변경 시 9판 구성이 달라짐 (전부 같지 않아야 함)
+    func testDealsChangeAcrossMonths() {
+        let august = DailyChallenge.deals(for: date(2026, 8, 12))
+        let september = DailyChallenge.deals(for: date(2026, 9, 12))
+        XCTAssertNotEqual(august, september)
+    }
+
+    /// 같은 달 안에서 날짜가 바뀌면 순서가 달라짐 (전부 같지 않아야 함)
+    func testDealsVaryWithinMonth() {
+        let day1 = DailyChallenge.deals(for: date(2026, 8, 12))
+        let day2 = DailyChallenge.deals(for: date(2026, 8, 13))
+        XCTAssertNotEqual(day1, day2)
+    }
 }
 
 final class ChallengeStoreTests: XCTestCase {
@@ -93,6 +136,61 @@ final class ChallengeStoreTests: XCTestCase {
         let today = ChallengeStore.dateKey(for: Date())
         store.record(ChallengeStore.Result(dateKey: today, variant: .freecell, stars: 2, seconds: 400, moves: 150))
         XCTAssertEqual(store.todayResult()?.stars, 2)
+    }
+
+    // MARK: - 9판 기록 (T-216)
+
+    /// 판 결과 기록 → 날짜별 9판 조회
+    func testRecordDealAndRead() {
+        let key = "2026-08-12"
+        let deal = ChallengeStore.DealResult(variant: .freecell, number: 42, stars: 3, seconds: 300, moves: 100)
+        XCTAssertTrue(store.recordDeal(deal, for: key))
+        let day = store.dayResult(for: key)
+        XCTAssertEqual(day?.deals.count, 1)
+        XCTAssertEqual(day?.deals.first?.variant, .freecell)
+        XCTAssertEqual(day?.totalStars, 3)
+        XCTAssertEqual(day?.completedCount, 1)
+    }
+
+    /// 같은 판 더 높은 별점은 갱신, 낮으면 유지
+    func testRecordDealUpgradeOnly() {
+        let key = "2026-08-12"
+        let low = ChallengeStore.DealResult(variant: .freecell, number: 42, stars: 1, seconds: 900, moves: 300)
+        let high = ChallengeStore.DealResult(variant: .freecell, number: 42, stars: 3, seconds: 300, moves: 100)
+        XCTAssertTrue(store.recordDeal(low, for: key))
+        XCTAssertFalse(store.recordDeal(low, for: key))
+        XCTAssertTrue(store.recordDeal(high, for: key))
+        XCTAssertEqual(store.dayResult(for: key)?.deals.first?.stars, 3)
+        XCTAssertEqual(store.dayResult(for: key)?.deals.count, 1)
+    }
+
+    /// 다른 판은 누적 (9판까지)
+    func testRecordDealAccumulates() {
+        let key = "2026-08-12"
+        let a = ChallengeStore.DealResult(variant: .freecell, number: 1, stars: 2, seconds: 400, moves: 150)
+        let b = ChallengeStore.DealResult(variant: .spider, number: 2, stars: 3, seconds: 500, moves: 200)
+        let c = ChallengeStore.DealResult(variant: .golf, number: 3, stars: 0, seconds: 0, moves: 0)
+        store.recordDeal(a, for: key)
+        store.recordDeal(b, for: key)
+        store.recordDeal(c, for: key)
+        let day = store.dayResult(for: key)
+        XCTAssertEqual(day?.deals.count, 3)
+        XCTAssertEqual(day?.totalStars, 5)
+        XCTAssertEqual(day?.completedCount, 2)
+    }
+
+    /// 기존 단건 저장 → 9판 구조로 변환 (호환)
+    func testLegacySingleResultConvertsToDayResult() {
+        let key = "2026-08-12"
+        store.record(ChallengeStore.Result(dateKey: key, variant: .freecell, stars: 2, seconds: 400, moves: 150))
+        let day = store.dayResult(for: key)
+        XCTAssertEqual(day?.deals.count, 1)
+        XCTAssertEqual(day?.deals.first?.stars, 2)
+        XCTAssertEqual(day?.totalStars, 2)
+        // 새 구조 기록이 생기면 기존 변환 결과를 대체
+        let deal = ChallengeStore.DealResult(variant: .spider, number: 7, stars: 3, seconds: 400, moves: 150)
+        store.recordDeal(deal, for: key)
+        XCTAssertEqual(store.dayResult(for: key)?.deals.count, 2)
     }
 }
 
