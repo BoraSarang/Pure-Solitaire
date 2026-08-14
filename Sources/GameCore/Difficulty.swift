@@ -33,9 +33,10 @@ public enum Difficulty: String, CaseIterable, Sendable {
     }
 
     /// 난이도 측정용 예산 — 9판 순차 측정 시 판당 시간을 제한. 표준 판정보다 넉넉하되 재생 예산보다 작게.
+    /// timeLimit 8s: 로컬에선 #1이 풀리지만 CI 러너가 더 느려 시간 초과 → 20s로 여유 확보 (2026-08-14).
     public static let measureBudget = FreeCellSolver.Budget(
         nodeLimit: 400_000,
-        timeLimit: 8.0,
+        timeLimit: 20.0,
         depthLimit: 20_000
     )
 
