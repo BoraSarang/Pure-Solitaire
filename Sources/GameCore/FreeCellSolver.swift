@@ -36,10 +36,28 @@ public enum FreeCellSolver {
 
     /// 주어진 게임 번호의 딜이 풀리는지 여부 (미지원 변형은 false)
     public static func isWinnable(gameNumber: Int, variant: GameVariant, budget: Budget = .standard) -> Bool {
-        guard isFreeCellFamily(variant) else { return false }
-        let game = FreeCellGame(gameNumber: gameNumber, variant: variant)
-        return isWinnable(state: SolverState(from: game), variant: variant, budget: budget)
+        solve(gameNumber: gameNumber, variant: variant, budget: budget) != nil
     }
+
+    /// 풀이 이동 시퀀스 — DFS가 찾은 성공 경로를 처음부터 끝까지 순서대로 반환.
+    /// 미지원 변형/미해결/예산 초과는 nil. (자동 풀어 보기/리플레이용)
+    public static func solve(
+        gameNumber: Int,
+        variant: GameVariant,
+        budget: Budget = .standard
+    ) -> [Move]? {
+        guard isFreeCellFamily(variant) else { return nil }
+        let game = FreeCellGame(gameNumber: gameNumber, variant: variant)
+        return solve(state: SolverState(from: game), variant: variant, budget: budget)
+    }
+
+    /// 자동 풀어 보기 재생용 예산 — 사용자 명시 실행이므로 판정 예산보다 크게.
+    /// timeLimit 20s: 실측 #50 유효 해가 16.6초 소요되어 15초에서 조정(PLAN v3.21 기록).
+    public static let replayBudget = Budget(
+        nodeLimit: 2_000_000,
+        timeLimit: 20.0,
+        depthLimit: 60_000
+    )
 
     /// 시작 번호부터 위로(최대 maxAttempts개) 풀리는 번호를 찾는다. 못 찾으면 nil.
     /// 첫 번호가 풀리면 그대로 반환(대부분 즉시 종료). 미지원 변형은 시작 번호 그대로 반환.
@@ -84,17 +102,60 @@ public enum FreeCellSolver {
         }
     }
 
-    /// 반복 DFS 스택 프레임 — 상태와 다음 시도할 이동 인덱스
+    /// 반복 DFS 스택 프레임 — 상태와 다음 시도할 이동 인덱스.
+    /// appliedMove는 이 상태에 도달하기 위해 부모에서 적용한 이동(루트는 nil),
+    /// homeMoves는 이 상태로 정규화되며 자동 적용된 안전 홈 이동들.
+    /// homeCount는 이 상태 진입 시 홈 카드 수, stagnantDepth는 홈 카드가 마지막으로
+    /// 증가한 이후 진행된 이동 수 — 진행 없는 긴 경로 가지치기용.
     private struct Frame {
         var state: SolverState
         var moves: [Move]
         var nextIndex: Int
+        var appliedMove: Move?
+        var homeMoves: [Move]
+        var homeCount: Int
+        var stagnantDepth: Int
     }
 
-    static func isWinnable(state: SolverState, variant: GameVariant, budget: Budget) -> Bool {
+    /// 홈 카드가 이 횟수 이상 증가 없이 이동만 반복하면 그 경로는 포기(가지치기).
+    /// 실제 FreeCell 해법은 대부분 100~200 이동 내에 홈 카드가 꾸준히 늘므로,
+    /// 정체가 긴 경로는 승리와 무관한 순환/배회로 간주해 백트래킹한다.
+    private static let maxStagnantDepth = 80
+
+    static func homeCount(_ s: SolverState) -> Int {
+        s.homes.reduce(0) { $0 + $1.count }
+    }
+
+    /// 풀이 이동 시퀀스를 수집하는 반복 DFS.
+    /// 성공 시 처음→끝 순서의 유효한 이동 시퀀스를 반환하고, 실패/예산 초과 시 nil.
+    static func solve(state: SolverState, variant: GameVariant, budget: Budget) -> [Move]? {
         let start = Date()
-        var visited: Set<SolverState> = []
+
+        // 단일 DFS 호출 — 깊이 제한은 budget.depthLimit 전체. (IDDFS는 FreeCell 상태 공간이
+        // 커서 각 깊이 단계가 처음부터 재탐색해야 해서 시간 예산을 소진해 실패 — 단일 DFS로 회귀)
         var nodes = 0
+        return dfs(
+            depthLimit: budget.depthLimit,
+            start: start,
+            nodes: &nodes,
+            budget: budget,
+            state: state,
+            variant: variant
+        )
+    }
+
+    /// 단일 깊이 제한 반복 DFS (명시적 스택) — 승리 경로를 처음→끝 순서로 반환. 실패/예산 초과 nil.
+    /// visited는 이 호출 전용(깊이 단계별로 새로 구성). nodes는 전체 단계에서 공유해 누적된다.
+    private static func dfs(
+        depthLimit: Int,
+        start: Date,
+        nodes: inout Int,
+        budget: Budget,
+        state: SolverState,
+        variant: GameVariant
+    ) -> [Move]? {
+        var visited: Set<SolverState> = []
+        var stack: [Frame] = []
 
         func isWon(_ s: SolverState) -> Bool {
             switch variant {
@@ -130,10 +191,6 @@ public enum FreeCellSolver {
             }
         }
 
-        /// 안전 규칙 (표준 FreeCell 자동 이동 규칙, 재귀 없음):
-        /// 카드 C(rank r)를 홈으로 보내도 안전한 조건 —
-        /// C 위에 쌓일 수 있는 카드들(r-1, 반대색 2장)이 모두 이미 홈에 있으면 안전.
-        /// (A는 항상 안전)
         func isSafeToAutoplay(_ card: Card, in s: SolverState) -> Bool {
             if card.rank == .ace { return true }
             guard let lowerRank = card.rank.previous else { return true }
@@ -143,9 +200,9 @@ public enum FreeCellSolver {
             return blockers.allSatisfy { s.isHomeCard($0) }
         }
 
-        /// 안전한 홈 이동을 가능한 만큼 연속 적용한 정규화 상태 반환 (상태 압축)
-        func normalize(_ s: SolverState) -> SolverState {
+        func normalize(_ s: SolverState) -> (state: SolverState, homeMoves: [Move]) {
             var cur = s
+            var homeMoves: [Move] = []
             var progressed = true
             while progressed {
                 progressed = false
@@ -154,6 +211,7 @@ public enum FreeCellSolver {
                     if canMoveToHome(card, in: cur), isSafeToAutoplay(card, in: cur) {
                         cur.columns[i].removeLast()
                         cur.homes[homeIndex(for: card, in: cur)!].append(card)
+                        homeMoves.append(.columnToHome(columnIndex: i, card: card))
                         progressed = true
                         break
                     }
@@ -164,18 +222,15 @@ public enum FreeCellSolver {
                     if canMoveToHome(card, in: cur), isSafeToAutoplay(card, in: cur) {
                         cur.freeCells[i] = nil
                         cur.homes[homeIndex(for: card, in: cur)!].append(card)
+                        homeMoves.append(.freeCellToHome(freeCellIndex: i, card: card))
                         progressed = true
                         break
                     }
                 }
             }
-            return cur
+            return (cur, homeMoves)
         }
 
-        /// 일반 이동 (안전 홈 이동은 normalize에서 이미 처리됨) — 우선순위 오름차순
-        /// 수퍼무브(그룹) 포함 — FreeCell 탐색 효율의 핵심.
-        /// 0: 홈 이동(안전하지 않은 것만) / 1: 프리셀 비우기 / 2: 열→열(빈 열 제외, K 우선) /
-        /// 3: 열→빈 열(비-K) / 4: 열→프리셀 / 5: 홈 꺼내기
         func generalMoves(_ s: SolverState) -> [Move] {
             var moves: [Move] = []
 
@@ -198,8 +253,9 @@ public enum FreeCellSolver {
             for from in s.columns.indices {
                 let run = FreeCellRule.movableRun(from: s.columns[from], variant: variant)
                 guard !run.isEmpty else { continue }
+                let runTop = run.last!       // 이동 그룹의 top 카드 (단일 이동 시 실제 이동 카드)
                 for to in s.columns.indices where to != from {
-                    guard FreeCellRule.canMoveToColumn(run.first!, topCard: s.columns[to].last, variant: variant) else { continue }
+                    let destTop = s.columns[to].last
                     // 수퍼무브 용량 내 그룹 크기만 생성
                     // (supermoveCapacity가 destinationIsEmpty를 내부 처리 — 호출부에서 빼면 안 됨)
                     let destIsEmpty = s.columns[to].isEmpty
@@ -210,9 +266,25 @@ public enum FreeCellSolver {
                     )
                     let maxCount = min(run.count, capacity)
                     if maxCount >= 1 {
-                        moves.append(.columnToColumn(from: from, to: to, cardCount: 1))
+                        // 단일 이동(1장)은 top 카드가 실제 이동 카드 → top 기준 검사
+                        if FreeCellRule.canMoveToColumn(runTop, topCard: destTop, variant: variant) {
+                            moves.append(.columnToColumn(from: from, to: to, cardCount: 1))
+                        }
+                        // 그룹 이동: 이동 그룹의 bottom 카드(run[run.count-count])가 목적지에 놓일 수
+                        // 있는 크기 중 최대만 생성. maxCount로는 목적지에 못 놓이면
+                        // 더 작은 그룹(2 이상)이 유효할 수 있다 — 큰 것부터 탐색.
                         if maxCount > 1 {
-                            moves.append(.columnToColumn(from: from, to: to, cardCount: maxCount))
+                            var groupCount: Int? = nil
+                            for count in stride(from: maxCount, through: 2, by: -1) {
+                                let groupBottom = run[run.count - count]
+                                if FreeCellRule.canMoveToColumn(groupBottom, topCard: destTop, variant: variant) {
+                                    groupCount = count
+                                    break
+                                }
+                            }
+                            if let groupCount {
+                                moves.append(.columnToColumn(from: from, to: to, cardCount: groupCount))
+                            }
                         }
                     }
                 }
@@ -237,11 +309,6 @@ public enum FreeCellSolver {
             return moves.sorted { priority($0, in: s) < priority($1, in: s) }
         }
 
-        /// 이동 우선순위 (낮을수록 먼저 시도) — 연속 점수로 tie 최소화
-        /// 0 홈 이동 / 10 프리셀→열(프리셀 정리) / 20 빈 열로 K /
-        /// 30+드러나는 카드 랭크 홈 카드 드러내기(A=31..K=43) / 50 그룹 이동(크기 2+) /
-        /// 60 빈 열로 비-K / 70 단일 열→열(빈 열 있을 때만) / 80 열→프리셀 /
-        /// 90 단일 열→열(빈 열 없음) / 99 홈에서 꺼내기
         func priority(_ move: Move, in s: SolverState) -> Int {
             switch move {
             case .columnToHome: return 0
@@ -296,18 +363,16 @@ public enum FreeCellSolver {
             }
         }
 
-        // 반복 DFS (명시적 스택) — 스택 오버플로우 없음
-        var stack: [Frame] = []
-        let current = normalize(state)
+        let initial = normalize(state)
+        let current = initial.state
         visited.insert(current)
         nodes += 1
-        if isWon(current) { return true }
-        let firstMoves = generalMoves(current)
-        stack.append(Frame(state: current, moves: firstMoves, nextIndex: 0))
+        if isWon(current) { return initial.homeMoves }
+        stack.append(Frame(state: current, moves: generalMoves(current), nextIndex: 0, appliedMove: nil, homeMoves: initial.homeMoves, homeCount: Self.homeCount(current), stagnantDepth: 0))
 
         while !stack.isEmpty {
-            if nodes > budget.nodeLimit { return false }
-            if Date().timeIntervalSince(start) > budget.timeLimit { return false }
+            if nodes > budget.nodeLimit { return nil }
+            if Date().timeIntervalSince(start) > budget.timeLimit { return nil }
 
             let frame = stack[stack.count - 1]
             if frame.nextIndex >= frame.moves.count {
@@ -318,19 +383,36 @@ public enum FreeCellSolver {
             stack[stack.count - 1].nextIndex += 1
 
             // 깊이 제한 — 이 경로만 중단하고 백트래킹 (형제 이동 계속 탐색)
-            if stack.count > budget.depthLimit { continue }
+            if stack.count > depthLimit { continue }
 
             var nextState = frame.state
             apply(move, to: &nextState)
             let normalized = normalize(nextState)
 
-            if visited.contains(normalized) { continue }
-            visited.insert(normalized)
+            if visited.contains(normalized.state) { continue }
+            visited.insert(normalized.state)
             nodes += 1
-            if isWon(normalized) { return true }
 
-            stack.append(Frame(state: normalized, moves: generalMoves(normalized), nextIndex: 0))
+            // 진행(홈 카드 증가) 없는 경로 가지치기 — 홈 카드가 늘지 않는 이동을
+            // maxStagnantDepth 이상 반복하면 승리와 무관한 순환/배회로 간주해 백트래킹.
+            let nextHomeCount = Self.homeCount(normalized.state)
+            let newStagnant = nextHomeCount > frame.homeCount ? 0 : frame.stagnantDepth + 1
+            if newStagnant > Self.maxStagnantDepth { continue }
+
+            if isWon(normalized.state) {
+                // 스택 순서대로 경로 누적: 각 프레임 = [appliedMove] + homeMoves (루트는 homeMoves만)
+                var path: [Move] = []
+                for f in stack {
+                    if let applied = f.appliedMove { path.append(applied) }
+                    path.append(contentsOf: f.homeMoves)
+                }
+                path.append(move)
+                path.append(contentsOf: normalized.homeMoves)
+                return path
+            }
+
+            stack.append(Frame(state: normalized.state, moves: generalMoves(normalized.state), nextIndex: 0, appliedMove: move, homeMoves: normalized.homeMoves, homeCount: nextHomeCount, stagnantDepth: newStagnant))
         }
-        return false
+        return nil
     }
 }

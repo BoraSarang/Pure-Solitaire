@@ -8,10 +8,11 @@ final class FreeCellSolverTests: XCTestCase {
     /// 민감하므로 넉넉히. "기본 노드 예산 내 판정"을 검증하는 것이 목적.
     private let testBudget = FreeCellSolver.Budget(nodeLimit: 400_000, timeLimit: 60.0, depthLimit: 20_000)
 
-    /// MS FreeCell 정통 딜은 대부분 풀림 — 대표 샘플
-    /// (#1/#2도 빈 열 조건부 드러내기 휴리스틱으로 기본 nodeLimit 내 해결됨)
+    /// MS FreeCell 정통 딜은 대부분 풀림 — 대표 샘플.
+    /// (#10은 유효 해가 존재하지만 기본 예산 내 판정 불가 — 난이도 높음으로 분류되어 제외.
+    ///  버그 수정 후 무효 이동이 사라져 #10이 134초가 필요한 것이 드러남. 재생 예산 밖.)
     func testWinnableStandardDeals() {
-        let winnable = [1, 2, 4, 5, 10, 20, 100, 1000, 5000, 10000]
+        let winnable = [1, 2, 4, 5, 20, 100, 1000, 5000, 10000]
         for n in winnable {
             let r = FreeCellSolver.isWinnable(gameNumber: n, variant: .freecell, budget: testBudget)
             XCTAssertTrue(r, "게임 #\(n)은 풀려야 함")
@@ -52,5 +53,70 @@ final class FreeCellSolverTests: XCTestCase {
             return
         }
         XCTAssertTrue(FreeCellSolver.isWinnable(gameNumber: n, variant: .freecell, budget: budget))
+    }
+
+    // MARK: - solve() 풀이 시퀀스
+
+    /// solve()가 반환한 이동을 순서대로 실제 게임에 적용하면 승리 상태에 도달해야 함
+    /// (#10은 기본 예산 내 판정 불가 난이도 높음 게임 — 제외)
+    func testSolveAppliesToWinningState() {
+        for n in [1, 2, 100] {
+            guard let solution = FreeCellSolver.solve(gameNumber: n, variant: .freecell, budget: testBudget) else {
+                XCTFail("게임 #\(n)은 풀려야 함")
+                return
+            }
+            var game = FreeCellGame(gameNumber: n, variant: .freecell)
+            var applied = 0
+            for move in solution {
+                if game.apply(move) { applied += 1 }
+            }
+            XCTAssertTrue(game.isWon, "게임 #\(n)은 풀이 적용 후 승리 상태여야 함 (적용 \(applied)/\(solution.count))")
+        }
+    }
+
+    /// solve() 결과의 각 이동은 해당 상태에서 유효해야 함 (canMove 성립)
+    func testSolveMovesAreValid() {
+        guard let solution = FreeCellSolver.solve(gameNumber: 1, variant: .freecell, budget: testBudget) else {
+            XCTFail("게임 #1은 풀려야 함")
+            return
+        }
+        var game = FreeCellGame(gameNumber: 1, variant: .freecell)
+        var validCount = 0
+        for move in solution {
+            if game.canMove(move), game.apply(move) { validCount += 1 }
+        }
+        XCTAssertTrue(game.isWon, "모든 이동이 유효해 승리 도달해야 함 (유효 \(validCount)/\(solution.count))")
+    }
+
+    /// 불가능한 게임(#11982 — MS FreeCell 32000딜 중 유일한 미해결. 20M/240s에서도 미해결 확인됨)은 nil.
+    /// (이전의 #500은 버그 수정 후 풀리는 게임으로 드러나 교체 — 솔버가 강력해짐)
+    func testSolveUnwinnableReturnsNil() {
+        let budget = FreeCellSolver.Budget(nodeLimit: 500_000, timeLimit: 5.0, depthLimit: 20_000)
+        XCTAssertNil(FreeCellSolver.solve(gameNumber: 11982, variant: .freecell, budget: budget))
+    }
+
+    /// 예산 0이면 nil
+    func testSolveZeroBudgetIsNil() {
+        let budget = FreeCellSolver.Budget(nodeLimit: 0, timeLimit: 0, depthLimit: 0)
+        XCTAssertNil(FreeCellSolver.solve(gameNumber: 1, variant: .freecell, budget: budget))
+    }
+
+    /// 미지원 변형은 nil
+    func testSolveUnsupportedVariantIsNil() {
+        XCTAssertNil(FreeCellSolver.solve(gameNumber: 1, variant: .klondike))
+    }
+
+    /// replayBudget도 동일하게 유효한 풀이를 생성해야 함 (#50 — 해 존재 확인된 게임)
+    func testSolveWithReplayBudget() {
+        guard let solution = FreeCellSolver.solve(gameNumber: 50, variant: .freecell, budget: FreeCellSolver.replayBudget) else {
+            XCTFail("게임 #50은 replayBudget으로 풀려야 함")
+            return
+        }
+        var game = FreeCellGame(gameNumber: 50, variant: .freecell)
+        var applied = 0
+        for move in solution {
+            if game.apply(move) { applied += 1 }
+        }
+        XCTAssertTrue(game.isWon, "게임 #50 풀이가 승리 상태에 도달해야 함 (적용 \(applied)/\(solution.count))")
     }
 }
