@@ -17,7 +17,7 @@ echo "== [1/6] 빌드 ($CONFIGURATION) =="
 swift build -c "$CONFIGURATION"
 
 echo "== [2/6] 단위 테스트 =="
-swift test
+swift test -c release
 
 echo "== [3/6] .app 번들 구성 =="
 BIN=".build/$CONFIGURATION/$EXECUTABLE"

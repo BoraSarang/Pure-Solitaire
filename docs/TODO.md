@@ -75,6 +75,7 @@
 - [x] T-218: 챌린지 시트 UI 개편 — 달력(◀▶ 3개월, 날짜별 ★완료) + 날짜 선택 9판 목록 + 월 통계 하단. VM `startChallenge(deal:)`(특정 판 시작, `activeChallengeDeal`) + `recordChallengeIfToday` 판별 매칭 + `todayChallengeStars` 9판 합계. 빌드(경고 0) + 전체 249개 통과.
 - [x] T-219: C 난이도 태그 UI — `Difficulty.measure`(FreeCell 계열만, 예산 400k/8s/20k, 그 외 unmeasured) + VM 백그라운드 순차 측정 캐시(`ensureDealDifficulties`, onAppear/선택 변경/onDisappear 취소) + 판 목록 난이도 태그(쉬움/보통/어려움/미측정). DifficultyTests 6개 통과.
 - [x] T-220: D 월간 배지 — 달력 헤더에 월 완료율 배지(브론즈/실버/골드/다이아) 표시. T-218 달력 헤더에 포함 구현. 전체 249개 회귀 통과.
+- [x] T-221: 회귀(`swift test -c release` 249개) + `swift build`(경고 0) + `build_and_run.sh release` 설치·실행 + `docs/tests/v3.21_macos.md` + CHANGELOG/TODO/DESIGN 갱신 + `Pure-Solitaire-3.21.0-macos.zip`(4.3MB) 패키징. `build_and_run.sh` 테스트를 `swift test -c release`로 변경(debug는 #50 시간 초과). **v3.21.0 릴리스 준비 완료.**
 
 ## v1.0 — 프리셀 MVP
 

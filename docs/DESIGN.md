@@ -236,6 +236,15 @@ final class FreeCellGame {
 - **VM 연동**: `startChallenge()`(오늘 변형+시드로 `requestNewGame`) / `recordChallengeIfToday()`(승리 시 오늘 챌린지면 별점 저장) / `refreshAchievements()`(신규 잠금 해제 반환). `checkState()` 승리 분기에서 호출.
 - **UI**: ChallengeView 시트(오늘 변형·시드·별점 3개 목표·완료 상태) / AchievementsView 시트(배지 그리드, 잠금 회색+조건, 해제 풀컬러). 사이드바 "챌린지"(⌥⌘D) "업적"(⌥⌘T).
 
+### 3.21 자동 풀어 보기 + 일일 도전 9판/3개월 달력 (v3.21)
+- **풀이 이동 수집** (`GameCore/FreeCellSolver.swift`): `solve(gameNumber:variant:budget:) -> SolveResult?` — DFS(명시적 스택)가 성공 경로 이동 시퀀스를 `SolveResult(moves, nodeCount, depth)`로 반환. 무효 이동 버그 2건 수정(단일/그룹 bottom 카드 기준), 홈 카드 진행 없는 경로는 `maxStagnantDepth`(80) 가지치기. `isWinnable`은 `solve() != nil`. 예산 `replayBudget`(2M/20s/60k), 판정용 `measureBudget`(400k/8s/20k). FreeCell 계열 4종만 지원.
+- **난이도 판정** (`GameCore/Difficulty.swift`): 노드 <20k 쉬움 / <150k 보통 / 그 외 어려움 / 예산 초과 unmeasured. `Difficulty.measure(gameNumber:variant:)` — FreeCell 계열만 풀이.
+- **자동 풀어 보기/리플레이** (`FreeCellViewModel`): `FreeCellGame.applyForReplay`(undo/이동 수 오염 없이 시연 적용) + 스냅샷 보존·복원(재생 종료/중단/새 게임 시 원상 복구). 전방 `moveHistory`(자동 플레이 포함) 승리 시 `completedMoveHistory` 확정 → `startReplay`(시작 상태로 되돌려 재생). 속도 3단계(0.15/0.35/0.7s), 진행률, undo/redo 재생 중 가드. UI `PlaybackOverlayView` + 사이드바/메뉴 ⇧⌘P/⇧⌘R.
+- **일일 도전 9판** (`GameCore/ChallengeStore.swift`): `DailyChallenge.deals(for:) -> [Deal]` — 12종을 날짜 순번 시드로 Fisher-Yates 셔플 후 앞 9개 선택(중복 없음, 순서 결정적), 각 변형 번호는 `DailyDeal.gameNumber` 재사용. 단건 API(`variant(for:)`/`gameNumber(for:)`/`challengeVariant(for:)`) 호환 유지.
+- **9판 기록**: `ChallengeStore.DealResult`(variant/number/stars/seconds/moves) + `DayResult`(dateKey별 9판 배열, JSON Data 저장 `challenge.deals.{dateKey}`). `recordDeal`은 별점 업그레이드만. 기존 단건 `challenge.result.{dateKey}`는 로드 시 단일 판으로 변환(호환).
+- **3개월 달력/월 통계** (`GameCore/CalendarMonth.swift`): `CalendarMonth`(월·연 경계, firstWeekday, dayCount) + `MonthSummary`(완료/총/별/변형 분포, 완료율·별 획득률) + `MonthBadge`(25% 브론즈/50% 실버/75% 골드/100% 다이아).
+- **챌린지 시트 UI**: ChallengeView 전면 재작성 — 3개월 달력(◀▶, 날짜별 ★완료) + 날짜 선택 9판 목록(순번/변형/게임 번호/난이도 태그/별, 미래 비활성) + 월 통계 하단 + 월 배지. VM `startChallenge(deal:)`(특정 판 시작, `activeChallengeDeal`) + `recordChallengeIfToday` 판별 매칭 + 난이도 백그라운드 순차 측정 캐시(`ensureDealDifficulties`, `Task.detached`, onDisappear 취소).
+
 ### 3.20 Scorpion 변형 (v3.18)
 - **게임** (`GameCore/ScorpionGame.swift`): `columns: [[ColumnCard]]`(7열×7장) + `reserve: [Card]`(3장). `reserveDealt` 플래그로 예비 딜 1회 제한.
   - 딜: `DealGenerator.scorpionDeal(gameNumber:)` — 앞 4열 밑 3장 뒤집힘+위 4장 앞면, 뒤 3열 전부 앞면. 나머지 3장 예비.

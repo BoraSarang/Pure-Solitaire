@@ -1,5 +1,18 @@
 # CHANGELOG — 변경 이력
 
+## [3.21.0] — 2026-08-14 — [macos] — 자동 풀어 보기 + 내 이동 리플레이 + 일일 도전 9판/3개월 달력/난이도 태그/월 배지 (T-210~T-221)
+### 변경
+- **자동 풀어 보기 (A)**: `FreeCellSolver.solve(gameNumber:variant:budget:) -> SolveResult?` — DFS가 성공 경로 이동 시퀀스를 수집. 무효 이동 버그 2건 수정(단일/그룹 bottom 카드 기준) + 홈 카드 진행 없는 경로 가지치기(`maxStagnantDepth 80`). `isWinnable`은 `solve() != nil`로 재구현. 재생 예산 `replayBudget`(2M/20s/60k) — #50(703 이동/16.6s) 해결, #10은 난이도 높음으로 분류.
+- **난이도 판정 (C)**: `SolveResult`(moves+nodeCount+depth) + `Difficulty`(쉬움 <20k / 보통 <150k / 어려움, 예산 초과 unmeasured) + `Difficulty.measure`(FreeCell 계열만, 백그라운드 순차 측정 캐시).
+- **자동 풀어 보기/리플레이 재생 UI**: `PlaybackOverlayView`(진행률/속도 3단계/일시정지/중단) + 조작 잠금 + 사이드바/게임 메뉴 버튼(⇧⌘P 자동 풀어 보기, ⇧⌘R 내 이동 리플레이). 재생은 순수 시연 — 스냅샷 보존 후 종료/중단 시 원래 상태 복원.
+- **일일 도전 9판 (B)**: `DailyChallenge.deals(for:) -> [Deal]` — 12종 중 9개를 날짜 시드 결정적 셔플(중복 없음), 각 변형은 `DailyDeal.gameNumber` 재사용. 기존 단건 API 호환 유지.
+- **챌린지 시트 개편**: 3개월 달력(◀▶, 날짜별 ★완료 표시) + 날짜 선택 9판 목록(순번/변형/게임 번호/별/난이도 태그) + 월 통계(완료/별/완료율) + 월 배지(브론즈/실버/골드/다이아).
+- **ChallengeStore 9판 기록**: `DealResult`/`DayResult`(dateKey별 9판 배열) 저장 + `recordDeal`(별점 업그레이드만) + 기존 단건→9판 호환 변환.
+### 검증
+- `swift test -c release` **249개 전부 통과**(32.3s): FreeCellSolver 11 / Difficulty 6 / DailyChallenge 9 / ChallengeStore 8 / CalendarMonth 7 / FreeCellGame 리플레이 등.
+- `swift build -c release` 경고 0. (기존 ScorpionGame `default` 미도달 경고는 이번 버전 소관 아님)
+- 문서: PLAN_v3.21/TODO/CHANGELOG/tests v3.21/session
+
 ## [3.20.0] — 2026-08-12 — [macos] — 릴리스 + CI 테스트 안정화
 ### 변경
 - **GitHub Release v3.20.0 배포**: 태그 + GitHub Actions Release 워크플로우로 `Pure-Solitaire-3.20.0-macos.zip` (4.2MB) 생성.
