@@ -53,9 +53,10 @@ public enum FreeCellSolver {
 
     /// 자동 풀어 보기 재생용 예산 — 사용자 명시 실행이므로 판정 예산보다 크게.
     /// timeLimit 20s: 실측 #50 유효 해가 16.6초 소요되어 15초에서 조정(PLAN v3.21 기록).
+    /// 30s: CI 러너는 로컬보다 느려 20s에서 #50이 시간 초과로 실패하는 문제 → 여유 확보 (2026-08-14).
     public static let replayBudget = Budget(
         nodeLimit: 2_000_000,
-        timeLimit: 20.0,
+        timeLimit: 30.0,
         depthLimit: 60_000
     )
 

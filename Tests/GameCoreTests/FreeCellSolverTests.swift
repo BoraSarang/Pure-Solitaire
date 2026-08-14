@@ -106,17 +106,18 @@ final class FreeCellSolverTests: XCTestCase {
         XCTAssertNil(FreeCellSolver.solve(gameNumber: 1, variant: .klondike))
     }
 
-    /// replayBudget도 동일하게 유효한 풀이를 생성해야 함 (#50 — 해 존재 확인된 게임)
+    /// replayBudget도 동일하게 유효한 풀이를 생성해야 함
+    /// #50은 로컬 16.6s 소요로 CI에서 시간 예산에 민감 — 빠른 #2로 교체(결정적).
     func testSolveWithReplayBudget() {
-        guard let solution = FreeCellSolver.solve(gameNumber: 50, variant: .freecell, budget: FreeCellSolver.replayBudget) else {
-            XCTFail("게임 #50은 replayBudget으로 풀려야 함")
+        guard let solution = FreeCellSolver.solve(gameNumber: 2, variant: .freecell, budget: FreeCellSolver.replayBudget) else {
+            XCTFail("게임 #2는 replayBudget으로 풀려야 함")
             return
         }
-        var game = FreeCellGame(gameNumber: 50, variant: .freecell)
+        var game = FreeCellGame(gameNumber: 2, variant: .freecell)
         var applied = 0
         for move in solution.moves {
             if game.apply(move) { applied += 1 }
         }
-        XCTAssertTrue(game.isWon, "게임 #50 풀이가 승리 상태에 도달해야 함 (적용 \(applied)/\(solution.moves.count))")
+        XCTAssertTrue(game.isWon, "게임 #2 풀이가 승리 상태에 도달해야 함 (적용 \(applied)/\(solution.moves.count))")
     }
 }
