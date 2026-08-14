@@ -69,6 +69,12 @@
 - [x] T-212: VM 자동 풀어 보기 — `startAutoSolve`(백그라운드 solve + 타이머 순차 재생) / `pause`/`resume`/`cancel`, `FreeCellGame.applyForReplay`(기록 오염 없음), 스냅샷 복원, 속도 3단계, 진행률. 단위 테스트 + 전체 231개 회귀 통과.
 - [x] T-213: 내 이동 리플레이 — 전방 `moveHistory`(자동 플레이/완성 포함) 동기화 + 승리 시 확정, `startReplay`(시작 상태로 되돌려 재생)/`pause`/`resume`/`cancel` + 스냅샷 복원. 빌드 검증 + 전체 231개 회귀 통과.
 - [x] T-214: 재생 오버레이 UI — `PlaybackOverlayView`(진행률/속도/일시정지/중단) + 재생 중 조작 잠금 + 사이드바·메뉴 버튼(⇧⌘P/⇧⌘R). 빌드 검증 + 전체 231개 회귀 통과. **남은 것**: A 완료 — T-215부터 B(일일 도전 9판).
+- [x] T-215: DailyChallenge 9판 — `deals(for:) -> [Deal]`(12종 중 9개 날짜 시드 결정적 셔플·중복 없음) + 단건 API 호환 유지. 테스트 5개 추가 — DailyChallengeTests 9개 통과.
+- [x] T-216: ChallengeStore 판별 기록 — `DealResult`/`DayResult`(dateKey별 9판 배열) + `recordDeal`(별점 업그레이드만) + 기존 단건→9판 호환. 테스트 4개 추가 — 8개 통과.
+- [x] T-217: 3개월 달력/월 통계 — `CalendarMonth`(월·연 경계/firstWeekday/dayCount/dailyResults) + `MonthSummary`(완료/별/변형 분포) + `MonthBadge`(25/50/75/100%). 테스트 7개 통과.
+- [x] T-218: 챌린지 시트 UI 개편 — 달력(◀▶ 3개월, 날짜별 ★완료) + 날짜 선택 9판 목록 + 월 통계 하단. VM `startChallenge(deal:)`(특정 판 시작, `activeChallengeDeal`) + `recordChallengeIfToday` 판별 매칭 + `todayChallengeStars` 9판 합계. 빌드(경고 0) + 전체 249개 통과.
+- [x] T-219: C 난이도 태그 UI — `Difficulty.measure`(FreeCell 계열만, 예산 400k/8s/20k, 그 외 unmeasured) + VM 백그라운드 순차 측정 캐시(`ensureDealDifficulties`, onAppear/선택 변경/onDisappear 취소) + 판 목록 난이도 태그(쉬움/보통/어려움/미측정). DifficultyTests 6개 통과.
+- [x] T-220: D 월간 배지 — 달력 헤더에 월 완료율 배지(브론즈/실버/골드/다이아) 표시. T-218 달력 헤더에 포함 구현. 전체 249개 회귀 통과.
 
 ## v1.0 — 프리셀 MVP
 

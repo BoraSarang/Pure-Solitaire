@@ -51,8 +51,8 @@ Sources/PureSolitaire/Views/GameBoardView.swift            재생 오버레이/�
 - [x] T-215: DailyChallenge 9판 — `DailyChallenge.deals(for:) -> [Deal]`(12종 중 9개 날짜 시드 결정적 셔플·중복 없음) + 기존 단건 API 호환 유지. 테스트 5개(결정성/9개/부분집합/월 변경/일 변경) 추가 — DailyChallengeTests 9개 통과.
 - [x] T-216: ChallengeStore 판별 기록 — `DealResult`/`DayResult`(dateKey별 9판 배열) 저장 + `recordDeal`(별점 업그레이드만) + 기존 단건→9판 호환 변환. 테스트 4개 추가 — ChallengeStoreTests 8개 통과.
 - [x] T-217: 3개월 달력 + 월 통계 — `CalendarMonth`(월/연 경계, firstWeekday, dayCount, dailyResults) + `MonthSummary`(완료/별/변형 분포) + `MonthBadge`(25/50/75/100%). 테스트 7개 — CalendarMonthTests 통과.
-- [ ] T-218: 챌린지 시트 UI 개편 — 달력(◀▶ 3개월) + 날짜 선택 → 9판 목록(변형/번호/별/완료) + 월 통계/배지. 
-- [ ] T-219: C 난이도 태그 UI — 데일리 도전 판 목록/게임 번호 시트에 난이도 표시.
+- [x] T-218: 챌린지 시트 UI 개편 — `ChallengeView` 전면 재작성: 3개월 달력(◀▶ 월 네비게이션, 일~토 그리드, 날짜별 ★완료 표시, 오늘/선택 강조) + 날짜 선택 시 9판 목록(순번/변형/게임 번호/별/완료 강조, 미래 날짜 비활성) + 월 통계(완료/별/완료율) 하단 + "오늘" 버튼. VM `startChallenge(deal:)`(특정 판 시작, `activeChallengeDeal` 추적) + `recordChallengeIfToday`를 판별 매칭으로 개편 + `todayChallengeStars`는 9판 합계로. 빌드(경고 0) + 전체 247개 통과.
+- [x] T-219: C 난이도 태그 UI — `Difficulty.measure(gameNumber:variant:)`(FreeCell 계열만 풀이, 예산 `measureBudget` 400k/8s/20k, 그 외/미해결은 unmeasured) + VM `dealDifficultyCache`/`ensureDealDifficulties`(백그라운드 `Task.detached` 순차 측정, 중복 방지, 시트 onAppear/선택 변경 시 요청, onDisappear 취소) + 판 목록 난이도 태그(쉬움/보통/어려움/미측정 색상). DifficultyTests 6개 통과.
 - [ ] T-220: D 월간 배지 — 달력 헤더에 월 완료율 배지(브론즈/실버/골드/다이아).
 - [ ] T-221: 회귀(220+신규) + `swift build`(경고 0) + release 설치·실행 + `docs/tests/v3.21_macos.md` + CHANGELOG/TODO/DESIGN 갱신 + 릴리스 v3.21.0.
 

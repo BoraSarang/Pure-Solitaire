@@ -42,4 +42,18 @@ final class DifficultyTests: XCTestCase {
         // solve() == nil 이면 Difficulty.unmeasured 로 표시한다 (C 난이도 태그 UI 규칙)
         XCTAssertEqual(Difficulty.unmeasured.rawValue, "unmeasured")
     }
+
+    // MARK: - measure (T-219)
+
+    /// measure — 쉬운 판은 예산 내 해 발견되어 unmeasured가 아님
+    func testMeasureEasyDeal() {
+        let d = Difficulty.measure(gameNumber: 1, variant: .freecell)
+        XCTAssertNotEqual(d, .unmeasured, "#1은 measure 예산으로 풀려야 함")
+    }
+
+    /// measure — FreeCell 계열이 아닌 변형은 unmeasured (미지원)
+    func testMeasureUnsupportedVariant() {
+        XCTAssertEqual(Difficulty.measure(gameNumber: 1, variant: .klondike), .unmeasured)
+        XCTAssertEqual(Difficulty.measure(gameNumber: 1, variant: .spider), .unmeasured)
+    }
 }

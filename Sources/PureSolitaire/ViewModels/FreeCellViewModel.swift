@@ -336,41 +336,96 @@ final class FreeCellViewModel: ObservableObject {
 
     // MARK: - 데일리 챌린지 / 업적
 
-    /// 오늘 챌린지 시작 — 오늘 고정 변형 + 시드로 새 게임
-    func startChallenge() {
-        let date = Date()
-        let v = DailyChallenge.challengeVariant(for: date)
-        let number = DailyChallenge.gameNumber(for: date)
-        requestNewGame(number: number, variant: v)
+    /// 현재 진행 중인 데일리 챌린지 판 (T-218 9판)
+    private(set) var activeChallengeDeal: DailyChallenge.Deal?
+
+    /// 챌린지 판 시작 — 오늘 9판 중 특정 판 선택 (변형 + 게임 번호)
+    func startChallenge(deal: DailyChallenge.Deal) {
+        activeChallengeDeal = deal
+        requestNewGame(number: deal.number, variant: deal.variant)
     }
 
-    /// 오늘 챌린지 별점 합계 (승리/시간/이동 수 기준)
+    /// 오늘 챌린지 별점 합계 (오늘 9판 완료 별 합계)
     func todayChallengeStars() -> Int {
-        challengeStore.todayResult()?.stars ?? 0
+        challengeStore.todayDayResult()?.totalStars ?? 0
     }
 
-    /// 승리 기록 시 활성 챌린지 별점 반영 — checkState 승리 분기에서 호출
+    /// 승리 기록 시 활성 챌린지 별점 반영 — checkState 승리 분기에서 호출.
+    /// 오늘 9판 중 현재 활성 판과 매칭해 판별 기록 (별점 업그레이드만 반영).
     func recordChallengeIfToday() {
         let date = Date()
-        guard DailyChallenge.gameNumber(for: date) == currentGameNumber else { return }
-        let v = DailyChallenge.challengeVariant(for: date)
-        guard let start = gameStartedAt else { return }
+        guard let deal = activeChallengeDeal,
+              let start = gameStartedAt else { return }
+        let todayDeals = DailyChallenge.deals(for: date)
+        guard todayDeals.contains(deal) else { return }
         let seconds = Date().timeIntervalSince(start)
         let stars = DailyChallenge.stars(
-            variant: v,
+            variant: deal.variant,
             isWin: currentIsWon,
             seconds: seconds,
             moves: currentMoveCount
         )
         let key = ChallengeStore.dateKey(for: date)
-        challengeStore.record(ChallengeStore.Result(
-            dateKey: key,
-            variant: v,
-            stars: stars,
-            seconds: seconds,
-            moves: currentMoveCount
-        ))
+        challengeStore.recordDeal(
+            ChallengeStore.DealResult(
+                variant: deal.variant,
+                number: deal.number,
+                stars: stars,
+                seconds: seconds,
+                moves: currentMoveCount
+            ),
+            for: key
+        )
         objectWillChange.send()
+    }
+
+    // MARK: - 데일리 도전 판별 난이도 (T-219)
+
+    /// 판별 난이도 캐시 (key: "variantRaw|number") — 세션 동안 유지
+    private(set) var dealDifficultyCache: [String: Difficulty] = [:]
+    /// 측정 중인 판별 키 집합 — 중복 요청 방지
+    private var measuringDealKeys: Set<String> = Set()
+    /// 백그라운드 순차 측정 태스크
+    private var difficultyTask: Task<Void, Never>?
+
+    /// 판별 난이도 키
+    private func difficultyKey(_ deal: DailyChallenge.Deal) -> String {
+        "\(deal.variant.rawValue)|\(deal.number)"
+    }
+
+    /// 캐시된 판별 난이도 (미측정/미캐시는 nil)
+    func cachedDifficulty(for deal: DailyChallenge.Deal) -> Difficulty? {
+        dealDifficultyCache[difficultyKey(deal)]
+    }
+
+    /// 판별 난이도를 백그라운드에서 순차 측정 — 캐시에 없으면 1판씩 풀이.
+    /// 측정이 오래 걸려도 UI를 막지 않도록 Task.detached 사용, 완료 시 메인에서 갱신.
+    func ensureDealDifficulties(for deals: [DailyChallenge.Deal]) {
+        let pending = deals.filter {
+            dealDifficultyCache[difficultyKey($0)] == nil && !measuringDealKeys.contains(difficultyKey($0))
+        }
+        guard !pending.isEmpty else { return }
+        pending.forEach { measuringDealKeys.insert(difficultyKey($0)) }
+        difficultyTask?.cancel()
+        difficultyTask = Task.detached(priority: .userInitiated) { [weak self] in
+            for deal in pending {
+                if Task.isCancelled { break }
+                let key = "\(deal.variant.rawValue)|\(deal.number)"
+                let difficulty = Difficulty.measure(gameNumber: deal.number, variant: deal.variant)
+                await MainActor.run {
+                    guard let self else { return }
+                    self.dealDifficultyCache[key] = difficulty
+                    self.measuringDealKeys.remove(key)
+                    self.objectWillChange.send()
+                }
+            }
+        }
+    }
+
+    /// 챌린지 시트 닫힘 — 측정 태스크 정리
+    func cancelDealDifficultyMeasurement() {
+        difficultyTask?.cancel()
+        difficultyTask = nil
     }
 
     /// 잠금 해제 직전 신규 업적 갱신 — 메시지 표시용 신규 목록 반환

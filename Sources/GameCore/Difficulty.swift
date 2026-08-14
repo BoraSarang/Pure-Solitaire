@@ -31,4 +31,21 @@ public enum Difficulty: String, CaseIterable, Sendable {
     public static func `for`(result: SolveResult) -> Difficulty {
         `for`(nodeCount: result.nodeCount)
     }
+
+    /// 난이도 측정용 예산 — 9판 순차 측정 시 판당 시간을 제한. 표준 판정보다 넉넉하되 재생 예산보다 작게.
+    public static let measureBudget = FreeCellSolver.Budget(
+        nodeLimit: 400_000,
+        timeLimit: 8.0,
+        depthLimit: 20_000
+    )
+
+    /// 게임 번호 기준 난이도 측정 — FreeCell 계열만 실제 풀이, 그 외/미해결(예산 초과)은 unmeasured.
+    /// 자동 풀어 보기와 달리 사용자 명시 실행이 아니므로 measureBudget 사용.
+    public static func measure(gameNumber: Int, variant: GameVariant) -> Difficulty {
+        guard FreeCellSolver.isFreeCellFamily(variant) else { return .unmeasured }
+        guard let result = FreeCellSolver.solve(gameNumber: gameNumber, variant: variant, budget: measureBudget) else {
+            return .unmeasured
+        }
+        return `for`(result: result)
+    }
 }
