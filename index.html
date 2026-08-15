@@ -5,133 +5,599 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pure Solitaire · 순수한 솔리테어</title>
 <meta name="description" content="맥을 위해 재탄생한 군더더기 없는 클래식 카드 게임 모음. 광고 없이, 로그인 없이, 마이크로소프트 정통 규칙 그대로 12가지 게임을 즐기세요.">
+<meta name="theme-color" content="#0b1626">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Raleway:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="images/AppIcon-1024.png">
 <style>
+  /* ============ 토큰 (3D & Hyperrealism · Deep Navy / Felt Green / Gold) ============ */
   :root {
-    --felt: #1e5c3a;
-    --felt-dark: #16452b;
-    --accent: #ffd66b;
-    --text: #f5f5f0;
-    --muted: #b8c4bb;
+    --bg: #0b1626;
+    --bg-deep: #060d18;
+    --felt: #15803d;
+    --felt-deep: #0f5a2c;
+    --gold: #d97706;
+    --gold-soft: #f59e0b;
+    --card: #192134;
+    --card-2: #1e2740;
+    --fg: #ffffff;
+    --muted: #94a3b8;
+    --border: rgba(255, 255, 255, 0.08);
+    --ring: #f59e0b;
+    --shadow-card: 0 1px 2px rgba(0,0,0,.4), 0 4px 10px rgba(0,0,0,.35), 0 14px 40px rgba(0,0,0,.45), 0 30px 80px rgba(0,0,0,.5);
+    --shadow-glow: 0 0 0 1px rgba(245,158,11,.25), 0 12px 44px rgba(217,119,6,.28);
+    --perspective: 1000px;
+    --dur: 360ms;
+    --ease: cubic-bezier(.22,.61,.36,1);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI", sans-serif;
-    background: linear-gradient(160deg, #0f2a1c 0%, #16452b 45%, #1e5c3a 100%);
-    color: var(--text);
+    font-family: "Raleway", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI", sans-serif;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(21,128,61,.22), transparent 60%),
+      radial-gradient(1000px 500px at 10% 110%, rgba(217,119,6,.12), transparent 60%),
+      linear-gradient(175deg, var(--bg-deep) 0%, var(--bg) 55%, #0a1524 100%);
+    color: var(--fg);
     min-height: 100vh;
     line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
-  .wrap { max-width: 920px; margin: 0 auto; padding: 48px 24px 72px; }
-  .hero { text-align: center; padding: 24px 0 40px; }
-  .hero img.logo { width: 140px; height: 140px; border-radius: 22px; box-shadow: 0 12px 40px rgba(0,0,0,.45); }
-  .hero h1 { font-size: 44px; font-weight: 800; margin-top: 22px; letter-spacing: .5px; }
-  .hero .ko { font-size: 20px; color: var(--accent); font-weight: 600; margin-top: 4px; }
-  .hero p.tag { color: var(--muted); font-size: 16px; margin-top: 14px; max-width: 560px; margin-left: auto; margin-right: auto; }
-  .badges { display: flex; gap: 8px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
-  .badge { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18); padding: 6px 14px; border-radius: 999px; font-size: 13px; color: var(--text); }
-  .creator { margin-top: 16px; font-size: 14px; color: var(--muted); }
-  .creator a { color: var(--accent); text-decoration: none; }
+  ::selection { background: rgba(245,158,11,.35); }
+  a { color: inherit; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  .lora { font-family: "Lora", serif; }
+  :focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; border-radius: 6px; }
+
+  /* ============ 배경 장식 (parallax layers) ============ */
+  .bg-fx {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    perspective: 1200px;
+  }
+  .bg-fx .chip {
+    position: absolute; border-radius: 50%;
+    filter: blur(60px); opacity: .35;
+    will-change: transform;
+  }
+  .bg-fx .c1 { width: 420px; height: 420px; top: -120px; right: -80px; background: radial-gradient(circle, rgba(21,128,61,.5), transparent 70%); }
+  .bg-fx .c2 { width: 360px; height: 360px; bottom: 10%; left: -120px; background: radial-gradient(circle, rgba(217,119,6,.4), transparent 70%); }
+  .bg-fx .c3 { width: 260px; height: 260px; top: 40%; right: 15%; background: radial-gradient(circle, rgba(245,158,11,.25), transparent 70%); }
+
+  /* ============ 상단 네비 ============ */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    background: rgba(11,22,38,.72);
+    border-bottom: 1px solid var(--border);
+  }
+  nav .inner { display: flex; align-items: center; gap: 18px; height: 60px; }
+  nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .2px; text-decoration: none; }
+  nav .brand img { width: 30px; height: 30px; border-radius: 7px; box-shadow: 0 4px 12px rgba(0,0,0,.4); }
+  nav .links { display: flex; gap: 4px; margin-left: auto; }
+  nav .links a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; padding: 8px 12px; border-radius: 8px; transition: color var(--dur) var(--ease), background var(--dur) var(--ease); }
+  nav .links a:hover { color: var(--fg); background: rgba(255,255,255,.06); }
+  nav .cta { background: var(--gold); color: #0a0f16; font-weight: 700; font-size: 14px; text-decoration: none; padding: 9px 18px; border-radius: 999px; transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+  nav .cta:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(217,119,6,.4); }
+  @media (max-width: 720px) { nav .links { display: none; } }
+
+  /* ============ 히어로 ============ */
+  header.hero {
+    position: relative;
+    padding: 88px 0 72px;
+    display: grid; grid-template-columns: 1.05fr .95fr; gap: 56px; align-items: center;
+  }
+  .hero .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; color: var(--gold-soft);
+    background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.28);
+    padding: 6px 14px; border-radius: 999px; letter-spacing: .4px;
+  }
+  .hero h1 { font-size: clamp(40px, 6vw, 64px); line-height: 1.05; margin: 22px 0 8px; letter-spacing: -.5px; }
+  .hero h1 .accent { color: var(--gold-soft); }
+  .hero .ko { font-size: 20px; color: var(--gold-soft); font-weight: 600; margin-top: 2px; }
+  .hero .tag { color: var(--muted); font-size: 17px; margin-top: 20px; max-width: 480px; }
+  .hero .tag strong { color: var(--fg); font-weight: 600; }
+  .hero .cta-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 32px; align-items: center; }
+  .btn {
+    display: inline-flex; flex-direction: column; align-items: flex-start;
+    background: linear-gradient(180deg, #f59e0b, #d97706);
+    color: #0a0f16; font-weight: 800; font-size: 18px;
+    padding: 16px 34px; border-radius: 16px; text-decoration: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 34px rgba(217,119,6,.35), inset 0 1px 0 rgba(255,255,255,.35);
+    transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    position: relative; overflow: hidden;
+  }
+  .btn::after {
+    content: ""; position: absolute; top: 0; left: -120%; width: 70%; height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,.5), transparent);
+    transform: skewX(-20deg); transition: left .7s var(--ease);
+  }
+  .btn:hover { transform: translateY(-3px); box-shadow: 0 2px 4px rgba(0,0,0,.4), 0 16px 46px rgba(217,119,6,.5), inset 0 1px 0 rgba(255,255,255,.4); }
+  .btn:hover::after { left: 130%; }
+  .btn small { font-size: 12px; font-weight: 500; opacity: .85; }
+  .btn.ghost {
+    background: rgba(255,255,255,.06); color: var(--fg);
+    border: 1px solid var(--border); box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .btn.ghost:hover { background: rgba(255,255,255,.1); box-shadow: 0 12px 30px rgba(0,0,0,.4); }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+  .badge { background: rgba(255,255,255,.07); border: 1px solid var(--border); padding: 6px 14px; border-radius: 999px; font-size: 13px; color: #d7dde6; box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+  .creator { margin-top: 18px; font-size: 14px; color: var(--muted); }
+  .creator a { color: var(--gold-soft); text-decoration: none; }
   .creator a:hover { text-decoration: underline; }
-  .shot { text-align: center; margin: 36px 0 8px; }
-  .shot img { max-width: 100%; border-radius: 14px; box-shadow: 0 18px 50px rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.12); }
-  .shot figcaption { margin-top: 10px; color: var(--muted); font-size: 13px; }
-  section { margin-top: 52px; }
-  h2 { font-size: 26px; font-weight: 700; border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 22px; display: inline-block; }
-  ul.games { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; list-style: none; }
-  ul.games li { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: 14px 16px; }
-  ul.games li strong { display: block; font-size: 16px; }
-  ul.games li span { font-size: 13px; color: var(--muted); }
-  ul.features { list-style: none; }
-  ul.features li { padding: 8px 0 8px 28px; position: relative; color: #e8ede9; }
-  ul.features li::before { content: "◆"; position: absolute; left: 4px; color: var(--accent); font-size: 12px; top: 12px; }
-  .download { text-align: center; margin-top: 56px; }
-  .btn { display: inline-block; background: var(--accent); color: #1c2e24; font-weight: 700; font-size: 17px; padding: 14px 34px; border-radius: 999px; text-decoration: none; box-shadow: 0 8px 24px rgba(255,214,107,.3); }
-  .btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(255,214,107,.4); }
-  .btn small { display: block; font-size: 12px; font-weight: 500; opacity: .8; margin-top: 2px; }
-  footer { text-align: center; margin-top: 64px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,.12); color: var(--muted); font-size: 13px; }
-  footer a { color: var(--accent); text-decoration: none; }
-  .kbd { display: inline-block; background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.2); border-bottom-width: 2px; border-radius: 6px; padding: 1px 7px; font-size: 12px; font-family: inherit; }
+
+  /* ============ 3D 히어로 카드 ============ */
+  .stage { position: relative; perspective: var(--perspective); }
+  .tilt { position: relative; transform-style: preserve-3d; transition: transform var(--dur) var(--ease); will-change: transform; }
+  .frame {
+    position: relative; border-radius: 24px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,.14);
+    box-shadow: var(--shadow-card);
+    transform: translateZ(0);
+  }
+  .frame img { display: block; width: 100%; height: auto; }
+  .frame .glass {
+    position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(160deg, rgba(255,255,255,.16) 0%, transparent 32%, transparent 62%, rgba(255,255,255,.06) 100%);
+  }
+  /* 뒤에 겹친 그림자 카드 (3D 레이어) */
+  .frame-ghost {
+    position: absolute; inset: 0; border-radius: 24px;
+    background: linear-gradient(180deg, rgba(21,128,61,.5), rgba(15,90,44,.6));
+    border: 1px solid rgba(255,255,255,.1);
+    transform: translateZ(-70px) rotateX(2deg) rotateY(-4deg);
+    box-shadow: 0 40px 90px rgba(0,0,0,.5);
+  }
+  .frame-ghost-2 {
+    position: absolute; inset: 0; border-radius: 24px;
+    background: rgba(217,119,6,.14);
+    border: 1px solid rgba(245,158,11,.18);
+    transform: translateZ(-130px) rotateX(-1.5deg) rotateY(5deg);
+  }
+  /* 히어로 좌측 미니 카드 스택 (parallax layer) */
+  .float-card {
+    position: absolute; width: 150px; border-radius: 14px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,.16);
+    box-shadow: 0 18px 50px rgba(0,0,0,.5);
+    opacity: .92;
+  }
+  .float-card img { display: block; width: 100%; }
+  .fc1 { top: -34px; right: -46px; transform: translateZ(60px) rotate(7deg); animation: floaty 7s ease-in-out infinite; }
+  .fc2 { bottom: -40px; left: -40px; transform: translateZ(40px) rotate(-8deg); animation: floaty 8s ease-in-out infinite reverse; }
+  @keyframes floaty { 0%,100% { translate: 0 0; } 50% { translate: 0 -12px; } }
+
+  /* ============ 섹션 공통 ============ */
+  section { padding: 72px 0; }
+  .sec-head { max-width: 640px; margin-bottom: 40px; }
+  .sec-eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 1.6px; color: var(--gold-soft); text-transform: uppercase; }
+  h2 { font-size: clamp(28px, 4vw, 38px); margin-top: 10px; letter-spacing: -.4px; }
+  .sec-sub { color: var(--muted); margin-top: 12px; font-size: 16px; }
+
+  /* ============ 미리보기 ============ */
+  .shots { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .shot {
+    border-radius: 20px; overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    background: var(--card);
+  }
+  .shot img { display: block; width: 100%; height: auto; }
+  .shot figcaption { padding: 14px 18px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--border); }
+
+  /* ============ 게임 카테고리 ============ */
+  .cat { margin-bottom: 40px; }
+  .cat-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .cat-head .dot { width: 12px; height: 12px; border-radius: 4px; box-shadow: 0 0 14px currentColor; }
+  .cat-head h3 { font-size: 20px; }
+  .cat-head .n { color: var(--muted); font-size: 14px; }
+  .game-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .game-card {
+    position: relative; text-decoration: none; display: block;
+    background: linear-gradient(180deg, var(--card-2), var(--card));
+    border: 1px solid var(--border); border-radius: 16px; padding: 20px 18px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 26px rgba(0,0,0,.4);
+    transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    transform: translateZ(0);
+  }
+  .game-card:hover { transform: translateY(-6px); border-color: rgba(245,158,11,.4); box-shadow: 0 2px 4px rgba(0,0,0,.4), 0 20px 46px rgba(0,0,0,.55), 0 0 0 1px rgba(245,158,11,.2); }
+  .game-card .name { font-size: 17px; font-weight: 700; }
+  .game-card .desc { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.45; }
+  .dif { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; margin-top: 12px; letter-spacing: .3px; }
+  .dif.easy { color: #4ade80; background: rgba(74,222,128,.12); border: 1px solid rgba(74,222,128,.3); }
+  .dif.medium { color: #fbbf24; background: rgba(251,191,36,.12); border: 1px solid rgba(251,191,36,.3); }
+  .dif.hard { color: #f87171; background: rgba(248,113,113,.12); border: 1px solid rgba(248,113,113,.3); }
+
+  /* ============ 기능 Bento ============ */
+  .bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+  .bcard {
+    grid-column: span 2;
+    background: linear-gradient(180deg, var(--card-2), var(--card));
+    border: 1px solid var(--border); border-radius: 20px; padding: 26px 24px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.4);
+    transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+  .bcard:hover { transform: translateY(-4px); border-color: rgba(245,158,11,.35); }
+  .bcard.wide { grid-column: span 3; }
+  .bcard .ic {
+    width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
+    background: linear-gradient(180deg, rgba(21,128,61,.5), rgba(15,90,44,.6));
+    border: 1px solid rgba(21,128,61,.6); box-shadow: 0 6px 18px rgba(21,128,61,.35), inset 0 1px 0 rgba(255,255,255,.2);
+    margin-bottom: 16px;
+  }
+  .bcard .ic svg { width: 22px; height: 22px; stroke: var(--fg); }
+  .bcard h3 { font-size: 18px; margin-bottom: 8px; }
+  .bcard p { font-size: 14px; color: var(--muted); line-height: 1.55; }
+  .bcard .kbd {
+    display: inline-block; background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.2); border-bottom-width: 2px;
+    border-radius: 6px; padding: 1px 8px; font-size: 12px; font-family: inherit; margin-top: 10px; color: #cbd5e1;
+  }
+
+  /* ============ 데일리 도전 강조 ============ */
+  .daily {
+    background:
+      linear-gradient(180deg, rgba(21,128,61,.18), rgba(15,90,44,.1)),
+      linear-gradient(180deg, var(--card-2), var(--card));
+    border: 1px solid rgba(245,158,11,.25); border-radius: 28px; padding: 44px 44px;
+    box-shadow: var(--shadow-card);
+  }
+  .daily .wrap-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; }
+  .daily h3 { font-size: clamp(26px, 3.4vw, 34px); margin: 12px 0; }
+  .daily p { color: var(--muted); }
+  .daily ul { list-style: none; margin-top: 18px; display: grid; gap: 10px; }
+  .daily li { display: flex; gap: 10px; align-items: baseline; color: #dde4ec; font-size: 15px; }
+  .daily li::before { content: "✦"; color: var(--gold-soft); }
+  .daily .stars { display: flex; gap: 18px; justify-content: center; text-align: center; flex-wrap: wrap; }
+  .daily .stars .s { background: rgba(11,22,38,.5); border: 1px solid var(--border); border-radius: 16px; padding: 20px 26px; min-width: 96px; }
+  .daily .stars .num { font-family: "Lora", serif; font-size: 34px; font-weight: 700; color: var(--gold-soft); }
+  .daily .stars .lab { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* ============ 단축키 ============ */
+  .kbd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .kbd-row { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 12px; padding: 11px 16px; font-size: 14px; }
+  .kbd-row .k { background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.2); border-bottom-width: 2px; border-radius: 6px; padding: 2px 9px; font-size: 13px; color: #e2e8f0; white-space: nowrap; }
+
+  /* ============ 다운로드 ============ */
+  .cta-band { text-align: center; }
+  .cta-band .btn { margin-top: 26px; font-size: 20px; }
+  .meta-note { color: var(--muted); font-size: 13px; margin-top: 16px; }
+
+  /* ============ footer ============ */
+  footer { border-top: 1px solid var(--border); padding: 40px 0 56px; text-align: center; color: var(--muted); font-size: 14px; margin-top: 24px; }
+  footer a { color: var(--gold-soft); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  footer .sep { margin: 0 8px; opacity: .4; }
+
+  /* ============ 반응형 ============ */
+  @media (max-width: 960px) {
+    header.hero { grid-template-columns: 1fr; gap: 44px; padding-top: 60px; }
+    .stage { max-width: 540px; }
+    .game-grid { grid-template-columns: repeat(2, 1fr); }
+    .bcard, .bcard.wide { grid-column: span 3; }
+    .daily .wrap-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    header.hero { padding-top: 44px; }
+    .shots { grid-template-columns: 1fr; }
+    .game-grid { grid-template-columns: 1fr; }
+    .bcard, .bcard.wide { grid-column: span 6; }
+    .fc1 { right: -14px; width: 108px; }
+    .fc2 { left: -14px; width: 108px; }
+    .daily { padding: 32px 24px; }
+  }
+
+  /* ============ reduced motion ============ */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .bg-fx .chip { animation: none !important; }
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <div class="hero">
-    <img class="logo" src="images/AppIcon-1024.png" alt="Pure Solitaire 아이콘">
-    <h1>Pure Solitaire</h1>
-    <div class="ko">순수한 솔리테어</div>
-    <p class="tag">맥을 위해 재탄생한 군더더기 없는 클래식 카드 게임 모음.<br>광고 없이, 로그인 없이, 깔끔하게 — 마이크로소프트 정통 규칙 그대로.</p>
-    <div class="badges">
-      <span class="badge">macOS 네이티브</span>
-      <span class="badge">Swift 6 + SwiftUI</span>
-      <span class="badge">12가지 게임 형식</span>
-      <span class="badge">단위 테스트 220개</span>
-    </div>
-    <div class="creator">
-      ✦ 제작자 <a href="https://github.com/BoraSarang">BoRaSaRang</a> &nbsp;·&nbsp;
-      ✉️ 문의 <a href="mailto:leeborasarang@gmail.com">leeborasarang@gmail.com</a>
-    </div>
-  </div>
-
-  <figure class="shot">
-    <img src="docs/screenshots/macos/v3.20/board.png" alt="게임 보드 미리보기">
-    <figcaption>FreeCell · Klondike · Spider · Scorpion 등 12가지 게임</figcaption>
-  </figure>
-
-  <section>
-    <h2>🎮 지원 게임 (12종)</h2>
-    <ul class="games">
-      <li><strong>FreeCell</strong><span>MS 정통 규칙 · 수퍼무브 · 승리 보장</span></li>
-      <li><strong>Baker's Game</strong><span>같은 수트로만 정리</span></li>
-      <li><strong>Klondike</strong><span>스톡·웨이스트·스톡 재활용</span></li>
-      <li><strong>Spider</strong><span>10열 + 스톡 · 난이도 4단계</span></li>
-      <li><strong>Sea Tower</strong><span>10열×5장 + 프리셀</span></li>
-      <li><strong>Super FreeCell</strong><span>2덱 104장 + 프리셀 6</span></li>
-      <li><strong>Yukon</strong><span>그룹 자유 이동</span></li>
-      <li><strong>Forty Thieves</strong><span>2덱 · 홈셀 8개</span></li>
-      <li><strong>Golf</strong><span>웨이스트와 1 차이 제거</span></li>
-      <li><strong>Pyramid</strong><span>합 13인 노출 카드 제거</span></li>
-      <li><strong>TriPeaks</strong><span>3개 봉우리 · 합 13</span></li>
-      <li><strong>Scorpion</strong><span>7열×7장 + 예비 더미 · 그룹 이동</span></li>
-    </ul>
-  </section>
-
-  <section>
-    <h2>✨ 주요 기능</h2>
-    <ul class="features">
-      <li><strong>게임 번호 기반 딜</strong> — 1~1,000,000 사이 번호로 MS와 동일 배치 재현 (게임 #1/#617 검증)</li>
-      <li><strong>승리 보장 (Winnable)</strong> — FreeCell 계열은 내장 솔버가 풀리는 번호만 자동 선택</li>
-      <li><strong>데일리 딜 &amp; 챌린지</strong> — 날짜 시드 고정 · 매일 새로운 딜 · 별점 3점(승리/시간/이동)</li>
-      <li><strong>업적 10개</strong> — 첫 승리부터 50승·5연승·변형 완주·별 3까지 배지</li>
-      <li><strong>점수 체계</strong> — 이동마다 점수 누적 · 승리 보너스 · 통계 기록</li>
-      <li><strong>직관적인 조작</strong> — 드래그 &amp; 드롭, 클릭 이동, 더블클릭 홈 자동 이동</li>
-      <li><strong>무제한 실행 취소/다시 실행</strong> — 상태 스냅샷 기반으로 크래시에 안전</li>
-      <li><strong>자동 플레이 &amp; 힌트</strong> — 안전한 카드 자동 이동 + 전체 힌트 + 드래그 애니메이션</li>
-      <li><strong>승리 연출</strong> — 파티클(컨페티) + 사운드 시퀀스 + 배너</li>
-      <li><strong>통계 &amp; 기록</strong> — 게임별 통계·최단 승리·최근 승리 기록 자동 저장</li>
-      <li><strong>커스터마이징</strong> — 카드 스타일 4종 · 뒷면 패턴 5종 · 배경색 · 커스텀 배경(사진) · 보드 줌 · BGM 볼륨</li>
-    </ul>
-  </section>
-
-  <section>
-    <h2>⌨️ 주요 단축키</h2>
-    <p style="color:#e8ede9">
-      <span class="kbd">⌘N</span> 새 게임 · <span class="kbd">⌘G</span> 게임 번호 · <span class="kbd">⌘D</span> 데일리 딜 ·
-      <span class="kbd">⌥⌘D</span> 챌린지 · <span class="kbd">⌥⌘T</span> 업적 · <span class="kbd">⌘Z</span> 실행 취소 ·
-      <span class="kbd">⇧⌘Z</span> 다시 실행 · <span class="kbd">⌘H</span> 힌트 · <span class="kbd">⇧⌘H</span> 전체 힌트 ·
-      <span class="kbd">⌘+</span>/<span class="kbd">⌘-</span> 보드 줌
-    </p>
-  </section>
-
-  <div class="download">
-    <a class="btn" href="https://github.com/BoraSarang/Pure-Solitaire/releases/latest/download/Pure-Solitaire-3.20.0-macos.zip">Pure Solitaire 받기<small>v3.20.0 · macOS arm64 .app (4.2MB)</small></a>
-  </div>
-
-  <footer>
-    <p>© 2026 <a href="https://github.com/BoraSarang">BoRaSaRang</a> — 모든 권리 보유. · <a href="mailto:leeborasarang@gmail.com">leeborasarang@gmail.com</a></p>
-    <p style="margin-top:6px"><a href="https://github.com/BoraSarang/Pure-Solitaire">GitHub 저장소 보기</a></p>
-  </footer>
-
+<div class="bg-fx" aria-hidden="true">
+  <div class="chip c1" data-depth="0.3"></div>
+  <div class="chip c2" data-depth="0.5"></div>
+  <div class="chip c3" data-depth="0.7"></div>
 </div>
+
+<nav>
+  <div class="wrap inner">
+    <a class="brand" href="#top">
+      <img src="images/AppIcon-1024.png" alt="">
+      <span>Pure Solitaire</span>
+    </a>
+    <div class="links">
+      <a href="#games">게임</a>
+      <a href="#features">기능</a>
+      <a href="#daily">데일리 도전</a>
+      <a href="#shortcuts">단축키</a>
+    </div>
+    <a class="cta" href="#download">다운로드</a>
+  </div>
+</nav>
+
+<main id="top" class="wrap">
+
+  <!-- ============ 히어로 ============ -->
+  <header class="hero">
+    <div>
+      <span class="eyebrow">macOS 네이티브 · Swift 6 + SwiftUI</span>
+      <h1 class="lora">순수한 <span class="accent">솔리테어</span></h1>
+      <div class="ko">Pure Solitaire</div>
+      <p class="tag">
+        광고 없이, 로그인 없이, 깔끔하게.<br>
+        마이크로소프트 정통 규칙 그대로 <strong>12가지 카드 게임</strong>을 즐기세요.
+      </p>
+      <div class="cta-row">
+        <a class="btn" href="#download">Pure Solitaire 받기<small>v3.22.0 · macOS .app (4MB)</small></a>
+        <a class="btn ghost" href="https://github.com/BoraSarang/Pure-Solitaire" target="_blank" rel="noopener">GitHub 저장소</a>
+      </div>
+      <div class="badges">
+        <span class="badge">12가지 게임 형식</span>
+        <span class="badge">자동 풀어 보기</span>
+        <span class="badge">데일리 도전 9판</span>
+        <span class="badge">단위 테스트 253개</span>
+      </div>
+      <div class="creator">
+        ✦ 제작자 <a href="https://github.com/BoraSarang" target="_blank" rel="noopener">BoRaSaRang</a>
+        <span class="sep">·</span>
+        ✉️ 문의 <a href="mailto:leeborasarang@gmail.com">leeborasarang@gmail.com</a>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="frame-ghost-2" aria-hidden="true"></div>
+      <div class="frame-ghost" aria-hidden="true"></div>
+      <div class="tilt" id="heroTilt">
+        <div class="frame">
+          <img src="docs/screenshots/macos/v3.22/home.png" alt="Pure Solitaire 홈 화면 — 카테고리 4그룹 게임 그리드와 데일리 도전">
+          <div class="glass" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="float-card fc1" aria-hidden="true"><img src="docs/screenshots/macos/v3.22/play.png" alt=""></div>
+      <div class="float-card fc2" aria-hidden="true"><img src="docs/screenshots/macos/v3.22/play.png" alt=""></div>
+    </div>
+  </header>
+
+  <!-- ============ 미리보기 ============ -->
+  <section id="preview">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Preview</div>
+      <h2 class="lora">앱 미리보기</h2>
+      <p class="sec-sub">앱을 실행하면 먼저 만나는 홈 화면과, 12가지 게임이 펼쳐지는 게임 보드.</p>
+    </div>
+    <div class="shots">
+      <figure class="shot">
+        <img src="docs/screenshots/macos/v3.22/home.png" alt="홈 화면 — 카테고리 4그룹(FreeCell/스톡/스파이더/카드 제거) 그리드와 난이도 뱃지">
+        <figcaption>홈 화면 — 카테고리 4그룹 + 난이도 뱃지 + 하던 게임 이어하기</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="docs/screenshots/macos/v3.22/play.png" alt="게임 보드 — 카드 펼침과 정보 영역(게임 번호/이동/점수/난이도)">
+        <figcaption>게임 보드 — 게임 번호 · 이동 · 점수 · 난이도 뱃지 표시</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============ 게임 카테고리 ============ -->
+  <section id="games">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Games</div>
+      <h2 class="lora">12가지 게임, 4개 카테고리</h2>
+      <p class="sec-sub">게임마다 고정 난이도가 표시됩니다 — 쉬움부터 어려움까지 차근차근 도전하세요.</p>
+    </div>
+
+    <div class="cat">
+      <div class="cat-head"><span class="dot" style="color:#34d399"></span><h3 class="lora">FreeCell 계열</h3><span class="n">3종</span></div>
+      <div class="game-grid">
+        <div class="game-card"><div class="name">FreeCell</div><div class="desc">MS 정통 규칙 · 수퍼무브 · 승리 보장</div><span class="dif medium">보통</span></div>
+        <div class="game-card"><div class="name">Baker's Game</div><div class="desc">프리셀 없이 같은 수트로만 정리</div><span class="dif medium">보통</span></div>
+        <div class="game-card"><div class="name">Sea Tower</div><div class="desc">10열×5장 + 프리셀 2 · 같은 수트</div><span class="dif hard">어려움</span></div>
+        <div class="game-card"><div class="name">Super FreeCell</div><div class="desc">2덱 104장 + 프리셀 6</div><span class="dif hard">어려움</span></div>
+      </div>
+    </div>
+
+    <div class="cat">
+      <div class="cat-head"><span class="dot" style="color:#60a5fa"></span><h3 class="lora">스톡 &amp; 웨이스트</h3><span class="n">3종</span></div>
+      <div class="game-grid">
+        <div class="game-card"><div class="name">Klondike</div><div class="desc">스톡·웨이스트·스톡 재활용 (1/3장)</div><span class="dif medium">보통</span></div>
+        <div class="game-card"><div class="name">Yukon</div><div class="desc">앞면 카드와 그 위 전체를 그룹 이동</div><span class="dif hard">어려움</span></div>
+        <div class="game-card"><div class="name">Forty Thieves</div><div class="desc">2덱 · 10열×4장 전부 앞면 · 홈셀 8</div><span class="dif hard">어려움</span></div>
+        <div class="game-card" style="opacity:.5; pointer-events:none"><div class="name">─</div><div class="desc">카테고리 여백</div></div>
+      </div>
+    </div>
+
+    <div class="cat">
+      <div class="cat-head"><span class="dot" style="color:#f59e0b"></span><h3 class="lora">스파이더</h3><span class="n">1종</span></div>
+      <div class="game-grid">
+        <div class="game-card"><div class="name">Spider</div><div class="desc">10열 + 스톡 5더미 · 같은 수트 K→A · 난이도 4단계</div><span class="dif medium">보통</span></div>
+      </div>
+    </div>
+
+    <div class="cat">
+      <div class="cat-head"><span class="dot" style="color:#f472b6"></span><h3 class="lora">카드 제거</h3><span class="n">4종</span></div>
+      <div class="game-grid">
+        <div class="game-card"><div class="name">Golf</div><div class="desc">웨이스트와 1 차이 · 같은 랭크 제거</div><span class="dif easy">쉬움</span></div>
+        <div class="game-card"><div class="name">Scorpion</div><div class="desc">7열×7장 + 예비 더미 · 그룹 이동</div><span class="dif easy">쉬움</span></div>
+        <div class="game-card"><div class="name">Pyramid</div><div class="desc">피라미드 28장 · 합 13 노출 카드 제거</div><span class="dif medium">보통</span></div>
+        <div class="game-card"><div class="name">TriPeaks</div><div class="desc">3개 봉우리 · 웨이스트와 1 랭크 차이</div><span class="dif medium">보통</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 기능 Bento ============ -->
+  <section id="features">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Features</div>
+      <h2 class="lora">직관적으로, 그리고 깊이 있게</h2>
+      <p class="sec-sub">간단해 보이지만 — 어느새 빠져드는 완성도를 위해 만들었습니다.</p>
+    </div>
+    <div class="bento">
+      <div class="bcard">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h16M4 6h16M4 22h16"/><path d="M7 14a4 4 0 0 1 0 8 4 4 0 0 1 0-8Z"/></svg></div>
+        <h3>홈 화면</h3>
+        <p>앱을 열면 바로 카테고리 4그룹 그리드. 하던 게임은 "이어하기" 카드로 한 번에 복귀.</p>
+        <span class="kbd">⌘1</span>
+      </div>
+      <div class="bcard">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div>
+        <h3>자동 풀어 보기</h3>
+        <p>내장 솔버가 승리 경로를 찾아 끝까지 재생. 진행률·속도 3단계·일시정지·중단.</p>
+        <span class="kbd">⇧⌘P</span>
+      </div>
+      <div class="bcard">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></div>
+        <h3>내 이동 리플레이</h3>
+        <p>승리한 판을 처음부터 내가 둔 그대로 다시 감상.</p>
+        <span class="kbd">⇧⌘R</span>
+      </div>
+      <div class="bcard wide">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M12 2v4M16 2v4"/></svg></div>
+        <h3>데일리 도전</h3>
+        <p>매일 9판이 새로 셔플됩니다. 3개월 달력으로 날짜별 완료·별점을 한눈에, 월 배지(브론즈→다이아)로 꾸준함에 보상.</p>
+        <span class="kbd">⌥⌘D</span>
+      </div>
+      <div class="bcard wide">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5v0A2.5 2.5 0 0 0 6.5 24H20"/></svg></div>
+        <h3>게임 번호 딜 · 승리 보장</h3>
+        <p>1~1,000,000 번호로 MS와 동일 배치 재현. FreeCell 계열은 내장 솔버가 풀리는 번호만 자동 선택해 언제나 풀이 가능한 판부터 시작.</p>
+        <span class="kbd">⌘G</span>
+      </div>
+      <div class="bcard">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <h3>무제한 실행 취소</h3>
+        <p>상태 스냅샷 기반 — 크래시에 안전한 무한 undo/redo.</p>
+        <span class="kbd">⌘Z</span>
+      </div>
+      <div class="bcard">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-6 4 3 4-5"/></svg></div>
+        <h3>통계 &amp; 업적</h3>
+        <p>게임별 통계·최단 승리·최근 기록 + 업적 10개.</p>
+        <span class="kbd">⌘T</span>
+      </div>
+      <div class="bcard">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></div>
+        <h3>커스터마이징</h3>
+        <p>카드 스타일 4종 · 뒷면 5종 · 배경색·사진 · 보드 줌 · BGM.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 데일리 도전 강조 ============ -->
+  <section id="daily">
+    <div class="daily">
+      <div class="wrap-grid">
+        <div>
+          <span class="sec-eyebrow">Daily Challenge</span>
+          <h3 class="lora">오늘의 9판, 내일이면 사라집니다</h3>
+          <p>날짜 시드로 고정된 9가지 게임이 매일 새로 셔플됩니다. 풀어서 별점을 모으고, 월 배지로 꾸준함을 증명하세요.</p>
+          <ul>
+            <li>매일 9판 — 하루하루 다른 구성</li>
+            <li>별점 3점 — 승리 · 시간 · 이동 수</li>
+            <li>3개월 달력 — 완료·별점을 한눈에</li>
+            <li>월 배지 — 브론즈 / 실버 / 골드 / 다이아</li>
+            <li>판별 난이도 태그 — 내 실력에 맞게</li>
+          </ul>
+        </div>
+        <div class="stars" aria-hidden="true">
+          <div class="s"><div class="num">9</div><div class="lab">하루 판수</div></div>
+          <div class="s"><div class="num">3</div><div class="lab">별점</div></div>
+          <div class="s"><div class="num">3</div><div class="lab">개월 달력</div></div>
+          <div class="s"><div class="num">4</div><div class="lab">월 배지</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 단축키 ============ -->
+  <section id="shortcuts">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Shortcuts</div>
+      <h2 class="lora">손끝으로 움직이는 카드</h2>
+      <p class="sec-sub">자주 쓰는 동작은 단축키 하나로.</p>
+    </div>
+    <div class="kbd-grid">
+      <div class="kbd-row"><span>홈 화면</span><span class="k">⌘1</span></div>
+      <div class="kbd-row"><span>새 게임</span><span class="k">⌘N</span></div>
+      <div class="kbd-row"><span>게임 번호</span><span class="k">⌘G</span></div>
+      <div class="kbd-row"><span>데일리 도전</span><span class="k">⌥⌘D</span></div>
+      <div class="kbd-row"><span>자동 풀어 보기</span><span class="k">⇧⌘P</span></div>
+      <div class="kbd-row"><span>내 이동 리플레이</span><span class="k">⇧⌘R</span></div>
+      <div class="kbd-row"><span>실행 취소 / 다시 실행</span><span class="k">⌘Z · ⇧⌘Z</span></div>
+      <div class="kbd-row"><span>힌트 / 전체 힌트</span><span class="k">⌘H · ⇧⌘H</span></div>
+      <div class="kbd-row"><span>자동 플레이</span><span class="k">⇧⌘A</span></div>
+      <div class="kbd-row"><span>통계</span><span class="k">⌘T</span></div>
+      <div class="kbd-row"><span>업적</span><span class="k">⌥⌘T</span></div>
+      <div class="kbd-row"><span>보드 줌</span><span class="k">⌘+ · ⌘−</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 다운로드 ============ -->
+  <section id="download" class="cta-band">
+    <div class="sec-eyebrow">Download</div>
+    <h2 class="lora">지금, 순수한 솔리테어를 만나보세요</h2>
+    <div>
+      <a class="btn" href="https://github.com/BoraSarang/Pure-Solitaire/releases/latest/download/Pure-Solitaire-3.22.0-macos.zip">Pure Solitaire 받기<small>v3.22.0 · macOS arm64 .app (4MB) · GitHub Releases</small></a>
+    </div>
+    <p class="meta-note">macOS 13 이상 · 설치 파일 압축 해제 후 실행 · 추가 설치 불필요</p>
+  </section>
+
+</main>
+
+<footer>
+  <p>© 2026 <a href="https://github.com/BoraSarang" target="_blank" rel="noopener">BoRaSaRang</a> — 모든 권리 보유.<span class="sep">·</span><a href="https://github.com/BoraSarang/Pure-Solitaire" target="_blank" rel="noopener">GitHub 저장소</a><span class="sep">·</span><a href="mailto:leeborasarang@gmail.com">문의하기</a></p>
+</footer>
+
+<script>
+(function () {
+  // ============ 히어로 3D 틸트 (마우스 반응) ============
+  var tilt = document.getElementById("heroTilt");
+  if (tilt && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    var stage = tilt.parentElement;
+    var bound = 10, scale = 1.02;
+    var raf = null, tx = 0, ty = 0, cx = 0, cy = 0;
+    stage.addEventListener("mousemove", function (e) {
+      var r = stage.getBoundingClientRect();
+      cx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+      cy = ((e.clientY - r.top) / r.height - 0.5) * 2;
+      if (!raf) raf = requestAnimationFrame(apply);
+    });
+    stage.addEventListener("mouseleave", function () {
+      cx = 0; cy = 0;
+      if (!raf) raf = requestAnimationFrame(apply);
+    });
+    function apply() {
+      raf = null;
+      tx += (cx * bound - tx) * 0.12;
+      ty += (cy * bound - ty) * 0.12;
+      var rx = Math.max(-bound, Math.min(bound, -ty));
+      var ry = Math.max(-bound, Math.min(bound, tx));
+      tilt.style.transform = "perspective(1000px) rotateX(" + rx.toFixed(2) + "deg) rotateY(" + ry.toFixed(2) + "deg) scale(" + scale + ")";
+      if (Math.abs(tx) > 0.05 || Math.abs(ty) > 0.05) {
+        raf = requestAnimationFrame(apply);
+      }
+    }
+  }
+
+  // ============ 배경 chip parallax (3 레이어) ============
+  var chips = document.querySelectorAll(".bg-fx .chip");
+  if (chips.length && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    var raf2 = null;
+    window.addEventListener("mousemove", function (e) {
+      var nx = (e.clientX / window.innerWidth - 0.5);
+      var ny = (e.clientY / window.innerHeight - 0.5);
+      if (!raf2) raf2 = requestAnimationFrame(function () {
+        raf2 = null;
+        chips.forEach(function (c) {
+          var d = parseFloat(c.dataset.depth || "0.5");
+          c.style.transform = "translate3d(" + (nx * -60 * d).toFixed(1) + "px," + (ny * -40 * d).toFixed(1) + "px,0)";
+        });
+      });
+    });
+  }
+})();
+</script>
 </body>
 </html>
