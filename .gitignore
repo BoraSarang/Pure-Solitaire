@@ -21,3 +21,4 @@ AppIcon.iconset/
 
 # 릴리스 zip 산출물
 Pure-Solitaire-*.zip
+__pycache__/

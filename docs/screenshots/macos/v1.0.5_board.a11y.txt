@@ -1,1 +1,0 @@
-cards=52 sidebarBtns=8

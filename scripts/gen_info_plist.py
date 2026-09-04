@@ -21,6 +21,7 @@ def main() -> None:
         "CFBundlePackageType": "APPL",
         "CFBundleIconFile": "AppIcon",
         "CFBundleIconName": "AppIcon",
+        "CFBundleSupportedPlatforms": ["MacOSX"],
         "LSMinimumSystemVersion": "13.0",
         "LSApplicationCategoryType": "public.app-category.card-games",
         "NSHighResolutionCapable": True,
