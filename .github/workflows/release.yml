@@ -1,0 +1,30 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-app:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build (release)
+        run: swift build -c release
+
+      - name: Run tests (release)
+        run: swift test -c release
+
+      - name: Package .app bundle
+        run: bash scripts/package_release.sh "${GITHUB_REF_NAME#v}"
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Pure-Solitaire-*.zip
+          generate_release_notes: true
