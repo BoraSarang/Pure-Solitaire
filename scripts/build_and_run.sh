@@ -10,7 +10,7 @@ cd "$PROJECT_DIR"
 APP_NAME="Pure Solitaire"
 EXECUTABLE="PureSolitaire"
 BUNDLE_ID="com.borasarang.puresolitaire"
-VERSION="3.20.0"
+VERSION="3.27.0"
 DEST="$HOME/Applications/$APP_NAME.app"
 
 echo "== [1/6] 빌드 ($CONFIGURATION) =="

@@ -6,7 +6,7 @@ import sys
 
 def main() -> None:
     app_dir = sys.argv[1]
-    version = os.environ.get("VERSION", "3.20.0")
+    version = os.environ.get("VERSION", "3.27.0")
     app_name = os.environ.get("APP_NAME", "Pure Solitaire")
     executable = os.environ.get("EXECUTABLE", "PureSolitaire")
     bundle_id = os.environ.get("BUNDLE_ID", "com.borasarang.puresolitaire")

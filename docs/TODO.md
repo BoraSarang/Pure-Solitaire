@@ -88,7 +88,7 @@
 - [x] T-254: PyramidGame 재활용 1회 — `didRecycle` 상태 + `canMove(.recycleStock)`(스톡 비고 웨이스트 있고 미사용) + `applyUnchecked`(웨이스트 역순→스톡 복귀) + Snapshot/Codable(기존 저장 호환) + hint 후보.
 - [x] T-255: VM `tapPyramidStock` 클론다이크 패턴 분기 (스톡 없으면 재활용) + View 재활용 오버레이(유턴 아이콘).
 - [x] T-256: 테스트(재활용 1회/순서 복원/스톡 존재 시 거부/undo-redo 복원/레거시 호환) + 회귀 274개 통과.
-- [x] T-257: Spider 스톡 더미 표시 — 스톡 50장 × 클릭 1회(10장 딜) 로 더미당 10장씩 소진 표현 (`cardsLeft > index * 10`). 전체 비었을 때만 전부 사라지던 문제 수정, 회귀 274개 유지.
+- [x] T-257: Spider 스톡 더미 표시 — 스톡 50장 × 클릭 1회(10장 딜) 로 더미당 10장씩 소진 표현 (`cardsLeft > index * 10`). 전체 비었을 때만 전부 사라지던 문제 수정, 회귀 274개 유지. **사용자 실기 확인 완료 (2026-09-09).**
 
 ## v3.23 — 게임 흐름 버그 수정 (완료 — 2026-09-09, 커밋 4b4e1e5)
 - [x] T-229: 데일리 단일화 — `startDailyDeal` 폐지 → `startTodayDeal(variant:)` (9판 매핑 후 `startChallenge` 위임). SideBarView:62, GameCommands:27 교체.

@@ -211,7 +211,7 @@ struct SettingsView: View {
 
     /// 앱 버전 (Info.plist의 CFBundleShortVersionString)
     private var appVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "3.20.0"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "3.27.0"
     }
 
     /// GitHub 저장소 페이지를 기본 브라우저로 열기

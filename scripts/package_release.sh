@@ -3,7 +3,7 @@
 # 사용: bash scripts/package_release.sh [version]
 set -euo pipefail
 
-VERSION="${1:-3.20.0}"
+VERSION="${1:-3.27.0}"
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_DIR"
 
