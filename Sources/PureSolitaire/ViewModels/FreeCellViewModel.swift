@@ -1143,10 +1143,9 @@ final class FreeCellViewModel: ObservableObject {
 
     // MARK: - Golf 상호작용
 
-    /// 스톡 클릭: 1장 드로 (재활용 없음 — 스톡이 비면 무시)
+    /// 스톡 클릭: 1장 드로 (재활용 없음 — 스톡이 비면 canMove 가드로 무시)
     func tapGolfStock() {
-        guard golf?.stock.isEmpty == false else { return }
-        apply(.drawFromStock)
+        _ = apply(.drawFromStock)
     }
 
     /// 웨이스트 클릭: 아무 동작 없음 (Golf 웨이스트는 제거 대상이 아니라 기준 카드)
@@ -1162,10 +1161,9 @@ final class FreeCellViewModel: ObservableObject {
 
     // MARK: - Pyramid 상호작용
 
-    /// 스톡 클릭: 1장 드로 (재활용 없음 — 스톡이 비면 무시)
+    /// 스톡 클릭: 1장 드로 (재활용 없음 — 스톡이 비면 canMove 가드로 무시)
     func tapPyramidStock() {
-        guard pyramid?.stock.isEmpty == false else { return }
-        apply(.drawFromStock)
+        _ = apply(.drawFromStock)
     }
 
     /// 웨이스트 클릭: 아무 동작 없음 (Pyramid 웨이스트는 기준 카드)
@@ -1218,10 +1216,9 @@ final class FreeCellViewModel: ObservableObject {
 
     // MARK: - TriPeaks 상호작용
 
-    /// 스톡 클릭: 1장 드로 (재활용 없음 — 스톡이 비면 무시)
+    /// 스톡 클릭: 1장 드로 (재활용 없음 — 스톡이 비면 canMove 가드로 무시)
     func tapTriPeaksStock() {
-        guard triPeaks?.stock.isEmpty == false else { return }
-        apply(.drawFromStock)
+        _ = apply(.drawFromStock)
     }
 
     /// 웨이스트 클릭: 아무 동작 없음 (TriPeaks 웨이스트는 기준 카드)
