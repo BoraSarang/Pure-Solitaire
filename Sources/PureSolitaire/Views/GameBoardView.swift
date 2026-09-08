@@ -104,6 +104,12 @@ struct GameBoardView: View {
                             finishDrag(boardSize: geo.size, cardSize: size)
                         }
             )
+            .simultaneousGesture(
+                SpatialTapGesture(count: 1).onEnded { value in
+                    guard !(vm.isAutoSolving || vm.isReplaying) else { return }
+                    handleBoardTap(at: value.location, boardSize: geo.size, cardSize: size)
+                }
+            )
             .onChange(of: vm.hintAnimationTick) { _ in
                 runHintDragAnimation(boardSize: geo.size, cardSize: size)
             }
@@ -1558,6 +1564,205 @@ struct GameBoardView: View {
             lastTapAt = now
             lastTapIdentifier = identifier
             single()
+        }
+    }
+
+    // MARK: - 보드 탭 라우팅 (SpatialTapGesture 기반, T-비동기: macOS SwiftUI 보드 내 개별 탭 인식 불가 대응)
+
+    /// 보드 좌표의 탭 지점을 현재 변형의 탭 핸들러로 라우팅
+    private func handleBoardTap(at point: CGPoint, boardSize: CGSize, cardSize: CGSize) {
+        let columnsStartY = cardSize.height * 1.3 + 10
+
+        if vm.pyramid != nil {
+            handlePyramidTap(at: point, boardSize: boardSize, cardSize: cardSize)
+            return
+        }
+        if vm.triPeaks != nil {
+            handleTriPeaksTap(at: point, boardSize: boardSize, cardSize: cardSize)
+            return
+        }
+        if point.y < columnsStartY {
+            handleTopRowTap(at: point, boardSize: boardSize, cardSize: cardSize)
+            return
+        }
+        handleColumnTap(at: point, boardSize: boardSize, cardSize: cardSize)
+    }
+
+    private func handlePyramidTap(at point: CGPoint, boardSize: CGSize, cardSize: CGSize) {
+        let stockRect = CGRect(x: 14, y: 0, width: cardSize.width, height: cardSize.height)
+        if stockRect.contains(point) {
+            vm.tapPyramidStock()
+            return
+        }
+        for i in 0..<PyramidGame.pyramidCount {
+            guard let p = vm.pyramid, p.pyramid.indices.contains(i), p.pyramid[i] != nil, p.isExposed(i) else { continue }
+            let origin = pyramidCardOrigin(index: i, cardSize: cardSize, boardSize: boardSize)
+            if CGRect(x: origin.x, y: origin.y, width: cardSize.width, height: cardSize.height).contains(point) {
+                vm.tapPyramidCard(index: i)
+                return
+            }
+        }
+    }
+
+    private func handleTriPeaksTap(at point: CGPoint, boardSize: CGSize, cardSize: CGSize) {
+        let stockRect = CGRect(x: 14, y: 0, width: cardSize.width, height: cardSize.height)
+        if stockRect.contains(point) {
+            vm.tapTriPeaksStock()
+            return
+        }
+        for i in 0..<TriPeaksGame.totalPeaksCount {
+            guard let t = vm.triPeaks, t.peaks.indices.contains(i), t.peaks[i] != nil, t.isExposed(i) else { continue }
+            let origin = triPeaksCardOrigin(index: i, cardSize: cardSize, boardSize: boardSize)
+            if CGRect(x: origin.x, y: origin.y, width: cardSize.width, height: cardSize.height).contains(point) {
+                vm.tapTriPeaksCard(index: i)
+                return
+            }
+        }
+    }
+
+    private func handleTopRowTap(at point: CGPoint, boardSize: CGSize, cardSize: CGSize) {
+        let gap: CGFloat = 2
+        let left = cardSize.width + gap
+
+        if vm.spider != nil {
+            for i in 0..<5 {
+                let x = 14 + CGFloat(i) * left
+                if CGRect(x: x, y: 0, width: cardSize.width, height: cardSize.height).contains(point) {
+                    vm.tapSpiderStock()
+                    return
+                }
+            }
+            return
+        }
+        if vm.klondike != nil {
+            let stockX: CGFloat = 14
+            let wasteX = stockX + left
+            if CGRect(x: stockX, y: 0, width: cardSize.width, height: cardSize.height).contains(point) {
+                vm.tapKlondikeStock()
+                return
+            }
+            if CGRect(x: wasteX, y: 0, width: cardSize.width, height: cardSize.height).contains(point) {
+                handleWasteTap()
+                return
+            }
+            let homeStartX = boardSize.width - 14 - CGFloat(KlondikeGame.homeCount) * cardSize.width - CGFloat(KlondikeGame.homeCount - 1) * gap
+            for i in 0..<KlondikeGame.homeCount {
+                if CGRect(x: homeStartX + CGFloat(i) * left, y: 0, width: cardSize.width, height: cardSize.height).contains(point) {
+                    vm.tapKlondikeHome(i)
+                    return
+                }
+            }
+            return
+        }
+        if vm.yukon != nil {
+            let homeStartX = boardSize.width - 14 - CGFloat(YukonGame.homeCount) * cardSize.width - CGFloat(YukonGame.homeCount - 1) * gap
+            for i in 0..<YukonGame.homeCount {
+                if CGRect(x: homeStartX + CGFloat(i) * left, y: 0, width: cardSize.width, height: cardSize.height).contains(point) {
+                    vm.tapYukonHome(i)
+                    return
+                }
+            }
+            return
+        }
+        if vm.fortyThieves != nil {
+            let stockX: CGFloat = 14
+            let wasteX = stockX + left
+            if CGRect(x: stockX, y: 0, width: cardSize.width, height: cardSize.height).contains(point) {
+                vm.tapFortyThievesStock()
+                return
+            }
+            if CGRect(x: wasteX, y: 0, width: cardSize.width, height: cardSize.height).contains(point) {
+                handleFortyThievesWasteTap()
+                return
+            }
+            let homeStartX = boardSize.width - 14 - CGFloat(FortyThievesGame.homeCount) * cardSize.width - CGFloat(FortyThievesGame.homeCount - 1) * gap
+            for i in 0..<FortyThievesGame.homeCount {
+                if CGRect(x: homeStartX + CGFloat(i) * left, y: 0, width: cardSize.width, height: cardSize.height).contains(point) {
+                    vm.tapFortyThievesHome(i)
+                    return
+                }
+            }
+            return
+        }
+        if vm.golf != nil {
+            let stockX: CGFloat = 14
+            if CGRect(x: stockX, y: 0, width: cardSize.width, height: cardSize.height).contains(point) {
+                vm.tapGolfStock()
+            }
+            return
+        }
+        if vm.scorpion != nil {
+            let reserveX = boardSize.width - 14 - cardSize.width
+            if CGRect(x: reserveX, y: 0, width: cardSize.width, height: cardSize.height).contains(point) {
+                vm.tapScorpionStock()
+            }
+            return
+        }
+
+        for i in 0..<FreeCellGame.homeCount {
+            let x = 14 + CGFloat(i) * left
+            if CGRect(x: x, y: 0, width: cardSize.width, height: cardSize.height).contains(point) {
+                vm.tapHome(i)
+                return
+            }
+        }
+        let freeStartX = boardSize.width - 14 - CGFloat(freeCellCount) * cardSize.width - CGFloat(freeCellCount - 1) * gap
+        for i in 0..<freeCellCount {
+            let x = freeStartX + CGFloat(i) * left
+            if CGRect(x: x, y: 0, width: cardSize.width, height: cardSize.height).contains(point) {
+                handleFreeCellTap(index: i)
+                return
+            }
+        }
+    }
+
+    private func handleColumnTap(at point: CGPoint, boardSize: CGSize, cardSize: CGSize) {
+        let gap: CGFloat = 2
+        let left = cardSize.width + gap
+        let colsStartX = columnsStartX(boardSize: boardSize, cardSize: cardSize)
+        let col = Int((point.x - colsStartX) / left)
+        guard col >= 0, col < columnCount else { return }
+        let columnsStartY = cardSize.height * 1.3 + 10
+        let step = effectiveStep(cardSize: cardSize, boardSize: boardSize)
+
+        let cardCount: Int
+        if let s = vm.spider {
+            cardCount = s.columns[col].count
+        } else if let k = vm.klondike {
+            cardCount = k.columns[col].count
+        } else if let y = vm.yukon {
+            cardCount = y.columns[col].count
+        } else if let f = vm.fortyThieves {
+            cardCount = f.columns[col].count
+        } else if let g = vm.golf {
+            cardCount = g.columns[col].count
+        } else if let s = vm.scorpion {
+            cardCount = s.columns[col].count
+        } else {
+            cardCount = vm.game.columns[col].count
+        }
+        guard cardCount > 0 else { return }
+
+        let yOffset = point.y - columnsStartY
+        guard yOffset >= 0 else { return }
+        let lastCardBottom = CGFloat(cardCount - 1) * step + cardSize.height
+        guard yOffset <= lastCardBottom else { return }
+        let i = min(Int(yOffset / step), cardCount - 1)
+
+        if vm.spider != nil {
+            handleSpiderCardTap(column: col, cardIndex: i)
+        } else if vm.klondike != nil {
+            handleKlondikeCardTap(column: col, cardIndex: i)
+        } else if vm.yukon != nil {
+            handleYukonCardTap(column: col, cardIndex: i)
+        } else if vm.fortyThieves != nil {
+            handleFortyThievesCardTap(column: col, cardIndex: i)
+        } else if vm.golf != nil {
+            vm.tapGolfColumn(column: col, cardIndex: i)
+        } else if vm.scorpion != nil {
+            handleScorpionCardTap(column: col, cardIndex: i)
+        } else {
+            handleCardTap(column: col, cardIndex: i)
         }
     }
 

@@ -1,5 +1,15 @@
 # CHANGELOG — 변경 이력
 
+## [미배포] — 2026-09-08 — [macos] — 보드 탭 라우팅 (T-252)
+### 변경
+- **보드 내 탭 불능 해결**: 이 macOS 환경에서는 SwiftUI 보드 내부 자식 뷰(카드/스톡)의 `.onTapGesture`·`Button`·`highPriorityGesture`가 이벤트를 받지 못해 피라미드 스톡/카드, 타블로 카드 등의 클릭이 전부 무시되었음(사이드바·홈 버튼, 드래그는 정상). 보드 최상위 ZStack에 `SpatialTapGesture`를 추가하고 좌표 기반으로 현재 변형의 기존 탭 핸들러(`tapPyramidStock`/`handleCardTap`/`handleFreeCellTap`/더블클릭 `handleTap` 등)에 라우팅.
+- **기하 일관성**: 라우팅 히트 영역은 기존 `columnsStartX`/`effectiveStep`/`pyramidCardOrigin`/`triPeaksCardOrigin`과 상단행 플레임(좌 x14, 우 boardW-14, 높이 카드×1.3)을 그대로 재사용 → 드래그·탭 좌표가 동일 규칙. 자동풀어보기/리플레이 중에는 탭 무시.
+- 기존 드래그(`DragGesture` + `onContinuousHover`)·상단행/열 셋업·모드 구조 변경 없음(순수 추가).
+### 검증
+- Pyramid 실동작 확인: 스톡 클릭 → `tapPyramidStock`(드로), 하단 노출 카드 클릭 → `tapPyramidCard`(선택/제거) 발생(임시 파일 로그로 검증 후 제거).
+- `swift test -c release` **267개 전부 통과**.
+- `swift build -c release` 설공.
+
 ## [미배포] — 2026-09-09 — [macos] — 일반/확장 모드 분리 (T-244~T-249, PLAN_v3.24)
 ### 변경
 - **게임 모드**: 일반(FreeCell·Klondike·Spider·Pyramid, 기본) / 확장(12종). 설정 게임플레이 섹션에서 전환.
