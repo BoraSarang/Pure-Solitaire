@@ -72,6 +72,11 @@
 - [x] T-249: 테스트 3개 + 회귀 263개 통과.
 - [ ] T-250: 문서 + 커밋 + 푸시.
 
+## v3.25 — 보드 탭 라우팅 (진행중)
+- [x] T-252: 보드 내 카드/스톡 탭 불능 해결 — 상위 `SpatialTapGesture` 좌표 라우팅 (Pyramid 실동작 확인, 회귀 267개 통과, 커밋 6c3d872).
+- [x] T-253: 이중 발화 차단 — 자식 계층(카드/스톡/피라미드·트라이픽스 body) 히트 테스트 차단으로 포인터 탭은 라우터만, 접근성 활성화는 기존 유지 (회귀 267개 통과).
+  - 남은 작업: FreeCell/Klondike 등 남은 변형 라이브 검증 — 디스플레이 슬립/잠금 상태로 GUI 검증 보류.
+
 ## v3.23 — 게임 흐름 버그 수정 (진행중, PLAN_v3.23_macos.md)
 - [x] T-229: 데일리 단일화 — `startDailyDeal` 폐지 → `startTodayDeal(variant:)` (9판 매핑 후 `startChallenge` 위임). SideBarView:62, GameCommands:27 교체.
 - [x] T-230: `activeChallenge: (deal, startDate)?` 구조체화 + `newGame` 진입 리셋 + `pendingChallengeDeal` (확인 다이얼로그 경로).

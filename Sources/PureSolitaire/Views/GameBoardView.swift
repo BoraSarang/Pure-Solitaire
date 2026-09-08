@@ -44,15 +44,18 @@ struct GameBoardView: View {
                 .padding(.horizontal, 14)
                 .padding(.bottom, 14)
                 .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
+                .allowsHitTesting(false)
 
                 if vm.pyramid != nil {
                     pyramidBody(cardSize: size, boardSize: geo.size)
                         .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
                         .zIndex(5)
+                        .allowsHitTesting(false)
                 } else if vm.triPeaks != nil {
                     triPeaksBody(cardSize: size, boardSize: geo.size)
                         .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
                         .zIndex(5)
+                        .allowsHitTesting(false)
                 }
 
                 if let drag {
