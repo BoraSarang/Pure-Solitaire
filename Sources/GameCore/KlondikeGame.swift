@@ -23,8 +23,7 @@ public struct KlondikeGame: Equatable, Sendable, Codable {
     /// 스톡 드로 장수 (1 = 한 장, 3 = 세 장)
     public var drawMode: Int
     public private(set) var moveCount: Int = 0
-    private var undoStack: [Snapshot] = []
-    private var redoStack: [Snapshot] = []
+    private var history = UndoHistory<Snapshot>()
 
     private struct Snapshot: Equatable, Codable {
         var columns: [[ColumnCard]]
@@ -72,8 +71,9 @@ public struct KlondikeGame: Equatable, Sendable, Codable {
         gameNumber = try c.decode(Int.self, forKey: .gameNumber)
         drawMode = try c.decodeIfPresent(Int.self, forKey: .drawMode) ?? 1
         moveCount = try c.decodeIfPresent(Int.self, forKey: .moveCount) ?? 0
-        undoStack = try c.decodeIfPresent([Snapshot].self, forKey: .undoStack) ?? []
-        redoStack = try c.decodeIfPresent([Snapshot].self, forKey: .redoStack) ?? []
+        let undo = try c.decodeIfPresent([Snapshot].self, forKey: .undoStack) ?? []
+        let redo = try c.decodeIfPresent([Snapshot].self, forKey: .redoStack) ?? []
+        history = UndoHistory(undoStack: undo, redoStack: redo)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -85,8 +85,8 @@ public struct KlondikeGame: Equatable, Sendable, Codable {
         try c.encode(gameNumber, forKey: .gameNumber)
         try c.encode(drawMode, forKey: .drawMode)
         try c.encode(moveCount, forKey: .moveCount)
-        try c.encode(undoStack, forKey: .undoStack)
-        try c.encode(redoStack, forKey: .redoStack)
+        try c.encode(history.undoStack, forKey: .undoStack)
+        try c.encode(history.redoStack, forKey: .redoStack)
     }
 
     // MARK: - 조회
@@ -207,9 +207,8 @@ public struct KlondikeGame: Equatable, Sendable, Codable {
     @discardableResult
     public mutating func apply(_ move: Move) -> Bool {
         guard canMove(move) else { return false }
-        undoStack.append(Snapshot(columns: columns, stock: stock, waste: waste, homes: homes, moveCount: moveCount))
+        history.record(currentSnapshot)
         applyUnchecked(move)
-        redoStack.removeAll()
         moveCount += 1
         return true
     }
@@ -265,18 +264,20 @@ public struct KlondikeGame: Equatable, Sendable, Codable {
 
     // MARK: - 실행 취소 / 다시 실행
 
-    public var canUndo: Bool { !undoStack.isEmpty }
-    public var canRedo: Bool { !redoStack.isEmpty }
+    public var canUndo: Bool { history.canUndo }
+    public var canRedo: Bool { history.canRedo }
+
+    private var currentSnapshot: Snapshot {
+        Snapshot(columns: columns, stock: stock, waste: waste, homes: homes, moveCount: moveCount)
+    }
 
     public mutating func undo() {
-        guard let prev = undoStack.popLast() else { return }
-        redoStack.append(Snapshot(columns: columns, stock: stock, waste: waste, homes: homes, moveCount: moveCount))
+        guard let prev = history.popUndo(current: currentSnapshot) else { return }
         restore(prev)
     }
 
     public mutating func redo() {
-        guard let next = redoStack.popLast() else { return }
-        undoStack.append(Snapshot(columns: columns, stock: stock, waste: waste, homes: homes, moveCount: moveCount))
+        guard let next = history.popRedo(current: currentSnapshot) else { return }
         restore(next)
     }
 

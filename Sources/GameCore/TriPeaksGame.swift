@@ -11,8 +11,7 @@ public struct TriPeaksGame: Equatable, Sendable, Codable {
     public internal(set) var waste: [Card]
     public let gameNumber: Int
     public private(set) var moveCount: Int = 0
-    private var undoStack: [Snapshot] = []
-    private var redoStack: [Snapshot] = []
+    private var history = UndoHistory<Snapshot>()
 
     private struct Snapshot: Equatable, Codable {
         var peaks: [Card?]
@@ -35,6 +34,35 @@ public struct TriPeaksGame: Equatable, Sendable, Codable {
         self.peaks = deal.peaks.map { Optional($0) }
         self.stock = deal.stock
         self.waste = deal.waste
+    }
+
+    // MARK: - Codable (이전 저장 데이터 호환 — undoStack/redoStack 키 유지)
+
+    private enum CodingKeys: String, CodingKey {
+        case peaks, stock, waste, gameNumber, moveCount, undoStack, redoStack
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        peaks = try c.decode([Card?].self, forKey: .peaks)
+        stock = try c.decode([Card].self, forKey: .stock)
+        waste = try c.decode([Card].self, forKey: .waste)
+        gameNumber = try c.decode(Int.self, forKey: .gameNumber)
+        moveCount = try c.decodeIfPresent(Int.self, forKey: .moveCount) ?? 0
+        let undo = try c.decodeIfPresent([Snapshot].self, forKey: .undoStack) ?? []
+        let redo = try c.decodeIfPresent([Snapshot].self, forKey: .redoStack) ?? []
+        history = UndoHistory(undoStack: undo, redoStack: redo)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(peaks, forKey: .peaks)
+        try c.encode(stock, forKey: .stock)
+        try c.encode(waste, forKey: .waste)
+        try c.encode(gameNumber, forKey: .gameNumber)
+        try c.encode(moveCount, forKey: .moveCount)
+        try c.encode(history.undoStack, forKey: .undoStack)
+        try c.encode(history.redoStack, forKey: .redoStack)
     }
 
     // MARK: - 조회
@@ -112,9 +140,8 @@ public struct TriPeaksGame: Equatable, Sendable, Codable {
     @discardableResult
     public mutating func apply(_ move: Move) -> Bool {
         guard canMove(move) else { return false }
-        undoStack.append(Snapshot(peaks: peaks, stock: stock, waste: waste, moveCount: moveCount))
+        history.record(currentSnapshot)
         applyUnchecked(move)
-        redoStack.removeAll()
         moveCount += 1
         return true
     }
@@ -135,18 +162,20 @@ public struct TriPeaksGame: Equatable, Sendable, Codable {
 
     // MARK: - 실행 취소 / 다시 실행
 
-    public var canUndo: Bool { !undoStack.isEmpty }
-    public var canRedo: Bool { !redoStack.isEmpty }
+    public var canUndo: Bool { history.canUndo }
+    public var canRedo: Bool { history.canRedo }
+
+    private var currentSnapshot: Snapshot {
+        Snapshot(peaks: peaks, stock: stock, waste: waste, moveCount: moveCount)
+    }
 
     public mutating func undo() {
-        guard let prev = undoStack.popLast() else { return }
-        redoStack.append(Snapshot(peaks: peaks, stock: stock, waste: waste, moveCount: moveCount))
+        guard let prev = history.popUndo(current: currentSnapshot) else { return }
         restore(prev)
     }
 
     public mutating func redo() {
-        guard let next = redoStack.popLast() else { return }
-        undoStack.append(Snapshot(peaks: peaks, stock: stock, waste: waste, moveCount: moveCount))
+        guard let next = history.popRedo(current: currentSnapshot) else { return }
         restore(next)
     }
 

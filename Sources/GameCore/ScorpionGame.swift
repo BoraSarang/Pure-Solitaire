@@ -10,8 +10,7 @@ public struct ScorpionGame: Equatable, Sendable, Codable {
     public let gameNumber: Int
     public private(set) var moveCount: Int = 0
     public private(set) var reserveDealt = false
-    private var undoStack: [Snapshot] = []
-    private var redoStack: [Snapshot] = []
+    private var history = UndoHistory<Snapshot>()
 
     private struct Snapshot: Equatable, Codable {
         var columns: [[KlondikeGame.ColumnCard]]
@@ -27,6 +26,35 @@ public struct ScorpionGame: Equatable, Sendable, Codable {
         let deal = DealGenerator.scorpionDeal(gameNumber: gameNumber)
         self.columns = deal.columns
         self.reserve = deal.reserve
+    }
+
+    // MARK: - Codable (이전 저장 데이터 호환 — undoStack/redoStack 키 유지)
+
+    private enum CodingKeys: String, CodingKey {
+        case columns, reserve, gameNumber, moveCount, reserveDealt, undoStack, redoStack
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        columns = try c.decode([[KlondikeGame.ColumnCard]].self, forKey: .columns)
+        reserve = try c.decode([Card].self, forKey: .reserve)
+        gameNumber = try c.decode(Int.self, forKey: .gameNumber)
+        moveCount = try c.decodeIfPresent(Int.self, forKey: .moveCount) ?? 0
+        reserveDealt = try c.decodeIfPresent(Bool.self, forKey: .reserveDealt) ?? false
+        let undo = try c.decodeIfPresent([Snapshot].self, forKey: .undoStack) ?? []
+        let redo = try c.decodeIfPresent([Snapshot].self, forKey: .redoStack) ?? []
+        history = UndoHistory(undoStack: undo, redoStack: redo)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(columns, forKey: .columns)
+        try c.encode(reserve, forKey: .reserve)
+        try c.encode(gameNumber, forKey: .gameNumber)
+        try c.encode(moveCount, forKey: .moveCount)
+        try c.encode(reserveDealt, forKey: .reserveDealt)
+        try c.encode(history.undoStack, forKey: .undoStack)
+        try c.encode(history.redoStack, forKey: .redoStack)
     }
 
     // MARK: - 조회
@@ -113,9 +141,8 @@ public struct ScorpionGame: Equatable, Sendable, Codable {
     @discardableResult
     public mutating func apply(_ move: Move) -> Bool {
         guard canMove(move) else { return false }
-        undoStack.append(Snapshot(columns: columns, reserve: reserve, moveCount: moveCount, reserveDealt: reserveDealt))
+        history.record(currentSnapshot)
         applyUnchecked(move)
-        redoStack.removeAll()
         moveCount += 1
         return true
     }
@@ -148,18 +175,20 @@ public struct ScorpionGame: Equatable, Sendable, Codable {
 
     // MARK: - 실행 취소 / 다시 실행
 
-    public var canUndo: Bool { !undoStack.isEmpty }
-    public var canRedo: Bool { !redoStack.isEmpty }
+    public var canUndo: Bool { history.canUndo }
+    public var canRedo: Bool { history.canRedo }
+
+    private var currentSnapshot: Snapshot {
+        Snapshot(columns: columns, reserve: reserve, moveCount: moveCount, reserveDealt: reserveDealt)
+    }
 
     public mutating func undo() {
-        guard let prev = undoStack.popLast() else { return }
-        redoStack.append(Snapshot(columns: columns, reserve: reserve, moveCount: moveCount, reserveDealt: reserveDealt))
+        guard let prev = history.popUndo(current: currentSnapshot) else { return }
         restore(prev)
     }
 
     public mutating func redo() {
-        guard let next = redoStack.popLast() else { return }
-        undoStack.append(Snapshot(columns: columns, reserve: reserve, moveCount: moveCount, reserveDealt: reserveDealt))
+        guard let next = history.popRedo(current: currentSnapshot) else { return }
         restore(next)
     }
 

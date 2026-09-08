@@ -6,8 +6,7 @@ public struct FreeCellGame: Equatable, Sendable, Codable {
     public let gameNumber: Int
     public let variant: GameVariant
     public private(set) var moveCount: Int = 0
-    private var undoStack: [Snapshot] = []
-    private var redoStack: [Snapshot] = []
+    private var history = UndoHistory<Snapshot>()
 
     /// 실행 취소/다시 실행 스택에 저장되는 상태 스냅샷.
     /// 이동 기반 역연산이 아닌 전체 상태 복원 방식이라 홈/열 상태가 불일치해도 크래시하지 않는다.
@@ -78,8 +77,9 @@ public struct FreeCellGame: Equatable, Sendable, Codable {
         homes = try c.decode([[Card]].self, forKey: .homes)
         gameNumber = try c.decode(Int.self, forKey: .gameNumber)
         moveCount = try c.decodeIfPresent(Int.self, forKey: .moveCount) ?? 0
-        undoStack = try c.decodeIfPresent([Snapshot].self, forKey: .undoStack) ?? []
-        redoStack = try c.decodeIfPresent([Snapshot].self, forKey: .redoStack) ?? []
+        let undo = try c.decodeIfPresent([Snapshot].self, forKey: .undoStack) ?? []
+        let redo = try c.decodeIfPresent([Snapshot].self, forKey: .redoStack) ?? []
+        history = UndoHistory(undoStack: undo, redoStack: redo)
         variant = try c.decodeIfPresent(GameVariant.self, forKey: .variant) ?? .freecell
     }
 
@@ -90,8 +90,8 @@ public struct FreeCellGame: Equatable, Sendable, Codable {
         try c.encode(homes, forKey: .homes)
         try c.encode(gameNumber, forKey: .gameNumber)
         try c.encode(moveCount, forKey: .moveCount)
-        try c.encode(undoStack, forKey: .undoStack)
-        try c.encode(redoStack, forKey: .redoStack)
+        try c.encode(history.undoStack, forKey: .undoStack)
+        try c.encode(history.redoStack, forKey: .redoStack)
         try c.encode(variant, forKey: .variant)
     }
 
@@ -240,9 +240,8 @@ public struct FreeCellGame: Equatable, Sendable, Codable {
     @discardableResult
     public mutating func apply(_ move: Move) -> Bool {
         guard canMove(move) else { return false }
-        undoStack.append(Snapshot(columns: columns, freeCells: freeCells, homes: homes, moveCount: moveCount))
+        history.record(currentSnapshot)
         applyUnchecked(move)
-        redoStack.removeAll()
         moveCount += 1
         return true
     }
@@ -311,19 +310,21 @@ public struct FreeCellGame: Equatable, Sendable, Codable {
 
     // MARK: - 실행 취소 / 다시 실행
 
-    public var canUndo: Bool { !undoStack.isEmpty }
+    public var canUndo: Bool { history.canUndo }
 
-    public var canRedo: Bool { !redoStack.isEmpty }
+    public var canRedo: Bool { history.canRedo }
+
+    private var currentSnapshot: Snapshot {
+        Snapshot(columns: columns, freeCells: freeCells, homes: homes, moveCount: moveCount)
+    }
 
     public mutating func undo() {
-        guard let prev = undoStack.popLast() else { return }
-        redoStack.append(Snapshot(columns: columns, freeCells: freeCells, homes: homes, moveCount: moveCount))
+        guard let prev = history.popUndo(current: currentSnapshot) else { return }
         restore(prev)
     }
 
     public mutating func redo() {
-        guard let next = redoStack.popLast() else { return }
-        undoStack.append(Snapshot(columns: columns, freeCells: freeCells, homes: homes, moveCount: moveCount))
+        guard let next = history.popRedo(current: currentSnapshot) else { return }
         restore(next)
     }
 
