@@ -48,7 +48,7 @@
 | **Yukon** | Move any face-up card with all cards above it as a group |
 | **Forty Thieves** | 2 decks, 10 columns × 4 cards all face up, 8 home cells |
 | **Golf** | 7 columns all face up, waste ±1 rank / same rank removal |
-| **Pyramid** | 28-card pyramid, exposed pairs summing to 13 removed |
+| **Pyramid** | 28-card pyramid, exposed pairs summing to 13 removed, one-time stock recycle |
 | **TriPeaks** | 3 peaks, waste ±1 rank removal |
 | **Scorpion** | 7 columns × 7 cards + 3 reserve, group movement, K only on empty columns |
 
@@ -59,7 +59,8 @@
 - **Winnable Deals**: Unsolvable FreeCell numbers are skipped; the game auto-starts from a solvable number (built-in solver)
 - **Auto Solve ⇧⌘P**: Built-in DFS solver finds a winning path and replays it automatically (progress bar, 3 speed levels, pause/resume, restores state after demo)
 - **Replay My Moves ⇧⌘R**: Rewatch your winning game from the first move onward, exactly as you played it
-- **Daily Challenge**: Date-seeded 9-game shuffle each day, 3-month calendar with ★ completion, star rating (win · time · moves), monthly stats & badges (Bronze / Silver / Gold / Diamond), per-deal difficulty tags
+- **Game Mode**: Switch between Standard (4 games: FreeCell, Klondike, Spider, Pyramid) and Extended (all 12) in Settings — Home · number sheet · random switch · today's deal show only the variants in the current mode; games in progress survive a mode switch
+- **Daily Challenge**: Mode-based deal count (Standard 4 / Extended 9) with a date seed, 3-month calendar with ★ completion, star rating (win · time · moves), monthly stats & badges (Bronze / Silver / Gold / Diamond), per-deal difficulty tags
 - **10 Achievements**: From first win to 50 wins, 5-game streaks, variant completions, and 3-star challenges
 - **Scoring**: Standard game-specific scoring per move, win bonus, final score in stats
 - **Intuitive Controls**: Drag & drop, click to move, double-click to auto-send home
@@ -120,7 +121,7 @@ swift test -c release
 
 ## 🧪 Tests
 
-- **253 unit tests** passing (deal reproduction · move rules · supermove capacity · win detection · save/restore · daily challenge/challenge store/achievements · Winnable solver · auto solve · difficulty rating · category/difficulty display)
+- **274 unit tests** passing (deal reproduction · move rules · supermove capacity · win detection · save/restore · daily challenge/challenge store/achievements · Winnable solver · auto solve · difficulty rating · category/difficulty display · game modes · Pyramid recycle)
 
 ```bash
 swift test -c release

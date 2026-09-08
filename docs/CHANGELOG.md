@@ -1,6 +1,6 @@
 # CHANGELOG — 변경 이력
 
-## [미배포] — 2026-09-09 — [macos] — Pyramid 스톡 재활용 1회 + Spider 스톡 표시 (T-254~T-257, PLAN_v3.27)
+## [3.27.0] — 2026-09-09 — [macos] — v3.23~v3.27 누적 릴리스 (T-229~T-257)
 ### 변경
 - **Pyramid 재활용 1회**: 스톡이 비고 웨이스트가 있고 재활용을 아직 안 썼으면 스톡 탭 1회로 웨이스트를 역순(원래 드로 순서)으로 스톡에 되돌림(Par Pyramid). 스톡 비었을 때 스톡 자리에 유턴 아이콘 + 접근성 "누르면 1회 재활용". 사용 후엔 드로 불가 빈 슬롯. hint도 재활용 후보 제안. undo/redo·저장 복원에 재활용 상태(`didRecycle`) 포함, 기존 저장 데이터(키 없음)는 false로 디코드 — 호환 유지. 점수는 재활용 -100(Scoring 기존 상수).
 - **Spider 스톡 더미 표시 수정**: 스톡 50장·클릭 1회 = 10장 딜인데 더미 5개가 스톡 전체 존재 여부로만 렌더되어, 마지막 클릭에서 한꺼번에 사라지던 문제 → 더미당 10장씩(`cardsLeft > index * 10`) 클릭마다 하나씩 소진 표시.
@@ -8,7 +8,7 @@
 - `swift test -c release` **274개 전부 통과** (267 + Pyramid 재활용 7개).
 - `swift build -c release` 성공(기존 Scorpion dead-code 경고만).
 
-## [미배포] — 2026-09-09 — [macos] — 코드베이스 리팩토링 (무동작 변경)
+### 코드베이스 리팩토링 (무동작 변경)
 ### 변경
 - **스톡 탭 가드 일원화**: Golf/Pyramid/TriPeaks 스톡 탭 핸들러의 중복 `canMove` 가드 제거 → `_ = apply(.drawFromStock)` 단일 경로.
 - **undo/redo 공용화**: 게임 9종에 중복된 `undoStack`/`redoStack`/`undo()`/`redo()`/`canUndo`/`canRedo` 보일러플레이트를 `GameCore.UndoHistory<Snapshot>` 제네릭으로 통합 (기록·팝 연산 포함). 각 게임 커스텀 Codable에서 기존 `undoStack`/`redoStack` JSON 키 그대로 유지 — 기존 저장 데이터 호환.
@@ -18,7 +18,7 @@
 - `swift test -c release` **267개 전부 통과** (커밋 4건 각각).
 - `swift build -c release` 성공.
 
-## [미배포] — 2026-09-09 — [macos] — 보드 탭 라우팅 보강 (T-253)
+### 보드 탭 라우팅 보강 (T-253)
 ### 변경
 - **이중 발화 차단**: 피라미드/트라이픽스 body와 보드 콘텐츠 VStack에 `.allowsHitTesting(false)` 적용 — 실제 히트 테스트는 상위 `SpatialTapGesture` 라우터만 통과. 자식 `.onTapGesture`(기존 접근성 활성화 경로)와 이벤트가 중복 발화하지 않아, 일부 머신(타일 상단 오버레이 등)에서 라우터+자식 둘 다 반응하던 경우를 예방.
 - 상위 종속 `DragGesture`/`onContinuousHover`는 자식 히트 테스트와 무관하므로 드래그 동작 변화 없음.
@@ -26,7 +26,7 @@
 - `swift test -c release` **267개 전부 통과**.
 - `swift build -c release` 성공. (FreeCell/Klondike 등 변형의 GUI 라이브 검증은 디스플레이 슬립 상태로 보류 — T-253 TODO 참조.)
 
-## [미배포] — 2026-09-08 — [macos] — 보드 탭 라우팅 (T-252)
+### 보드 탭 라우팅 (T-252)
 ### 변경
 - **보드 내 탭 불능 해결**: 이 macOS 환경에서는 SwiftUI 보드 내부 자식 뷰(카드/스톡)의 `.onTapGesture`·`Button`·`highPriorityGesture`가 이벤트를 받지 못해 피라미드 스톡/카드, 타블로 카드 등의 클릭이 전부 무시되었음(사이드바·홈 버튼, 드래그는 정상). 보드 최상위 ZStack에 `SpatialTapGesture`를 추가하고 좌표 기반으로 현재 변형의 기존 탭 핸들러(`tapPyramidStock`/`handleCardTap`/`handleFreeCellTap`/더블클릭 `handleTap` 등)에 라우팅.
 - **기하 일관성**: 라우팅 히트 영역은 기존 `columnsStartX`/`effectiveStep`/`pyramidCardOrigin`/`triPeaksCardOrigin`과 상단행 플레임(좌 x14, 우 boardW-14, 높이 카드×1.3)을 그대로 재사용 → 드래그·탭 좌표가 동일 규칙. 자동풀어보기/리플레이 중에는 탭 무시.
@@ -36,7 +36,7 @@
 - `swift test -c release` **267개 전부 통과**.
 - `swift build -c release` 설공.
 
-## [미배포] — 2026-09-09 — [macos] — 일반/확장 모드 분리 (T-244~T-249, PLAN_v3.24)
+### 일반/확장 모드 분리 (T-244~T-249, PLAN_v3.24)
 ### 변경
 - **게임 모드**: 일반(FreeCell·Klondike·Spider·Pyramid, 기본) / 확장(12종). 설정 게임플레이 섹션에서 전환.
 - **모드별 데일리**: 일반 4판 고정 순서, 확장 9판 셔플. 기록(별점·월 배지·업적)은 통합 유지.
@@ -46,7 +46,7 @@
 - `swift build -c release` 경고 0.
 - 문서: PLAN_v3.24/TODO/CHANGELOG 갱신.
 
-## [미배포] — 2026-09-08 — [macos] — 게임 흐름 버그 수정 (T-229~T-242, PLAN_v3.23)
+### 게임 흐름 버그 수정 (T-229~T-242, PLAN_v3.23)
 ### 변경
 - **데일리 단일화**: `startDailyDeal` 폐지 → `startTodayDeal` (오늘 9판 매핑 후 `startChallenge` 위임, ⌘D UX 유지). 데일리 딜 승리도 달력/별점에 기록됨.
 - **챌린지 기록 정합성**: `activeChallenge` (판+시작일) 구조체화, `pendingChallengeDeal`로 확인 다이얼로그 경로 대응, 시작일 기준 기록, 챌린지 Winnable 우회 (표시=플레이=기록 번호 일치).
