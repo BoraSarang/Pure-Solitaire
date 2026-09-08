@@ -16,7 +16,8 @@
 - 플랫폼: macOS (Pure Solitaire, SwiftUI)
 - 빌드+테스트: `swift build -c release` 성공(기존 Scorpion dead-code 경고만), `swift test -c release` **274개 전부 통과**(267 + Pyramid 7개).
 - PERF/CACHE: 해당 없음. 저장 형식 호환 유지(새 `didRecycle` 키, 없으면 false).
-- 남은 TODO: 푸시 미확정(커밋만 함 — 사용자 확인 대기). T-253 GUI 라이브 검증은 여전히 보류(디스플레이 슬립). Spider 스톡 소진 표시는 사용자가 직접 확인.
+- 남은 TODO: T-253 GUI 라이브 검증(FreeCell/Klondike/FortyThieves 등 변형 탭·드래그) + T-243 잔여 `build_and_run.sh release` 수동 시나리오 + T-058/T-068 수동 검증 — 디스플레이 정상이면 사용자가 직접 확인. 보류 유지: T-206(솔버 휴리스틱), T-030(변형 프리셀 추가).
+- 전달 로그: GUI 검증 조건 그대로(디스플레이 밝기 정상화 선행). Spider 스톡은 클릭마다 더미 1개씩 비워지는지 사용자 확인 필요.
 - 전달 로그: GUI 검증 조건 그대로(디스플레이 밝기 정상화 선행). Spider 스톡은 클릭마다 더미 1개씩 비워지는지 사용자 확인 필요.
 - 문서 갱신: PLAN_v3.27_macos.md, TODO.md(T-254~257 완료), CHANGELOG.md, DESIGN.md(3.9 Pyramid 재활용 기술).
 - 큐 상태: 좋음.
