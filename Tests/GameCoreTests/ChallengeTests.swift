@@ -192,6 +192,54 @@ final class ChallengeStoreTests: XCTestCase {
         store.recordDeal(deal, for: key)
         XCTAssertEqual(store.dayResult(for: key)?.deals.count, 2)
     }
+
+    // MARK: - T-233 데일리 단일화 정합성
+
+    /// 날짜 키 사전식 순서 = 시간 순서 (미래 판정 문자열 비교의 근거)
+    func testDateKeyLexicographicOrderMatchesChronology() {
+        let cal = Calendar(identifier: .gregorian)
+        func key(_ y: Int, _ m: Int, _ d: Int) -> String {
+            var comps = DateComponents()
+            comps.calendar = cal
+            comps.year = y
+            comps.month = m
+            comps.day = d
+            return ChallengeStore.dateKey(for: comps.date ?? Date(), calendar: cal)
+        }
+        XCTAssertLessThan(key(2026, 8, 12), key(2026, 8, 13))
+        XCTAssertLessThan(key(2026, 8, 31), key(2026, 9, 1))
+        XCTAssertLessThan(key(2026, 12, 31), key(2027, 1, 1))
+        XCTAssertEqual(key(2026, 8, 12), key(2026, 8, 12))
+    }
+
+    /// 같은 변형·다른 번호는 별개 판으로 누적 (기록 키 = 변형+번호)
+    func testSameVariantDifferentNumberAreSeparateDeals() {
+        let key = "2026-08-12"
+        let a = ChallengeStore.DealResult(variant: .freecell, number: 10, stars: 2, seconds: 400, moves: 150)
+        let b = ChallengeStore.DealResult(variant: .freecell, number: 20, stars: 3, seconds: 300, moves: 100)
+        XCTAssertTrue(store.recordDeal(a, for: key))
+        XCTAssertTrue(store.recordDeal(b, for: key))
+        let day = store.dayResult(for: key)
+        XCTAssertEqual(day?.deals.count, 2)
+        XCTAssertEqual(day?.totalStars, 5)
+    }
+
+    /// 9판 각 번호 = DailyDeal 번호 (단일화 fallback 구성과 동일한 번호 보장)
+    func testDealNumbersMatchDailyDealNumbers() {
+        var comps = DateComponents()
+        comps.calendar = Calendar(identifier: .gregorian)
+        comps.year = 2026
+        comps.month = 8
+        comps.day = 12
+        let date = comps.date ?? Date()
+        let cal = Calendar(identifier: .gregorian)
+        for deal in DailyChallenge.deals(for: date, calendar: cal) {
+            XCTAssertEqual(
+                deal.number,
+                DailyDeal.gameNumber(for: date, variant: deal.variant, calendar: cal)
+            )
+        }
+    }
 }
 
 final class AchievementTests: XCTestCase {

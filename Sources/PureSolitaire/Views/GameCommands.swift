@@ -24,7 +24,7 @@ struct GameCommands: Commands {
                 .keyboardShortcut("1", modifiers: .command)
             Button("게임 번호...") { viewModel.showingGameNumber = true }
                 .keyboardShortcut("g", modifiers: .command)
-            Button("데일리 딜") { viewModel.startDailyDeal() }
+            Button("데일리 딜") { viewModel.startTodayDeal() }
                 .keyboardShortcut("d", modifiers: .command)
             Button("데일리 챌린지") { viewModel.showingChallenge = true }
                 .keyboardShortcut("d", modifiers: [.command, .option])

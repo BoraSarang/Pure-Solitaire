@@ -353,20 +353,30 @@ final class FreeCellViewModel: ObservableObject {
         showingNewGameConfirmation = true
     }
 
-    /// 데일리 딜 — 오늘 날짜 시드로 현재 변형의 고정 게임 시작
-    func startDailyDeal() {
-        let number = DailyDeal.gameNumber(for: Date(), variant: variant)
-        requestNewGame(number: number, variant: variant)
+    /// 오늘 데일리 판 시작 — 오늘 9판 중 현재 변형 판으로 챌린지 진입 (T-229 단일화).
+    /// 9판에 현재 변형이 없으면 DailyDeal 번호로 판을 구성 (9판 내 동일 번호 보장).
+    func startTodayDeal() {
+        let today = Date()
+        if let deal = DailyChallenge.deals(for: today).first(where: { $0.variant == variant }) {
+            startChallenge(deal: deal)
+        } else {
+            startChallenge(deal: DailyChallenge.Deal(
+                variant: variant,
+                number: DailyDeal.gameNumber(for: today, variant: variant)
+            ))
+        }
     }
 
     // MARK: - 데일리 챌린지 / 업적
 
-    /// 현재 진행 중인 데일리 챌린지 판 (T-218 9판)
-    private(set) var activeChallengeDeal: DailyChallenge.Deal?
+    /// 현재 진행 중인 데일리 챌린지 판 + 시작일 (T-230: 자정 경계 승리도 시작일에 기록)
+    private(set) var activeChallenge: (deal: DailyChallenge.Deal, startDate: Date)?
+    /// 확인 다이얼로그 대기 중인 챌린지 판 — newGame 확정 시 activeChallenge로 승격
+    private var pendingChallengeDeal: DailyChallenge.Deal?
 
     /// 챌린지 판 시작 — 오늘 9판 중 특정 판 선택 (변형 + 게임 번호)
     func startChallenge(deal: DailyChallenge.Deal) {
-        activeChallengeDeal = deal
+        pendingChallengeDeal = deal
         requestNewGame(number: deal.number, variant: deal.variant)
     }
 
@@ -376,13 +386,13 @@ final class FreeCellViewModel: ObservableObject {
     }
 
     /// 승리 기록 시 활성 챌린지 별점 반영 — checkState 승리 분기에서 호출.
-    /// 오늘 9판 중 현재 활성 판과 매칭해 판별 기록 (별점 업그레이드만 반영).
+    /// 시작일 9판 중 활성 판과 매칭해 기록 (별점 업그레이드만 반영, 자정 경계도 시작일에 기록).
     func recordChallengeIfToday() {
-        let date = Date()
-        guard let deal = activeChallengeDeal,
+        guard let active = activeChallenge,
               let start = gameStartedAt else { return }
-        let todayDeals = DailyChallenge.deals(for: date)
-        guard todayDeals.contains(deal) else { return }
+        let startDeals = DailyChallenge.deals(for: active.startDate)
+        guard startDeals.contains(active.deal) else { return }
+        let deal = active.deal
         let seconds = Date().timeIntervalSince(start)
         let stars = DailyChallenge.stars(
             variant: deal.variant,
@@ -390,7 +400,7 @@ final class FreeCellViewModel: ObservableObject {
             seconds: seconds,
             moves: currentMoveCount
         )
-        let key = ChallengeStore.dateKey(for: date)
+        let key = ChallengeStore.dateKey(for: active.startDate)
         challengeStore.recordDeal(
             ChallengeStore.DealResult(
                 variant: deal.variant,
@@ -443,6 +453,13 @@ final class FreeCellViewModel: ObservableObject {
                     self.measuringDealKeys.remove(key)
                     self.objectWillChange.send()
                 }
+            }
+            // 취소로 중단된 잔여 키 정리 — 미정리 시 이후 재측정 불가 (T-232)
+            let remaining = pending.map { "\($0.variant.rawValue)|\($0.number)" }
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                remaining.forEach { self.measuringDealKeys.remove($0) }
+                self.objectWillChange.send()
             }
         }
     }
@@ -544,6 +561,7 @@ final class FreeCellViewModel: ObservableObject {
         showingNewGameConfirmation = false
         newGameVariantRequest = nil
         newGameNumberRequest = nil
+        pendingChallengeDeal = nil
     }
 
     /// 승리 후 다음 게임 (확인 없이 바로)
@@ -560,10 +578,15 @@ final class FreeCellViewModel: ObservableObject {
         // 자동 풀어 보기/리플레이 진행 중이면 정리 (새 게임으로 전환)
         cancelAutoSolve(restore: false, message: nil)
         cancelReplaySilently()
+        // 챌린지 판 확정 — 확인 다이얼로그 경로도 newGame에서 승격 (T-230)
+        let challengeDeal = pendingChallengeDeal
+        pendingChallengeDeal = nil
+        activeChallenge = nil
         let safeNumber = min(max(number, DealGenerator.minGameNumber), DealGenerator.maxGameNumber)
-        // 승리 보장 옵션 — FreeCell 계열에서 시작 번호부터 풀리는 번호를 탐색해 실제 시작 번호로 사용
+        // 승리 보장 옵션 — FreeCell 계열에서 시작 번호부터 풀리는 번호를 탐색해 실제 시작 번호로 사용.
+        // 챌린지 판은 표시 번호 = 플레이 번호 = 기록 키 유지를 위해 탐색 우회 (T-231).
         var startNumber = safeNumber
-        if FreeCellSolver.isFreeCellFamily(variant), isWinnableEnabled(for: variant) {
+        if challengeDeal == nil, FreeCellSolver.isFreeCellFamily(variant), isWinnableEnabled(for: variant) {
             if let found = FreeCellSolver.firstWinnableGameNumber(
                 from: safeNumber,
                 variant: variant,
@@ -662,6 +685,9 @@ final class FreeCellViewModel: ObservableObject {
         stats.setLastGameNumber(startNumber, for: variant)
         stats.recordStarted(variant)
         gameStartedAt = Date()
+        if let challengeDeal {
+            activeChallenge = (deal: challengeDeal, startDate: gameStartedAt ?? Date())
+        }
         startElapsedTimer()
         if settings.autoPlayEnabled {
             runAutoPlay()

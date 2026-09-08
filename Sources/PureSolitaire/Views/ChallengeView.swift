@@ -24,6 +24,12 @@ struct ChallengeView: View {
         vm.challengeStore.dayResult(for: ChallengeStore.dateKey(for: selectedDate, calendar: calendar))
     }
 
+    /// 선택 날짜가 미래인지 — 시각 비교가 아닌 날짜 키 문자열 비교 (T-232: 오전 오늘 비활성화 버그 수정)
+    private var isFutureSelected: Bool {
+        ChallengeStore.dateKey(for: selectedDate, calendar: calendar)
+            > ChallengeStore.dateKey(for: today, calendar: calendar)
+    }
+
     /// 3개월 목록 (이전/현재/다음)
     private var months: [CalendarMonth] {
         CalendarMonth.rangeAround(focusedMonth)
@@ -263,8 +269,8 @@ struct ChallengeView: View {
             )
         }
         .buttonStyle(.plain)
-        .disabled(selectedDate > today)  // 미래 날짜는 비활성
-        .opacity(selectedDate > today ? 0.45 : 1)
+        .disabled(isFutureSelected)  // 미래 날짜는 비활성
+        .opacity(isFutureSelected ? 0.45 : 1)
     }
 
     /// 난이도 태그 (쉬움/보통/어려움/미측정)

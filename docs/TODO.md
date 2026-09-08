@@ -63,6 +63,16 @@
 - [ ] T-206: 솔버 휴리스틱 추가 개선 — #50(기본 예산 초과, 해는 존재) / #500(난제) 기본 예산 내 해결 — 예산 유지 결정으로 보류.
   - **2026-08-14 진행 중 갱신**: T-210 과정에서 무효 이동 버그 2건 수정(단일/그룹 bottom 카드 기준 + 유효 최대 그룹 탐색) + 진행(홈 카드) 없는 경로 가지치기(`maxStagnantDepth 80`)로 **#50 유효 해 703 이동이 재생 예산(2M/20s) 내 16.6s 해결**, **#500은 이제 기본 예산으로도 풀리는 게임으로 판명** — T-206 목표 대부분 해소됨.
 
+## v3.23 — 게임 흐름 버그 수정 (진행중, PLAN_v3.23_macos.md)
+- [ ] T-229: 데일리 단일화 — `startDailyDeal` 폐지 → `startTodayDeal(variant:)` (9판 매핑 후 `startChallenge` 위임). SideBarView:62, GameCommands:27 교체.
+- [ ] T-230: `activeChallenge: (deal, startDate)?` 구조체화 + `newGame` 진입 리셋 + `pendingChallengeDeal` (확인 다이얼로그 경로).
+- [ ] T-231: 시작일 기준 기록 + 챌린지 Winnable 우회 (표시=플레이=기록 번호 일치).
+- [ ] T-232: 미래 판정 `dateKey` 문자열 비교 (오전 버그). 측정 취소 시 `measuringDealKeys` 롤백.
+- [ ] T-233: 1단계 테스트 (ChallengeTests 3개: 단일화 매핑/시작일 기록/dateKey 비교) + 회귀.
+- [ ] T-234~T-238: 2단계 시작·전환 (홈 순서 역전/번호시트 홈 전환/시트 상태머신/persist 정리/경과시간 복구).
+- [ ] T-239~T-242: 3단계 솔버·재생 안전화 (비동기 탐색/세대 토큰/취소 주입/변이 가드).
+- [ ] T-243: 회귀 + `build_and_run.sh release` 수동 시나리오 + CHANGELOG/DESIGN 갱신.
+
 ## v3.22 — 홈 화면 + 게임 카테고리/난이도 그룹화 + 게임 중 난이도 (진행중)
 - [x] T-222: `GameVariant` 표시 전용 속성 — `GameCategory`(4그룹) + `baseDifficulty`/`categoryOrder` + `homeOrderedVariants`. `allCases` 순서 유지(데일리 셔플/순환 매핑 무영향). GameVariantDisplayTests 4개 통과.
 - [x] T-223: `GameSelectorView` 카테고리 섹션화 + 난이도 뱃지.
