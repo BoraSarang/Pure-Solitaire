@@ -1,6 +1,16 @@
 import SwiftUI
 import GameCore
 
+extension Suit {
+    /// 무늬 기본 색: 레드 수트(♥♦) = 빨강, 블랙 수트(♣♠) = 진한 검정
+    var uiColor: Color {
+        switch color {
+        case .red: Color(red: 0.85, green: 0.10, blue: 0.10)
+        case .black: Color(red: 0.10, green: 0.10, blue: 0.10)
+        }
+    }
+}
+
 // MARK: - 무늬 Shape (커스텀 벡터)
 
 struct HeartShape: Shape {
@@ -99,16 +109,17 @@ struct SuitSymbolView: View {
     var foreground: Color?
 
     var body: some View {
-        Group {
+        let color = foreground ?? suit.uiColor
+        return Group {
             switch suit {
             case .hearts:
-                HeartShape().fill(foreground ?? Color(red: 0.85, green: 0.10, blue: 0.10))
+                HeartShape().fill(color)
             case .diamonds:
-                DiamondShape().fill(foreground ?? Color(red: 0.85, green: 0.10, blue: 0.10))
+                DiamondShape().fill(color)
             case .clubs:
-                ClubShape().fill(foreground ?? Color(red: 0.10, green: 0.10, blue: 0.10))
+                ClubShape().fill(color)
             case .spades:
-                SpadeShape().fill(foreground ?? Color(red: 0.10, green: 0.10, blue: 0.10))
+                SpadeShape().fill(color)
             }
         }
     }
@@ -132,7 +143,7 @@ struct CardView: View {
     }
 
     private var faceColor: Color {
-        isRed ? Color(red: 0.80, green: 0.10, blue: 0.10) : Color(red: 0.12, green: 0.12, blue: 0.12)
+        card?.suit.uiColor ?? Color(red: 0.12, green: 0.12, blue: 0.12)
     }
 
     private var fontDesign: Font.Design {

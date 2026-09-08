@@ -353,9 +353,7 @@ private struct MiniCard: View {
                     .stroke(
                         faceDown
                             ? Color.white.opacity(0.35)
-                            : (suit.color == .red
-                                ? Color(red: 0.80, green: 0.10, blue: 0.10)
-                                : Color(red: 0.20, green: 0.20, blue: 0.20)),
+                            : suit.uiColor,
                         lineWidth: 0.7
                     )
             )
