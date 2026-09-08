@@ -157,19 +157,27 @@ final class FreeCellViewModel: ObservableObject {
 
     /// 복원 가능한 저장 게임의 형식 (홈 화면 "하던 게임 이어하기" 표시용). 없으면 nil.
     /// init의 복원 우선순위(Spider→Klondike→…→FreeCell/Baker's)와 동일 순서로 확인.
+    /// persist/clearSave 시 갱신되는 캐시 사용 — body 평가마다 JSON 디코드 반복 방지 (T-237).
+    private var restoredVariantCache: GameVariant?
+    private var restoredVariantCacheValid = false
     var restoredVariant: GameVariant? {
-        if gameSaver.restoreSpider() != nil { return .spider }
-        if gameSaver.restoreKlondike() != nil { return .klondike }
-        if gameSaver.restoreYukon() != nil { return .yukon }
-        if gameSaver.restoreFortyThieves() != nil { return .fortyThieves }
-        if gameSaver.restoreGolf() != nil { return .golf }
-        if gameSaver.restorePyramid() != nil { return .pyramid }
-        if gameSaver.restoreTriPeaks() != nil { return .triPeaks }
-        if gameSaver.restoreScorpion() != nil { return .scorpion }
-        if gameSaver.restoreSeaTower() != nil { return .seaTower }
-        if gameSaver.restoreSuperFreeCell() != nil { return .superFreeCell }
-        if gameSaver.restore() != nil { return .freecell }
-        return nil
+        if restoredVariantCacheValid { return restoredVariantCache }
+        let result: GameVariant?
+        if gameSaver.restoreSpider() != nil { result = .spider }
+        else if gameSaver.restoreKlondike() != nil { result = .klondike }
+        else if gameSaver.restoreYukon() != nil { result = .yukon }
+        else if gameSaver.restoreFortyThieves() != nil { result = .fortyThieves }
+        else if gameSaver.restoreGolf() != nil { result = .golf }
+        else if gameSaver.restorePyramid() != nil { result = .pyramid }
+        else if gameSaver.restoreTriPeaks() != nil { result = .triPeaks }
+        else if gameSaver.restoreScorpion() != nil { result = .scorpion }
+        else if gameSaver.restoreSeaTower() != nil { result = .seaTower }
+        else if gameSaver.restoreSuperFreeCell() != nil { result = .superFreeCell }
+        else if gameSaver.restore() != nil { result = .freecell }
+        else { result = nil }
+        restoredVariantCache = result
+        restoredVariantCacheValid = true
+        return result
     }
 
     /// 현재 게임의 게임번호 / 이동 수 (Spider/Klondike/Yukon/FortyThieves/Golf/Pyramid/TriPeaks 분기)
@@ -218,67 +226,66 @@ final class FreeCellViewModel: ObservableObject {
         BGMPLayer.shared.setVolume(v)
     }
 
+    /// 복원 세션 시작 — 저장된 경과 시간 복구 후 타이머 재개 (T-238).
+    /// gameNumberText는 init 초기화 규칙상 호출부에서 직접 대입.
+    private func beginRestoredSession() {
+        startElapsedTimer()
+        let elapsed = gameSaver.restoreElapsed() ?? 0
+        elapsedSeconds = elapsed
+        gameStartedAt = Date().addingTimeInterval(-elapsed)
+    }
+
     init() {
         if let restored = gameSaver.restoreSpider() {
             spider = restored
             gameOptions.setSelectedID(String(restored.difficulty.rawValue), for: .spider, optionID: "spiderDifficulty")
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
-            gameStartedAt = Date()
-            startElapsedTimer()
+            beginRestoredSession()
         } else if let restored = gameSaver.restoreKlondike() {
             klondike = restored
             gameOptions.setSelectedID(String(restored.drawMode), for: .klondike, optionID: "klondikeDraw")
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
-            gameStartedAt = Date()
-            startElapsedTimer()
+            beginRestoredSession()
         } else if let restored = gameSaver.restoreYukon() {
             yukon = restored
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
-            gameStartedAt = Date()
-            startElapsedTimer()
+            beginRestoredSession()
         } else if let restored = gameSaver.restoreFortyThieves() {
             fortyThieves = restored
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
-            gameStartedAt = Date()
-            startElapsedTimer()
+            beginRestoredSession()
         } else if let restored = gameSaver.restoreGolf() {
             golf = restored
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
-            gameStartedAt = Date()
-            startElapsedTimer()
+            beginRestoredSession()
         } else if let restored = gameSaver.restorePyramid() {
             pyramid = restored
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
-            gameStartedAt = Date()
-            startElapsedTimer()
+            beginRestoredSession()
         } else if let restored = gameSaver.restoreTriPeaks() {
             triPeaks = restored
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
-            gameStartedAt = Date()
-            startElapsedTimer()
+            beginRestoredSession()
         } else if let restored = gameSaver.restoreScorpion() {
             scorpion = restored
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
-            gameStartedAt = Date()
-            startElapsedTimer()
+            beginRestoredSession()
         } else if let restored = gameSaver.restoreSeaTower() {
             game = restored
             gameNumberText = String(restored.gameNumber)
-            gameStartedAt = Date()
-            startElapsedTimer()
+            beginRestoredSession()
         } else if let restored = gameSaver.restoreSuperFreeCell() {
             game = restored
             gameNumberText = String(restored.gameNumber)
-            gameStartedAt = Date()
-            startElapsedTimer()
+            beginRestoredSession()
         } else if let restored = gameSaver.restore() {
             guard restored.variant == .freecell || restored.variant == .bakersGame else {
                 gameSaver.clear()
@@ -296,8 +303,8 @@ final class FreeCellViewModel: ObservableObject {
             }
             game = restored
             gameNumberText = String(restored.gameNumber)
-            gameStartedAt = Date()
-            startElapsedTimer()
+            gameNumberText = String(restored.gameNumber)
+            beginRestoredSession()
         } else {
             let number = stats.lastGameNumber(for: .freecell) ?? 1
             let safeNumber = min(max(number, DealGenerator.minGameNumber), DealGenerator.maxGameNumber)
@@ -313,6 +320,9 @@ final class FreeCellViewModel: ObservableObject {
     }
 
     // MARK: - 새 게임
+
+    /// 게임 세션 ID — newGame 확정마다 갱신. ContentView가 구독해 홈→게임 자동 전환 (T-234).
+    private(set) var gameSessionID = UUID()
 
     /// 홈 화면으로 이동 — 게임 화면에서 홈 복귀 (T-227)
     func goHome() {
@@ -512,32 +522,35 @@ final class FreeCellViewModel: ObservableObject {
         return Achievement.all.filter { unlocked.contains($0.kind.rawValue) }
     }
 
+    /// 진행 중 게임이 있어 새 게임 확인이 필요한지 (T-236: 시트→다이얼로그 분기 공용)
+    var needsNewGameConfirmation: Bool { currentMoveCount > 0 && !currentIsWon }
+
     func requestNewGame(variant: GameVariant) {
-        guard currentMoveCount > 0 && !currentIsWon else {
-            newGame(variant: variant)
+        guard !needsNewGameConfirmation else {
+            newGameVariantRequest = variant
+            showingNewGameConfirmation = true
             return
         }
-        newGameVariantRequest = variant
-        showingNewGameConfirmation = true
+        newGame(variant: variant)
     }
 
     func requestNewGame(number: Int) {
-        guard currentMoveCount > 0 && !currentIsWon else {
-            newGame(number: number)
+        guard !needsNewGameConfirmation else {
+            newGameNumberRequest = number
+            showingNewGameConfirmation = true
             return
         }
-        newGameNumberRequest = number
-        showingNewGameConfirmation = true
+        newGame(number: number)
     }
 
     func requestNewGame(number: Int, variant: GameVariant) {
-        guard currentMoveCount > 0 && !currentIsWon else {
-            newGame(number: number, variant: variant)
+        guard !needsNewGameConfirmation else {
+            newGameVariantRequest = variant
+            newGameNumberRequest = number
+            showingNewGameConfirmation = true
             return
         }
-        newGameVariantRequest = variant
-        newGameNumberRequest = number
-        showingNewGameConfirmation = true
+        newGame(number: number, variant: variant)
     }
 
     func confirmNewGame() {
@@ -555,6 +568,7 @@ final class FreeCellViewModel: ObservableObject {
         showingNewGameConfirmation = false
         newGameVariantRequest = nil
         newGameNumberRequest = nil
+        showingChallenge = false
     }
 
     func cancelNewGame() {
@@ -582,6 +596,8 @@ final class FreeCellViewModel: ObservableObject {
         let challengeDeal = pendingChallengeDeal
         pendingChallengeDeal = nil
         activeChallenge = nil
+        // 변형 전환 시 stale 저장 키 정리 — 이어하기는 현재 게임만 (T-237)
+        clearSave()
         let safeNumber = min(max(number, DealGenerator.minGameNumber), DealGenerator.maxGameNumber)
         // 승리 보장 옵션 — FreeCell 계열에서 시작 번호부터 풀리는 번호를 탐색해 실제 시작 번호로 사용.
         // 챌린지 판은 표시 번호 = 플레이 번호 = 기록 키 유지를 위해 탐색 우회 (T-231).
@@ -694,6 +710,7 @@ final class FreeCellViewModel: ObservableObject {
         }
         persist()
         dealAnimation()
+        gameSessionID = UUID()
     }
 
     // MARK: - 경과 시간 타이머
@@ -1367,6 +1384,11 @@ final class FreeCellViewModel: ObservableObject {
             default: gameSaver.save(game)
             }
         }
+        // 이어하기 캐시 갱신 — 현재 게임이 복원 가능 상태 (T-237)
+        restoredVariantCache = variant
+        restoredVariantCacheValid = true
+        // 경과 시간 함께 저장 — 이어하기 시간 연속성 (T-238)
+        gameSaver.saveElapsed(elapsedSeconds)
     }
 
     private func clearSave() {
@@ -1381,6 +1403,10 @@ final class FreeCellViewModel: ObservableObject {
         gameSaver.clearPyramid()
         gameSaver.clearTriPeaks()
         gameSaver.clearScorpion()
+        gameSaver.clearElapsed()
+        // 이어하기 캐시 갱신 — 저장 없음 (T-237)
+        restoredVariantCache = nil
+        restoredVariantCacheValid = true
     }
 
     func canMove(cardAt source: CardSource, cardCount: Int, to destination: Destination) -> Bool {

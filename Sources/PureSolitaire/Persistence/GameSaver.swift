@@ -16,6 +16,7 @@ final class GameSaver {
         static let savedPyramid = "persistence.savedPyramid"
         static let savedTriPeaks = "persistence.savedTriPeaks"
         static let savedScorpion = "persistence.savedScorpion"
+        static let savedElapsedSeconds = "persistence.elapsedSeconds"
     }
 
     private let defaults: UserDefaults
@@ -204,6 +205,23 @@ final class GameSaver {
 
     func clearScorpion() {
         defaults.removeObject(forKey: Keys.savedScorpion)
+    }
+
+    // MARK: - 경과 시간 (이어하기 시간 연속성, T-238)
+
+    /// 경과 시간 저장 (persist 시 함께 저장)
+    func saveElapsed(_ seconds: TimeInterval) {
+        defaults.set(seconds, forKey: Keys.savedElapsedSeconds)
+    }
+
+    /// 저장된 경과 시간 복구. 없으면 nil.
+    func restoreElapsed() -> TimeInterval? {
+        guard defaults.object(forKey: Keys.savedElapsedSeconds) != nil else { return nil }
+        return defaults.double(forKey: Keys.savedElapsedSeconds)
+    }
+
+    func clearElapsed() {
+        defaults.removeObject(forKey: Keys.savedElapsedSeconds)
     }
 
     // MARK: - 제네릭 직렬화 헬퍼

@@ -64,12 +64,16 @@
   - **2026-08-14 진행 중 갱신**: T-210 과정에서 무효 이동 버그 2건 수정(단일/그룹 bottom 카드 기준 + 유효 최대 그룹 탐색) + 진행(홈 카드) 없는 경로 가지치기(`maxStagnantDepth 80`)로 **#50 유효 해 703 이동이 재생 예산(2M/20s) 내 16.6s 해결**, **#500은 이제 기본 예산으로도 풀리는 게임으로 판명** — T-206 목표 대부분 해소됨.
 
 ## v3.23 — 게임 흐름 버그 수정 (진행중, PLAN_v3.23_macos.md)
-- [ ] T-229: 데일리 단일화 — `startDailyDeal` 폐지 → `startTodayDeal(variant:)` (9판 매핑 후 `startChallenge` 위임). SideBarView:62, GameCommands:27 교체.
-- [ ] T-230: `activeChallenge: (deal, startDate)?` 구조체화 + `newGame` 진입 리셋 + `pendingChallengeDeal` (확인 다이얼로그 경로).
-- [ ] T-231: 시작일 기준 기록 + 챌린지 Winnable 우회 (표시=플레이=기록 번호 일치).
-- [ ] T-232: 미래 판정 `dateKey` 문자열 비교 (오전 버그). 측정 취소 시 `measuringDealKeys` 롤백.
-- [ ] T-233: 1단계 테스트 (ChallengeTests 3개: 단일화 매핑/시작일 기록/dateKey 비교) + 회귀.
-- [ ] T-234~T-238: 2단계 시작·전환 (홈 순서 역전/번호시트 홈 전환/시트 상태머신/persist 정리/경과시간 복구).
+- [x] T-229: 데일리 단일화 — `startDailyDeal` 폐지 → `startTodayDeal(variant:)` (9판 매핑 후 `startChallenge` 위임). SideBarView:62, GameCommands:27 교체.
+- [x] T-230: `activeChallenge: (deal, startDate)?` 구조체화 + `newGame` 진입 리셋 + `pendingChallengeDeal` (확인 다이얼로그 경로).
+- [x] T-231: 시작일 기준 기록 + 챌린지 Winnable 우회 (표시=플레이=기록 번호 일치).
+- [x] T-232: 미래 판정 `dateKey` 문자열 비교 (오전 버그). 측정 취소 시 `measuringDealKeys` 롤백.
+- [x] T-233: 1단계 테스트 (ChallengeTests 3개: dateKey 순서/별개 판/번호 일치) + 회귀 256개 통과.
+- [x] T-234: 홈 이탈 순서 역전 — `gameSessionID` 확정 이벤트 + ContentView onChange 자동 전환, 취소 시 홈 유지. HomeView 타일/무작위 onStartGame 선행 제거.
+- [x] T-235: 번호시트·챌린지시트 시작도 gameSessionID 전환으로 통합 (VM 수정 불필요).
+- [x] T-236: 시트→다이얼로그 2단계 — `needsNewGameConfirmation` 공용화 + 확인 필요 시 시트 유지, `confirmNewGame`에서 시트 닫기.
+- [x] T-237: `newGame` 진입 `clearSave()` (stale 키 정리) + `restoredVariant` 캐시 (persist/clearSave 갱신).
+- [x] T-238: 경과 시간 저장·복구 — GameSaver elapsed 키 + `beginRestoredSession` 헬퍼 + init 11분기 교체.
 - [ ] T-239~T-242: 3단계 솔버·재생 안전화 (비동기 탐색/세대 토큰/취소 주입/변이 가드).
 - [ ] T-243: 회귀 + `build_and_run.sh release` 수동 시나리오 + CHANGELOG/DESIGN 갱신.
 

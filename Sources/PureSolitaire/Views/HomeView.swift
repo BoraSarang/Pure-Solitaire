@@ -104,7 +104,7 @@ struct HomeView: View {
                 subtitle: "아무 게임",
                 shortcut: ""
             ) {
-                onStartGame()
+                // T-234: 확정 후 gameSessionID 변경이 홈 전환 처리
                 vm.requestNewGame()
             }
             Spacer()
@@ -196,7 +196,7 @@ struct HomeView: View {
     private func homeTile(_ variant: GameVariant) -> some View {
         let boardColor = settings.backgroundColor(for: settings.background)
         return Button {
-            onStartGame()
+            // T-234: 확정 후 gameSessionID 변경이 홈 전환 처리, 취소 시 홈 유지
             vm.requestNewGame(variant: variant)
         } label: {
             VStack(spacing: 8) {

@@ -83,6 +83,10 @@ struct ContentView: View {
         .onChange(of: vm.showingHome) { _ in
             updateWindowTitle()
         }
+        .onChange(of: vm.gameSessionID) { _ in
+            // 새 게임 확정 시 홈→게임 자동 전환 (T-234: 취소 시 홈 유지)
+            vm.showingHome = false
+        }
     }
 
     /// 게임 화면 — 사이드바 + 보드
