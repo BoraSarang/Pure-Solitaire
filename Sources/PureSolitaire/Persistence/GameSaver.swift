@@ -4,19 +4,19 @@ import GameCore
 /// 게임 진행 상태 자동 저장 (UserDefaults, JSON 직렬화)
 /// 앱 종료/크래시 후 재시작 시 이어서 복구하기 위한 안전망.
 final class GameSaver {
-    private enum Keys {
-        static let savedGame = "persistence.savedGame"
-        static let savedKlondike = "persistence.savedKlondike"
-        static let savedSpider = "persistence.savedSpider"
-        static let savedSeaTower = "persistence.savedSeaTower"
-        static let savedSuperFreeCell = "persistence.savedSuperFreeCell"
-        static let savedYukon = "persistence.savedYukon"
-        static let savedFortyThieves = "persistence.savedFortyThieves"
-        static let savedGolf = "persistence.savedGolf"
-        static let savedPyramid = "persistence.savedPyramid"
-        static let savedTriPeaks = "persistence.savedTriPeaks"
-        static let savedScorpion = "persistence.savedScorpion"
-        static let savedElapsedSeconds = "persistence.elapsedSeconds"
+    private enum Key: String, CaseIterable {
+        case savedGame = "persistence.savedGame"
+        case savedKlondike = "persistence.savedKlondike"
+        case savedSpider = "persistence.savedSpider"
+        case savedSeaTower = "persistence.savedSeaTower"
+        case savedSuperFreeCell = "persistence.savedSuperFreeCell"
+        case savedYukon = "persistence.savedYukon"
+        case savedFortyThieves = "persistence.savedFortyThieves"
+        case savedGolf = "persistence.savedGolf"
+        case savedPyramid = "persistence.savedPyramid"
+        case savedTriPeaks = "persistence.savedTriPeaks"
+        case savedScorpion = "persistence.savedScorpion"
+        case savedElapsedSeconds = "persistence.elapsedSeconds"
     }
 
     private let defaults: UserDefaults
@@ -25,203 +25,63 @@ final class GameSaver {
         self.defaults = defaults
     }
 
-    // MARK: - FreeCell/Baker's
+    // MARK: - 변형별 저장 슬롯
 
-    /// 저장된 게임이 있는지
-    func hasSavedGame() -> Bool {
-        defaults.data(forKey: Keys.savedGame) != nil
+    /// 변형 → 저장 키 매핑. FreeCell/Baker's는 같은 슬롯(savedGame) 공유.
+    private func key(for variant: GameVariant) -> String {
+        switch variant {
+        case .freecell, .bakersGame: Key.savedGame.rawValue
+        case .klondike: Key.savedKlondike.rawValue
+        case .spider: Key.savedSpider.rawValue
+        case .seaTower: Key.savedSeaTower.rawValue
+        case .superFreeCell: Key.savedSuperFreeCell.rawValue
+        case .yukon: Key.savedYukon.rawValue
+        case .fortyThieves: Key.savedFortyThieves.rawValue
+        case .golf: Key.savedGolf.rawValue
+        case .pyramid: Key.savedPyramid.rawValue
+        case .triPeaks: Key.savedTriPeaks.rawValue
+        case .scorpion: Key.savedScorpion.rawValue
+        }
+    }
+
+    /// 해당 변형 저장 게임 존재 여부
+    func hasData(for variant: GameVariant) -> Bool {
+        defaults.data(forKey: key(for: variant)) != nil
     }
 
     /// 게임 상태 저장 (전체 상태 + undo/redo 스택 포함)
-    func save(_ game: FreeCellGame) {
-        store(game, forKey: Keys.savedGame)
+    func save<G: Encodable>(_ value: G, variant: GameVariant) {
+        store(value, forKey: key(for: variant))
     }
 
     /// 저장된 게임 복구. 없거나 디코딩 실패 시 nil.
-    func restore() -> FreeCellGame? {
-        load(FreeCellGame.self, forKey: Keys.savedGame)
+    func restore<G: Decodable>(_ type: G.Type, variant: GameVariant) -> G? {
+        load(type, forKey: key(for: variant))
     }
 
-    /// 저장 상태 제거 (승리 등 완료된 게임이 쌓이지 않도록)
-    func clear() {
-        defaults.removeObject(forKey: Keys.savedGame)
+    /// 변형 저장 상태 제거
+    func clear(variant: GameVariant) {
+        defaults.removeObject(forKey: key(for: variant))
     }
 
-    // MARK: - Klondike
-
-    /// Klondike 게임 저장 (전체 상태 + undo/redo 스택 포함)
-    func save(_ klondike: KlondikeGame) {
-        store(klondike, forKey: Keys.savedKlondike)
-    }
-
-    /// 저장된 Klondike 게임 복구. 없거나 디코딩 실패 시 nil.
-    func restoreKlondike() -> KlondikeGame? {
-        load(KlondikeGame.self, forKey: Keys.savedKlondike)
-    }
-
-    func clearKlondike() {
-        defaults.removeObject(forKey: Keys.savedKlondike)
-    }
-
-    // MARK: - Spider
-
-    /// Spider 게임 저장 (전체 상태 + undo/redo 스택 포함)
-    func save(_ spider: SpiderGame) {
-        store(spider, forKey: Keys.savedSpider)
-    }
-
-    /// 저장된 Spider 게임 복구. 없거나 디코딩 실패 시 nil.
-    func restoreSpider() -> SpiderGame? {
-        load(SpiderGame.self, forKey: Keys.savedSpider)
-    }
-
-    func clearSpider() {
-        defaults.removeObject(forKey: Keys.savedSpider)
-    }
-
-    // MARK: - Sea Tower
-
-    func saveSeaTower(_ game: FreeCellGame) {
-        guard game.variant == .seaTower else { return }
-        store(game, forKey: Keys.savedSeaTower)
-    }
-
-    func restoreSeaTower() -> FreeCellGame? {
-        guard let game: FreeCellGame = load(FreeCellGame.self, forKey: Keys.savedSeaTower),
-              game.variant == .seaTower else { return nil }
-        return game
-    }
-
-    func clearSeaTower() {
-        defaults.removeObject(forKey: Keys.savedSeaTower)
-    }
-
-    // MARK: - Super FreeCell
-
-    func saveSuperFreeCell(_ game: FreeCellGame) {
-        guard game.variant == .superFreeCell else { return }
-        store(game, forKey: Keys.savedSuperFreeCell)
-    }
-
-    func restoreSuperFreeCell() -> FreeCellGame? {
-        guard let game: FreeCellGame = load(FreeCellGame.self, forKey: Keys.savedSuperFreeCell),
-              game.variant == .superFreeCell else { return nil }
-        return game
-    }
-
-    func clearSuperFreeCell() {
-        defaults.removeObject(forKey: Keys.savedSuperFreeCell)
-    }
-
-    // MARK: - Yukon
-
-    func save(_ yukon: YukonGame) {
-        store(yukon, forKey: Keys.savedYukon)
-    }
-
-    func restoreYukon() -> YukonGame? {
-        load(YukonGame.self, forKey: Keys.savedYukon)
-    }
-
-    func clearYukon() {
-        defaults.removeObject(forKey: Keys.savedYukon)
-    }
-
-    // MARK: - Forty Thieves
-
-    /// Forty Thieves 게임 저장 (전체 상태 + undo/redo 스택 포함)
-    func save(_ fortyThieves: FortyThievesGame) {
-        store(fortyThieves, forKey: Keys.savedFortyThieves)
-    }
-
-    /// 저장된 Forty Thieves 게임 복구. 없거나 디코딩 실패 시 nil.
-    func restoreFortyThieves() -> FortyThievesGame? {
-        load(FortyThievesGame.self, forKey: Keys.savedFortyThieves)
-    }
-
-    func clearFortyThieves() {
-        defaults.removeObject(forKey: Keys.savedFortyThieves)
-    }
-
-    // MARK: - Golf
-
-    /// Golf 게임 저장 (전체 상태 + undo/redo 스택 포함)
-    func save(_ golf: GolfGame) {
-        store(golf, forKey: Keys.savedGolf)
-    }
-
-    /// 저장된 Golf 게임 복구. 없거나 디코딩 실패 시 nil.
-    func restoreGolf() -> GolfGame? {
-        load(GolfGame.self, forKey: Keys.savedGolf)
-    }
-
-    func clearGolf() {
-        defaults.removeObject(forKey: Keys.savedGolf)
-    }
-
-    // MARK: - Pyramid
-
-    /// Pyramid 게임 저장 (전체 상태 + undo/redo 스택 포함)
-    func save(_ pyramid: PyramidGame) {
-        store(pyramid, forKey: Keys.savedPyramid)
-    }
-
-    /// 저장된 Pyramid 게임 복구. 없거나 디코딩 실패 시 nil.
-    func restorePyramid() -> PyramidGame? {
-        load(PyramidGame.self, forKey: Keys.savedPyramid)
-    }
-
-    func clearPyramid() {
-        defaults.removeObject(forKey: Keys.savedPyramid)
-    }
-
-    // MARK: - TriPeaks
-
-    /// TriPeaks 게임 저장 (전체 상태 + undo/redo 스택 포함)
-    func save(_ triPeaks: TriPeaksGame) {
-        store(triPeaks, forKey: Keys.savedTriPeaks)
-    }
-
-    /// 저장된 TriPeaks 게임 복구. 없거나 디코딩 실패 시 nil.
-    func restoreTriPeaks() -> TriPeaksGame? {
-        load(TriPeaksGame.self, forKey: Keys.savedTriPeaks)
-    }
-
-    func clearTriPeaks() {
-        defaults.removeObject(forKey: Keys.savedTriPeaks)
-    }
-
-    // MARK: - Scorpion
-
-    /// Scorpion 게임 저장 (전체 상태 + undo/redo 스택 포함)
-    func save(_ scorpion: ScorpionGame) {
-        store(scorpion, forKey: Keys.savedScorpion)
-    }
-
-    /// 저장된 Scorpion 게임 복구. 없거나 디코딩 실패 시 nil.
-    func restoreScorpion() -> ScorpionGame? {
-        load(ScorpionGame.self, forKey: Keys.savedScorpion)
-    }
-
-    func clearScorpion() {
-        defaults.removeObject(forKey: Keys.savedScorpion)
+    /// 모든 게임/경과 시간 저장 제거 (승리 등 완료된 게임이 쌓이지 않도록)
+    func clearAll() {
+        for key in Key.allCases {
+            defaults.removeObject(forKey: key.rawValue)
+        }
     }
 
     // MARK: - 경과 시간 (이어하기 시간 연속성, T-238)
 
     /// 경과 시간 저장 (persist 시 함께 저장)
     func saveElapsed(_ seconds: TimeInterval) {
-        defaults.set(seconds, forKey: Keys.savedElapsedSeconds)
+        defaults.set(seconds, forKey: Key.savedElapsedSeconds.rawValue)
     }
 
     /// 저장된 경과 시간 복구. 없으면 nil.
     func restoreElapsed() -> TimeInterval? {
-        guard defaults.object(forKey: Keys.savedElapsedSeconds) != nil else { return nil }
-        return defaults.double(forKey: Keys.savedElapsedSeconds)
-    }
-
-    func clearElapsed() {
-        defaults.removeObject(forKey: Keys.savedElapsedSeconds)
+        guard defaults.object(forKey: Key.savedElapsedSeconds.rawValue) != nil else { return nil }
+        return defaults.double(forKey: Key.savedElapsedSeconds.rawValue)
     }
 
     // MARK: - 제네릭 직렬화 헬퍼

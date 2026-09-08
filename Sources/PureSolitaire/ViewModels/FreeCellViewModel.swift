@@ -169,17 +169,17 @@ final class FreeCellViewModel: ObservableObject {
     var restoredVariant: GameVariant? {
         if restoredVariantCacheValid { return restoredVariantCache }
         let result: GameVariant?
-        if gameSaver.restoreSpider() != nil { result = .spider }
-        else if gameSaver.restoreKlondike() != nil { result = .klondike }
-        else if gameSaver.restoreYukon() != nil { result = .yukon }
-        else if gameSaver.restoreFortyThieves() != nil { result = .fortyThieves }
-        else if gameSaver.restoreGolf() != nil { result = .golf }
-        else if gameSaver.restorePyramid() != nil { result = .pyramid }
-        else if gameSaver.restoreTriPeaks() != nil { result = .triPeaks }
-        else if gameSaver.restoreScorpion() != nil { result = .scorpion }
-        else if gameSaver.restoreSeaTower() != nil { result = .seaTower }
-        else if gameSaver.restoreSuperFreeCell() != nil { result = .superFreeCell }
-        else if gameSaver.restore() != nil { result = .freecell }
+        if gameSaver.hasData(for: .spider) { result = .spider }
+        else if gameSaver.hasData(for: .klondike) { result = .klondike }
+        else if gameSaver.hasData(for: .yukon) { result = .yukon }
+        else if gameSaver.hasData(for: .fortyThieves) { result = .fortyThieves }
+        else if gameSaver.hasData(for: .golf) { result = .golf }
+        else if gameSaver.hasData(for: .pyramid) { result = .pyramid }
+        else if gameSaver.hasData(for: .triPeaks) { result = .triPeaks }
+        else if gameSaver.hasData(for: .scorpion) { result = .scorpion }
+        else if gameSaver.hasData(for: .seaTower) { result = .seaTower }
+        else if gameSaver.hasData(for: .superFreeCell) { result = .superFreeCell }
+        else if gameSaver.hasData(for: .freecell) { result = .freecell }
         else { result = nil }
         restoredVariantCache = result
         restoredVariantCacheValid = true
@@ -242,59 +242,59 @@ final class FreeCellViewModel: ObservableObject {
     }
 
     init() {
-        if let restored = gameSaver.restoreSpider() {
+        if let restored = gameSaver.restore(SpiderGame.self, variant: .spider) {
             spider = restored
             gameOptions.setSelectedID(String(restored.difficulty.rawValue), for: .spider, optionID: "spiderDifficulty")
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
             beginRestoredSession()
-        } else if let restored = gameSaver.restoreKlondike() {
+        } else if let restored = gameSaver.restore(KlondikeGame.self, variant: .klondike) {
             klondike = restored
             gameOptions.setSelectedID(String(restored.drawMode), for: .klondike, optionID: "klondikeDraw")
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
             beginRestoredSession()
-        } else if let restored = gameSaver.restoreYukon() {
+        } else if let restored = gameSaver.restore(YukonGame.self, variant: .yukon) {
             yukon = restored
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
             beginRestoredSession()
-        } else if let restored = gameSaver.restoreFortyThieves() {
+        } else if let restored = gameSaver.restore(FortyThievesGame.self, variant: .fortyThieves) {
             fortyThieves = restored
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
             beginRestoredSession()
-        } else if let restored = gameSaver.restoreGolf() {
+        } else if let restored = gameSaver.restore(GolfGame.self, variant: .golf) {
             golf = restored
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
             beginRestoredSession()
-        } else if let restored = gameSaver.restorePyramid() {
+        } else if let restored = gameSaver.restore(PyramidGame.self, variant: .pyramid) {
             pyramid = restored
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
             beginRestoredSession()
-        } else if let restored = gameSaver.restoreTriPeaks() {
+        } else if let restored = gameSaver.restore(TriPeaksGame.self, variant: .triPeaks) {
             triPeaks = restored
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
             beginRestoredSession()
-        } else if let restored = gameSaver.restoreScorpion() {
+        } else if let restored = gameSaver.restore(ScorpionGame.self, variant: .scorpion) {
             scorpion = restored
             game = FreeCellGame(gameNumber: restored.gameNumber)
             gameNumberText = String(restored.gameNumber)
             beginRestoredSession()
-        } else if let restored = gameSaver.restoreSeaTower() {
+        } else if let restored = gameSaver.restore(FreeCellGame.self, variant: .seaTower), restored.variant == .seaTower {
             game = restored
             gameNumberText = String(restored.gameNumber)
             beginRestoredSession()
-        } else if let restored = gameSaver.restoreSuperFreeCell() {
+        } else if let restored = gameSaver.restore(FreeCellGame.self, variant: .superFreeCell), restored.variant == .superFreeCell {
             game = restored
             gameNumberText = String(restored.gameNumber)
             beginRestoredSession()
-        } else if let restored = gameSaver.restore() {
+        } else if let restored = gameSaver.restore(FreeCellGame.self, variant: .freecell) {
             guard restored.variant == .freecell || restored.variant == .bakersGame else {
-                gameSaver.clear()
+                gameSaver.clear(variant: .freecell)
                 let number = stats.lastGameNumber(for: .freecell) ?? 1
                 let safeNumber = min(max(number, DealGenerator.minGameNumber), DealGenerator.maxGameNumber)
                 game = FreeCellGame(gameNumber: safeNumber)
@@ -1412,27 +1412,23 @@ final class FreeCellViewModel: ObservableObject {
 
     func persist() {
         if let s = spider {
-            gameSaver.save(s)
+            gameSaver.save(s, variant: .spider)
         } else if let k = klondike {
-            gameSaver.save(k)
+            gameSaver.save(k, variant: .klondike)
         } else if let y = yukon {
-            gameSaver.save(y)
+            gameSaver.save(y, variant: .yukon)
         } else if let f = fortyThieves {
-            gameSaver.save(f)
+            gameSaver.save(f, variant: .fortyThieves)
         } else if let g = golf {
-            gameSaver.save(g)
+            gameSaver.save(g, variant: .golf)
         } else if let p = pyramid {
-            gameSaver.save(p)
+            gameSaver.save(p, variant: .pyramid)
         } else if let t = triPeaks {
-            gameSaver.save(t)
+            gameSaver.save(t, variant: .triPeaks)
         } else if let s = scorpion {
-            gameSaver.save(s)
+            gameSaver.save(s, variant: .scorpion)
         } else {
-            switch game.variant {
-            case .seaTower: gameSaver.saveSeaTower(game)
-            case .superFreeCell: gameSaver.saveSuperFreeCell(game)
-            default: gameSaver.save(game)
-            }
+            gameSaver.save(game, variant: game.variant)
         }
         // 이어하기 캐시 갱신 — 현재 게임이 복원 가능 상태 (T-237)
         restoredVariantCache = variant
@@ -1442,18 +1438,7 @@ final class FreeCellViewModel: ObservableObject {
     }
 
     private func clearSave() {
-        gameSaver.clear()
-        gameSaver.clearKlondike()
-        gameSaver.clearSpider()
-        gameSaver.clearSeaTower()
-        gameSaver.clearSuperFreeCell()
-        gameSaver.clearYukon()
-        gameSaver.clearFortyThieves()
-        gameSaver.clearGolf()
-        gameSaver.clearPyramid()
-        gameSaver.clearTriPeaks()
-        gameSaver.clearScorpion()
-        gameSaver.clearElapsed()
+        gameSaver.clearAll()
         // 이어하기 캐시 갱신 — 저장 없음 (T-237)
         restoredVariantCache = nil
         restoredVariantCacheValid = true
