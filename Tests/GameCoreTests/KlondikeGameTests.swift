@@ -284,4 +284,35 @@ final class KlondikeGameTests: XCTestCase {
         XCTAssertEqual(restored.homes, g.homes)
         XCTAssertEqual(restored.moveCount, g.moveCount)
     }
+
+    // MARK: - 부분 시퀀스 이동 (T-251: Spider와 동일 버그)
+
+    private func freshGame(columns: [Int: [Card]]) -> KlondikeGame {
+        var g = KlondikeGame(gameNumber: 42)
+        g.columns = Array(repeating: [], count: KlondikeGame.columnCount)
+        for (i, cards) in columns {
+            g.columns[i] = cards.map { .init(card: $0, faceUp: true) }
+        }
+        g.stock = []
+        g.waste = []
+        return g
+    }
+
+    /// 9♣-8♥-7♣ 중 8♥-7♣만 9♠ 위로 — 허용되어야 함
+    /// raw: 9♣=32, 8♥=30, 7♣=24, 9♠=35
+    func testPartialRunMoveAccepted() {
+        var g = freshGame(columns: [0: [card(32), card(30), card(24)],
+                                     1: [card(35)]])
+        XCTAssertTrue(g.canMove(.columnToColumn(from: 0, to: 1, cardCount: 2)))
+        XCTAssertTrue(g.apply(.columnToColumn(from: 0, to: 1, cardCount: 2)))
+        XCTAssertEqual(g.columns[1].map { $0.card.rawValue }, [35, 30, 24])
+    }
+
+    /// 8♥-7♣을 10♥ 위로는 불가 — 전체 run 맨 아래(9♣)가 맞는다고 허용하면 안 됨
+    /// 10♥=38
+    func testPartialRunMoveRejected() {
+        var g = freshGame(columns: [0: [card(32), card(30), card(24)],
+                                     1: [card(38)]])
+        XCTAssertFalse(g.canMove(.columnToColumn(from: 0, to: 1, cardCount: 2)))
+    }
 }

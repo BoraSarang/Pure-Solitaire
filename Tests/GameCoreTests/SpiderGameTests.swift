@@ -178,6 +178,26 @@ final class SpiderGameTests: XCTestCase {
         XCTAssertEqual(g.moveCount, 1)
     }
 
+    // MARK: - 부분 시퀀스 이동 (T-251: moving[0] 대신 선택 구간 맨 아래로 판정)
+
+    /// 10-9-8-7-6♠ 중 7-6만 8♠ 위로 — 허용되어야 함
+    func testPartialRunMoveAccepted() {
+        // raw: (rank-1)*4+suit, spades=3 → 10♠=39, 9♠=35, 8♠=31, 7♠=27, 6♠=23
+        var g = freshGame(columns: [0: [card(39), card(35), card(31), card(27), card(23)],
+                                     1: [card(31)]])
+        XCTAssertTrue(g.canMove(.columnToColumn(from: 0, to: 1, cardCount: 2)))
+        XCTAssertTrue(g.apply(.columnToColumn(from: 0, to: 1, cardCount: 2)))
+        XCTAssertEqual(g.columns[1].map(\.card.rawValue), [31, 27, 23])
+    }
+
+    /// 7-6을 J 위로는 불가 — 전체 run 맨 아래(10)가 맞는다고 허용하면 안 됨
+    func testPartialRunMoveRejected() {
+        // J♠ = 43
+        var g = freshGame(columns: [0: [card(39), card(35), card(31), card(27), card(23)],
+                                     1: [card(43)]])
+        XCTAssertFalse(g.canMove(.columnToColumn(from: 0, to: 1, cardCount: 2)))
+    }
+
     // MARK: - Codable
 
     func testCodableRoundTrip() {

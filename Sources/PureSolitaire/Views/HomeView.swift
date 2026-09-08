@@ -166,26 +166,23 @@ struct HomeView: View {
 
     private var categorySections: some View {
         VStack(alignment: .leading, spacing: 24) {
-            ForEach(GameCategory.allCases, id: \.self) { category in
-                categorySection(category)
+            if settings.gameMode == .standard {
+                // 일반 모드: 4종을 한 줄 한 섹션으로 (카테고리별 1줄씩이면 휑해 보임)
+                tileSection(title: "일반 게임", count: GameVariant.standardVariants.count, variants: GameVariant.standardVariants)
+            } else {
+                ForEach(GameCategory.allCases, id: \.self) { category in
+                    categorySection(category)
+                }
             }
         }
     }
 
-    private func categorySection(_ category: GameCategory) -> some View {
-        // T-246: 모드별 표시 목록 (일반=4종, 확장=전체). 빈 카테고리는 숨김.
-        let base: [GameVariant] = settings.gameMode == .standard
-            ? GameVariant.standardVariants
-            : GameVariant.homeOrderedVariants
-        let variants = base.filter { $0.category == category }
-        if variants.isEmpty {
-            return AnyView(EmptyView())
-        }
-        return AnyView(VStack(alignment: .leading, spacing: 8) {
+    private func tileSection(title: String, count: Int, variants: [GameVariant]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                Text(category.displayName)
+                Text(title)
                     .font(.title3.bold())
-                Text("\(variants.count)종")
+                Text("\(count)종")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -197,7 +194,16 @@ struct HomeView: View {
                     homeTile(variant)
                 }
             }
-        })
+        }
+    }
+
+    private func categorySection(_ category: GameCategory) -> some View {
+        // T-246: 확장 모드 전체 표시. 빈 카테고리는 숨김.
+        let variants = GameVariant.homeOrderedVariants.filter { $0.category == category }
+        if variants.isEmpty {
+            return AnyView(EmptyView())
+        }
+        return AnyView(tileSection(title: category.displayName, count: variants.count, variants: variants))
     }
 
     private func homeTile(_ variant: GameVariant) -> some View {

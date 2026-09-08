@@ -164,7 +164,8 @@ public struct KlondikeGame: Equatable, Sendable, Codable {
                   columns[from].count >= cardCount else { return false }
             let moving = movableRun(from: from)
             guard moving.count >= cardCount else { return false }
-            return canPlaceOnColumn(moving[0], column: to)
+            // 선택된 부분 시퀀스의 맨 아래 카드로 판정 (전체 run 맨 아래가 아님)
+            return canPlaceOnColumn(moving[moving.count - cardCount], column: to)
 
         case let .columnToHome(columnIndex, card):
             guard columns.indices.contains(columnIndex),
