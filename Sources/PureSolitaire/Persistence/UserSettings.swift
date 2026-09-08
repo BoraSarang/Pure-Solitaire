@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import GameCore
 
 /// 사용자 설정 (UserDefaults 영구 저장)
 final class UserSettings: ObservableObject {
@@ -62,6 +63,8 @@ final class UserSettings: ObservableObject {
     @AppStorage("settings.soundVolume") var soundVolume = 1.0
     @AppStorage("settings.bgmVolume") var bgmVolume = 0.5
     @AppStorage("settings.cardBackRaw") var cardBackRaw = CardBack.classic.rawValue
+    /// 게임 모드 (일반/확장) — 기본 일반 (T-245)
+    @AppStorage("settings.gameMode") var gameModeRaw = GameMode.standard.rawValue
     /// 커스텀 배경 이미지 파일 경로 (선택 시 Application Support에 복사)
     @AppStorage("settings.customBackgroundPath") var customBackgroundPath = ""
 
@@ -78,6 +81,12 @@ final class UserSettings: ObservableObject {
     var cardBack: CardBack {
         get { CardBack(rawValue: cardBackRaw) ?? .classic }
         set { cardBackRaw = newValue.rawValue }
+    }
+
+    /// 게임 모드 — UserSettings는 앱 타깃이라 GameCore의 GameMode 직접 참조 (T-245)
+    var gameMode: GameMode {
+        get { GameMode(rawValue: gameModeRaw) ?? .standard }
+        set { gameModeRaw = newValue.rawValue }
     }
 
     func backgroundColor(for style: BackgroundStyle) -> Color {

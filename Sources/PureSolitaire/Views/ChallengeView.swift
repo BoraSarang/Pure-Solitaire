@@ -4,6 +4,7 @@ import GameCore
 /// 데일리 챌린지 시트 — 3개월 달력 + 날짜별 9판 목록 + 월 통계/배지 (T-218)
 struct ChallengeView: View {
     @EnvironmentObject private var vm: FreeCellViewModel
+    @EnvironmentObject private var settings: UserSettings
     @Environment(\.dismiss) private var dismiss
 
     @State private var selectedDate = Date()
@@ -14,9 +15,9 @@ struct ChallengeView: View {
     /// 오늘 날짜 (달력 강조용)
     private var today: Date { Date() }
 
-    /// 선택 날짜의 9판
+    /// 선택 날짜의 판 — 모드별 구성 (일반 4판/확장 9판, T-247)
     private var deals: [DailyChallenge.Deal] {
-        DailyChallenge.deals(for: selectedDate, calendar: calendar)
+        DailyChallenge.deals(for: selectedDate, calendar: calendar, mode: settings.gameMode)
     }
 
     /// 선택 날짜의 완료 기록
@@ -66,7 +67,7 @@ struct ChallengeView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("데일리 챌린지")
                     .font(.title2.bold())
-                Text("하루 9판 · 별점으로 완료율 집계")
+                Text("하루 \(DailyChallenge.dealsPerDay(mode: settings.gameMode))판 · 별점으로 완료율 집계")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

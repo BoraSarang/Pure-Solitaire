@@ -85,7 +85,7 @@ struct HomeView: View {
             quickButton(
                 icon: "calendar.badge.checkmark",
                 title: "데일리 도전",
-                subtitle: "하루 9판",
+                subtitle: "하루 \(DailyChallenge.dealsPerDay(mode: settings.gameMode))판",
                 shortcut: "⌥⌘D"
             ) {
                 vm.showingChallenge = true
@@ -173,8 +173,15 @@ struct HomeView: View {
     }
 
     private func categorySection(_ category: GameCategory) -> some View {
-        let variants = GameVariant.homeOrderedVariants.filter { $0.category == category }
-        return VStack(alignment: .leading, spacing: 8) {
+        // T-246: 모드별 표시 목록 (일반=4종, 확장=전체). 빈 카테고리는 숨김.
+        let base: [GameVariant] = settings.gameMode == .standard
+            ? GameVariant.standardVariants
+            : GameVariant.homeOrderedVariants
+        let variants = base.filter { $0.category == category }
+        if variants.isEmpty {
+            return AnyView(EmptyView())
+        }
+        return AnyView(VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Text(category.displayName)
                     .font(.title3.bold())
@@ -190,7 +197,7 @@ struct HomeView: View {
                     homeTile(variant)
                 }
             }
-        }
+        })
     }
 
     private func homeTile(_ variant: GameVariant) -> some View {

@@ -58,6 +58,15 @@ struct SettingsView: View {
             }
 
             Section {
+                Picker("게임 모드", selection: Binding(
+                    get: { settings.gameMode },
+                    set: { settings.gameMode = $0 }
+                )) {
+                    ForEach(GameMode.allCases, id: \.self) { mode in
+                        Text(mode.displayName).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
                 Toggle("자동 이동", isOn: $settings.autoPlayEnabled)
                     .toggleStyle(.switch)
                 Toggle("승리 자동 완성", isOn: $settings.autoFinishEnabled)
@@ -111,7 +120,7 @@ struct SettingsView: View {
             } header: {
                 Label("게임플레이", systemImage: "gamecontroller")
             } footer: {
-                Text("자동 이동은 에이스 등 안전한 카드를 게임 중 홈셀로 옮깁니다.")
+                Text("일반 모드는 FreeCell·Klondike·Spider·Pyramid 4종 + 데일리 4판. 확장은 12종 + 데일리 9판. 자동 이동은 에이스 등 안전한 카드를 게임 중 홈셀로 옮깁니다.")
             }
 
             if !variantOptions.isEmpty {

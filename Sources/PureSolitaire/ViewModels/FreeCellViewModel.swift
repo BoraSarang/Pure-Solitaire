@@ -349,9 +349,9 @@ final class FreeCellViewModel: ObservableObject {
         newGame(number: number, variant: variant, spiderDifficulty: spiderDifficulty)
     }
 
-    /// 현재 게임을 제외한 변형 중 하나로 랜덤 전환 (진행 중이면 확인 다이얼로그 재사용)
+    /// 현재 게임을 제외한 변형 중 하나로 랜덤 전환 — 모드 내 변형만 (T-246)
     func switchToRandomGame() {
-        let options = GameVariant.allCases.filter { $0 != variant }
+        let options = GameVariant.visibleVariants(mode: settings.gameMode).filter { $0 != variant }
         guard let next = options.randomElement() else { return }
         requestNewGame(variant: next)
     }
@@ -373,11 +373,12 @@ final class FreeCellViewModel: ObservableObject {
         showingNewGameConfirmation = true
     }
 
-    /// 오늘 데일리 판 시작 — 오늘 9판 중 현재 변형 판으로 챌린지 진입 (T-229 단일화).
-    /// 9판에 현재 변형이 없으면 DailyDeal 번호로 판을 구성 (9판 내 동일 번호 보장).
+    /// 오늘 데일리 판 시작 — 모드별 오늘 판 중 현재 변형 판으로 챌린지 진입 (T-229 단일화, T-246 모드).
+    /// 판에 현재 변형이 없으면 DailyDeal 번호로 판을 구성 (판 내 동일 번호 보장).
     func startTodayDeal() {
         let today = Date()
-        if let deal = DailyChallenge.deals(for: today).first(where: { $0.variant == variant }) {
+        let mode = settings.gameMode
+        if let deal = DailyChallenge.deals(for: today, mode: mode).first(where: { $0.variant == variant }) {
             startChallenge(deal: deal)
         } else {
             startChallenge(deal: DailyChallenge.Deal(
@@ -410,7 +411,7 @@ final class FreeCellViewModel: ObservableObject {
     func recordChallengeIfToday() {
         guard let active = activeChallenge,
               let start = gameStartedAt else { return }
-        let startDeals = DailyChallenge.deals(for: active.startDate)
+        let startDeals = DailyChallenge.deals(for: active.startDate, mode: settings.gameMode)
         guard startDeals.contains(active.deal) else { return }
         let deal = active.deal
         let seconds = Date().timeIntervalSince(start)

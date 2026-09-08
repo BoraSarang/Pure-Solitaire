@@ -13,12 +13,27 @@ public enum DailyChallenge {
         }
     }
 
-    /// 하루 챌린지 판 수 (12종 중 9개)
+    /// 하루 챌린지 판 수 — 확장 9판 / 일반 4판 (T-244)
     public static let dealsPerDay = 9
+    public static let standardDealsPerDay = 4
 
-    /// 날짜 → 오늘 챌린지 9판 (12종 중 9개를 날짜 시드로 결정적 셔플 후 선택, 중복 없음, 순서 결정적)
+    public static func dealsPerDay(mode: GameMode) -> Int {
+        switch mode {
+        case .standard: standardDealsPerDay
+        case .extended: dealsPerDay
+        }
+    }
+
+    /// 날짜 → 오늘 챌린지 판 (T-244 모드별 구성).
+    /// 확장: 12종 중 9개를 날짜 시드로 결정적 셔플 후 선택 (중복 없음, 순서 결정적).
+    /// 일반: 4종 고정 순서 (번호는 날짜별 결정적).
     /// 각 변형의 게임 번호는 DailyDeal.gameNumber 재사용.
-    public static func deals(for date: Date, calendar: Calendar = .current) -> [Deal] {
+    public static func deals(for date: Date, calendar: Calendar = .current, mode: GameMode = .extended) -> [Deal] {
+        if mode == .standard {
+            return GameVariant.standardVariants.map {
+                Deal(variant: $0, number: DailyDeal.gameNumber(for: date, variant: $0, calendar: calendar))
+            }
+        }
         let days = calendar.ordinality(of: .day, in: .era, for: date) ?? 0
         var variants = GameVariant.allCases
         seededShuffle(&variants, seed: UInt64(days))

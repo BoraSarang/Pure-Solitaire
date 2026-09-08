@@ -5,6 +5,7 @@ import GameCore
 struct GameSelectorView: View {
     @Binding var selection: GameVariant
     let boardColor: Color
+    @EnvironmentObject private var settings: UserSettings
 
     private let columns = [
         GridItem(.flexible(), spacing: 14),
@@ -25,7 +26,7 @@ struct GameSelectorView: View {
     }
 
     private func categorySection(_ category: GameCategory) -> some View {
-        let variants = GameVariant.allCases
+        let variants = GameVariant.visibleVariants(mode: settings.gameMode)
             .filter { $0.category == category }
             .sorted { lhs, rhs in
                 let ld = difficultyRank(lhs.baseDifficulty)
@@ -33,7 +34,10 @@ struct GameSelectorView: View {
                 if ld != rd { return ld < rd }
                 return lhs.categoryOrder < rhs.categoryOrder
             }
-        return VStack(alignment: .leading, spacing: 8) {
+        if variants.isEmpty {
+            return AnyView(EmptyView())
+        }
+        return AnyView(VStack(alignment: .leading, spacing: 8) {
             Text(category.displayName)
                 .font(.subheadline.bold())
                 .foregroundStyle(.secondary)
@@ -49,7 +53,7 @@ struct GameSelectorView: View {
                     }
                 }
             }
-        }
+        })
     }
 
     private func difficultyRank(_ d: Difficulty) -> Int {

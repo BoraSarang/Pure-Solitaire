@@ -92,6 +92,31 @@ final class DailyChallengeTests: XCTestCase {
         let day2 = DailyChallenge.deals(for: date(2026, 8, 13))
         XCTAssertNotEqual(day1, day2)
     }
+
+    // MARK: - 모드별 구성 (T-244)
+
+    /// 일반 모드 = 4종 고정 순서 + 날짜별 번호 결정성
+    func testStandardDealsFixedFour() {
+        let d = date(2026, 8, 12)
+        let deals = DailyChallenge.deals(for: d, mode: .standard)
+        XCTAssertEqual(deals.count, 4)
+        XCTAssertEqual(deals.map(\.variant), [.freecell, .klondike, .spider, .pyramid])
+        XCTAssertEqual(deals, DailyChallenge.deals(for: d, mode: .standard))
+        // 날짜가 바뀌면 번호가 바뀜
+        XCTAssertNotEqual(deals, DailyChallenge.deals(for: date(2026, 8, 13), mode: .standard))
+    }
+
+    /// 모드별 판 수
+    func testDealsPerDayByMode() {
+        XCTAssertEqual(DailyChallenge.dealsPerDay(mode: .standard), 4)
+        XCTAssertEqual(DailyChallenge.dealsPerDay(mode: .extended), 9)
+    }
+
+    /// 표시 변형 필터 — 일반 4종 / 확장 12종
+    func testVisibleVariantsByMode() {
+        XCTAssertEqual(GameVariant.visibleVariants(mode: .standard), [.freecell, .klondike, .spider, .pyramid])
+        XCTAssertEqual(GameVariant.visibleVariants(mode: .extended), GameVariant.allCases)
+    }
 }
 
 final class ChallengeStoreTests: XCTestCase {

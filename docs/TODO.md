@@ -63,6 +63,15 @@
 - [ ] T-206: 솔버 휴리스틱 추가 개선 — #50(기본 예산 초과, 해는 존재) / #500(난제) 기본 예산 내 해결 — 예산 유지 결정으로 보류.
   - **2026-08-14 진행 중 갱신**: T-210 과정에서 무효 이동 버그 2건 수정(단일/그룹 bottom 카드 기준 + 유효 최대 그룹 탐색) + 진행(홈 카드) 없는 경로 가지치기(`maxStagnantDepth 80`)로 **#50 유효 해 703 이동이 재생 예산(2M/20s) 내 16.6s 해결**, **#500은 이제 기본 예산으로도 풀리는 게임으로 판명** — T-206 목표 대부분 해소됨.
 
+## v3.24 — 일반/확장 모드 분리 (진행중, PLAN_v3.24_macos.md)
+- [x] T-244: `GameMode` + `standardVariants`/`visibleVariants(mode:)` + 모드별 `deals` (일반 4판 고정/확장 9판 셔플).
+- [x] T-245: 설정 모드 Picker (`settings.gameMode`, 기본 일반).
+- [x] T-246: 선택 UI 필터 (홈/번호시트/랜덤/오늘딜).
+- [x] T-247: 데일리 연동 (ChallengeView 모드 전달 + 기록 경로).
+- [x] T-248: 전환 정책 명시 (게임 유지, 복원 예외 허용 — 코드 변경 없음).
+- [x] T-249: 테스트 3개 + 회귀 263개 통과.
+- [ ] T-250: 문서 + 커밋 + 푸시.
+
 ## v3.23 — 게임 흐름 버그 수정 (진행중, PLAN_v3.23_macos.md)
 - [x] T-229: 데일리 단일화 — `startDailyDeal` 폐지 → `startTodayDeal(variant:)` (9판 매핑 후 `startChallenge` 위임). SideBarView:62, GameCommands:27 교체.
 - [x] T-230: `activeChallenge: (deal, startDate)?` 구조체화 + `newGame` 진입 리셋 + `pendingChallengeDeal` (확인 다이얼로그 경로).

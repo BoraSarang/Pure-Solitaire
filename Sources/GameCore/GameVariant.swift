@@ -102,7 +102,32 @@ public enum GameCategory: String, CaseIterable, Sendable {
     }
 }
 
+/// 게임 모드 — 일반(4종) / 확장(12종). (T-244)
+public enum GameMode: String, Codable, CaseIterable, Sendable {
+    /// 일반 모드 (기본) — FreeCell/Klondike/Spider/Pyramid
+    case standard
+    /// 확장 모드 — 전체 12종
+    case extended
+
+    public var displayName: String {
+        switch self {
+        case .standard: "일반"
+        case .extended: "확장"
+        }
+    }
+}
+
 extension GameVariant {
+    /// 일반 모드 구성 (고정 순서) — 데일리 4판·선택 목록 공용. (T-244)
+    public static let standardVariants: [GameVariant] = [.freecell, .klondike, .spider, .pyramid]
+
+    /// 모드별 선택 가능 변형 — 표시·랜덤·데일리 진입점 일원화. (T-244)
+    public static func visibleVariants(mode: GameMode) -> [GameVariant] {
+        switch mode {
+        case .standard: standardVariants
+        case .extended: allCases
+        }
+    }
     /// 카테고리 — 홈 화면 그룹 표시용. (T-222)
     public var category: GameCategory {
         switch self {
