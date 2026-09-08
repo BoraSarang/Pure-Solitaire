@@ -79,6 +79,7 @@ public enum FreeCellSolver {
         guard isFreeCellFamily(variant) else { return startNumber }
         let deadline = Date().addingTimeInterval(budget.timeLimit * Double(maxAttempts))
         for n in startNumber...(startNumber + maxAttempts - 1) {
+            if budget.isCancelled?() == true { return nil }
             let safe = min(max(n, DealGenerator.minGameNumber), DealGenerator.maxGameNumber)
             if Date() > deadline { return nil }
             if isWinnable(gameNumber: safe, variant: variant, budget: budget) {

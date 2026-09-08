@@ -240,10 +240,9 @@ struct ChallengeView: View {
         let difficulty = vm.cachedDifficulty(for: deal)
         return Button {
             vm.startChallenge(deal: deal)
-            // T-236: 확인 필요 시 시트 유지 (다이얼로그에서 확정/취소), 즉시 시작만 닫기
-            if !vm.needsNewGameConfirmation {
-                dismiss()
-            }
+            // 시트는 항상 먼저 닫기 — 시트 위 확인 다이얼로그는 presenting 충돌로
+            // 표시 실패 가능. 확정/취소는 pendingChallengeDeal로 처리됨.
+            dismiss()
         } label: {
             HStack(spacing: 10) {
                 Text("\(index + 1)")

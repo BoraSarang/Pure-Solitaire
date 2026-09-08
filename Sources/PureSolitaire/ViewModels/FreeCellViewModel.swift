@@ -73,6 +73,10 @@ final class FreeCellViewModel: ObservableObject {
     private var autoSolveTimer: Timer?
     /// 자동 풀어 보기 세대 — 탐색 중 새 게임/중단 시 구 결과 파기용 (T-240)
     private var autoSolveGeneration = 0
+    /// 승리 보장 번호 탐색 중 표시 (T-239)
+    @Published private(set) var isSearchingWinnable = false
+    private var winnableSearchTask: Task<Void, Never>?
+    private var winnableSearchGeneration = 0
     private var moveHistory: [Move] = []
     private var redoMoveHistory: [Move] = []
     private var replayMoves: [Move] = []
@@ -324,13 +328,14 @@ final class FreeCellViewModel: ObservableObject {
     // MARK: - 새 게임
 
     /// 게임 세션 ID — newGame 확정마다 갱신. ContentView가 구독해 홈→게임 자동 전환 (T-234).
-    private(set) var gameSessionID = UUID()
+    @Published private(set) var gameSessionID = UUID()
 
     /// 홈 화면으로 이동 — 게임 화면에서 홈 복귀 (T-227)
     func goHome() {
-        // 백그라운드 재생 정리 — 복귀 후 타이머가 보드 변조 방지 (T-242)
+        // 백그라운드 재생/탐색 정리 — 복귀 후 타이머가 보드 변조 방지 (T-242, T-239)
         cancelAutoSolve(restore: false, message: nil)
         cancelReplaySilently()
+        cancelWinnableSearch()
         showingHome = true
         objectWillChange.send()
     }
@@ -457,7 +462,7 @@ final class FreeCellViewModel: ObservableObject {
         guard !pending.isEmpty else { return }
         pending.forEach { measuringDealKeys.insert(difficultyKey($0)) }
         difficultyTask?.cancel()
-        difficultyTask = Task.detached(priority: .userInitiated) { [weak self] in
+        difficultyTask = Task.detached(priority: .utility) { [weak self] in
             for deal in pending {
                 if Task.isCancelled { break }
                 let key = "\(deal.variant.rawValue)|\(deal.number)"
@@ -594,9 +599,10 @@ final class FreeCellViewModel: ObservableObject {
     }
 
     func newGame(number: Int, variant: GameVariant, spiderDifficulty: SpiderGame.Difficulty) {
-        // 자동 풀어 보기/리플레이 진행 중이면 정리 (새 게임으로 전환)
+        // 자동 풀어 보기/리플레이/번호 탐색 진행 중이면 정리 (새 게임으로 전환)
         cancelAutoSolve(restore: false, message: nil)
         cancelReplaySilently()
+        cancelWinnableSearch()
         // 챌린지 판 확정 — 확인 다이얼로그 경로도 newGame에서 승격 (T-230)
         let challengeDeal = pendingChallengeDeal
         pendingChallengeDeal = nil
@@ -604,48 +610,84 @@ final class FreeCellViewModel: ObservableObject {
         // 변형 전환 시 stale 저장 키 정리 — 이어하기는 현재 게임만 (T-237)
         clearSave()
         let safeNumber = min(max(number, DealGenerator.minGameNumber), DealGenerator.maxGameNumber)
-        // 승리 보장 옵션 — FreeCell 계열에서 시작 번호부터 풀리는 번호를 탐색해 실제 시작 번호로 사용.
+        // 승리 보장 옵션 — FreeCell 계열은 백그라운드에서 풀리는 번호 탐색 후 시작 (T-239).
         // 챌린지 판은 표시 번호 = 플레이 번호 = 기록 키 유지를 위해 탐색 우회 (T-231).
-        var startNumber = safeNumber
-        if challengeDeal == nil, FreeCellSolver.isFreeCellFamily(variant), isWinnableEnabled(for: variant) {
-            if let found = FreeCellSolver.firstWinnableGameNumber(
+        guard challengeDeal == nil,
+              FreeCellSolver.isFreeCellFamily(variant),
+              isWinnableEnabled(for: variant) else {
+            startGame(number: safeNumber, variant: variant, spiderDifficulty: spiderDifficulty, challengeDeal: challengeDeal)
+            return
+        }
+        winnableSearchGeneration += 1
+        let generation = winnableSearchGeneration
+        isSearchingWinnable = true
+        showMessage("풀리는 번호를 찾는 중…")
+        // 예산은 메인 액터에서 캡처 (static 격리 회피) — 취소 클로저는 탐색 Task 기준 평가
+        var searchBudget = Self.winnableSearchBudget
+        searchBudget.isCancelled = { Task.isCancelled }
+        winnableSearchTask = Task.detached(priority: .userInitiated) {
+            let found = FreeCellSolver.firstWinnableGameNumber(
                 from: safeNumber,
                 variant: variant,
-                budget: Self.winnableSearchBudget,
+                budget: searchBudget,
                 maxAttempts: 50
-            ) {
-                startNumber = found
+            )
+            await MainActor.run {
+                // 구 세대 결과 파기 — 탐색 중 새 요청 시 이전 결과 무시 (T-240 패턴)
+                guard self.winnableSearchGeneration == generation else { return }
+                self.isSearchingWinnable = false
+                self.startGame(
+                    number: found ?? safeNumber,
+                    variant: variant,
+                    spiderDifficulty: spiderDifficulty,
+                    challengeDeal: challengeDeal
+                )
             }
         }
+    }
+
+    /// 승리 보장 번호 탐색 취소 — 새 게임 요청·홈 복귀 시 구 탐색 파기 (T-239)
+    private func cancelWinnableSearch() {
+        winnableSearchTask?.cancel()
+        winnableSearchTask = nil
+        winnableSearchGeneration += 1
+        if isSearchingWinnable {
+            isSearchingWinnable = false
+            dismissMessage()
+        }
+    }
+
+    /// 실제 게임 생성 (동기) — 탐색 완료 후 또는 탐색 불필요 시 호출 (T-239 분리)
+    private func startGame(number: Int, variant: GameVariant, spiderDifficulty: SpiderGame.Difficulty, challengeDeal: DailyChallenge.Deal?) {
         switch variant {
         case .klondike:
-            klondike = KlondikeGame(gameNumber: safeNumber, drawMode: klondikeDrawMode)
+            klondike = KlondikeGame(gameNumber: number, drawMode: klondikeDrawMode)
             spider = nil
             yukon = nil
             pyramid = nil
             triPeaks = nil
         case .spider:
             self.spiderDifficulty = spiderDifficulty
-            spider = SpiderGame(gameNumber: safeNumber, difficulty: spiderDifficulty)
+            spider = SpiderGame(gameNumber: number, difficulty: spiderDifficulty)
             klondike = nil
             yukon = nil
             pyramid = nil
             triPeaks = nil
         case .yukon:
-            yukon = YukonGame(gameNumber: safeNumber)
+            yukon = YukonGame(gameNumber: number)
             klondike = nil
             spider = nil
             pyramid = nil
             triPeaks = nil
         case .fortyThieves:
-            fortyThieves = FortyThievesGame(gameNumber: safeNumber)
+            fortyThieves = FortyThievesGame(gameNumber: number)
             klondike = nil
             spider = nil
             yukon = nil
             pyramid = nil
             triPeaks = nil
         case .golf:
-            golf = GolfGame(gameNumber: safeNumber)
+            golf = GolfGame(gameNumber: number)
             klondike = nil
             spider = nil
             yukon = nil
@@ -653,7 +695,7 @@ final class FreeCellViewModel: ObservableObject {
             pyramid = nil
             triPeaks = nil
         case .pyramid:
-            pyramid = PyramidGame(gameNumber: safeNumber)
+            pyramid = PyramidGame(gameNumber: number)
             klondike = nil
             spider = nil
             yukon = nil
@@ -661,7 +703,7 @@ final class FreeCellViewModel: ObservableObject {
             golf = nil
             triPeaks = nil
         case .triPeaks:
-            triPeaks = TriPeaksGame(gameNumber: safeNumber)
+            triPeaks = TriPeaksGame(gameNumber: number)
             klondike = nil
             spider = nil
             yukon = nil
@@ -670,7 +712,7 @@ final class FreeCellViewModel: ObservableObject {
             pyramid = nil
             scorpion = nil
         case .scorpion:
-            scorpion = ScorpionGame(gameNumber: safeNumber)
+            scorpion = ScorpionGame(gameNumber: number)
             klondike = nil
             spider = nil
             yukon = nil
@@ -679,7 +721,7 @@ final class FreeCellViewModel: ObservableObject {
             pyramid = nil
             triPeaks = nil
         default:
-            game = FreeCellGame(gameNumber: startNumber, variant: variant)
+            game = FreeCellGame(gameNumber: number, variant: variant)
             klondike = nil
             spider = nil
             yukon = nil
@@ -689,7 +731,7 @@ final class FreeCellViewModel: ObservableObject {
             triPeaks = nil
             scorpion = nil
         }
-        gameNumberText = String(startNumber)
+        gameNumberText = String(number)
         selection = nil
         highlightedMove = nil
         hintCandidates = []
@@ -703,7 +745,7 @@ final class FreeCellViewModel: ObservableObject {
         completedMoveHistory = nil
         clearAllHints()
         dismissMessage()
-        stats.setLastGameNumber(startNumber, for: variant)
+        stats.setLastGameNumber(number, for: variant)
         stats.recordStarted(variant)
         gameStartedAt = Date()
         if let challengeDeal {

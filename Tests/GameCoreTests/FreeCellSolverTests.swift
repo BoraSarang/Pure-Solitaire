@@ -123,6 +123,27 @@ final class FreeCellSolverTests: XCTestCase {
         XCTAssertNotNil(FreeCellSolver.solve(gameNumber: 1, variant: .freecell, budget: budget))
     }
 
+    /// 취소 시 firstWinnable 즉시 nil (T-239: 탐색 중 취소 전파)
+    func testFirstWinnableCancelledReturnsNil() {
+        var budget = FreeCellSolver.Budget(
+            nodeLimit: 10_000_000,
+            timeLimit: 60,
+            depthLimit: 60_000,
+            isCancelled: { true }
+        )
+        XCTAssertNil(FreeCellSolver.firstWinnableGameNumber(
+            from: 1, variant: .freecell, budget: budget, maxAttempts: 50
+        ))
+    }
+
+    /// 정상 탐색은 첫 번호 그대로 (#1은 풀림)
+    func testFirstWinnableFindsFirst() {
+        XCTAssertEqual(
+            FreeCellSolver.firstWinnableGameNumber(from: 1, variant: .freecell),
+            1
+        )
+    }
+
     /// replayBudget도 동일하게 유효한 풀이를 생성해야 함
     /// #50은 로컬 16.6s 소요로 CI에서 시간 예산에 민감 — 빠른 #2로 교체(결정적).
     func testSolveWithReplayBudget() {

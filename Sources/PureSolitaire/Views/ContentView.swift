@@ -35,6 +35,21 @@ struct ContentView: View {
                     .padding(.bottom, 14)
                     .transition(AnyTransition.scale.combined(with: .opacity))
             }
+            if vm.isSearchingWinnable {
+                // 승리 보장 번호 탐색 중 로딩 표시 (T-239: 프리즈 대신 진행 표시)
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("풀리는 번호를 찾는 중…")
+                        .font(.callout)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(Capsule().fill(Color.black.opacity(0.68)))
+                .foregroundStyle(.white)
+                .padding(.bottom, 56)
+                .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity))
+            }
         }
         .background(BackgroundLayer(settings: settings))
         .background(WindowAccessor { window in

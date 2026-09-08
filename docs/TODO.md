@@ -77,7 +77,8 @@
 - [x] T-240: 자동풀어보기 세대 토큰 (`autoSolveGeneration`, 완료 시점 대조 후 파기).
 - [x] T-241: `Budget.isCancelled` + DFS 루프 조기 종료 + startAutoSolve 취소 전달. FreeCellSolverTests 2개 추가.
 - [x] T-242: `isBoardLocked` 가드 (apply/undo/redo) + 재생 중 경과시간 정지 + `goHome` 재생 취소.
-- [ ] T-239: Winnable 탐색 비동기화 (newGame 호출 체인 전체 비동기 + 로딩 UI — 별도 단계로 분리).
+- [x] T-239: Winnable 탐색 비동기화 — newGame/startGame 분리 + 로딩 UI + 세대 취소. FreeCellSolverTests 2개 추가.
+- [x] T-239a (버그 수정): `gameSessionID` @Published 누락 수정 + dealRow 항상 dismiss (시트 위 다이얼로그 충돌 회피) + 측정 QoS utility.
 - [ ] T-243: 회귀 + `build_and_run.sh release` 수동 시나리오 + CHANGELOG/DESIGN 갱신.
 
 ## v3.22 — 홈 화면 + 게임 카테고리/난이도 그룹화 + 게임 중 난이도 (진행중)
