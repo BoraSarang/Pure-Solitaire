@@ -1,5 +1,18 @@
 # CHANGELOG — 변경 이력
 
+## [미배포] — 2026-09-08 — [macos] — 게임 흐름 버그 수정 (T-229~T-242, PLAN_v3.23)
+### 변경
+- **데일리 단일화**: `startDailyDeal` 폐지 → `startTodayDeal` (오늘 9판 매핑 후 `startChallenge` 위임, ⌘D UX 유지). 데일리 딜 승리도 달력/별점에 기록됨.
+- **챌린지 기록 정합성**: `activeChallenge` (판+시작일) 구조체화, `pendingChallengeDeal`로 확인 다이얼로그 경로 대응, 시작일 기준 기록, 챌린지 Winnable 우회 (표시=플레이=기록 번호 일치).
+- **달력 버그**: 미래 판정을 `dateKey` 문자열 비교로 변경 (오전 오늘 비활성화 해소). 측정 취소 시 키 롤백.
+- **시작·전환**: `gameSessionID` 확정 이벤트로 홈→게임 자동 전환 (취소 시 홈 유지). `needsNewGameConfirmation` 공용화 + 확인 필요 시 시트 유지. `newGame` 진입 `clearSave()` + `restoredVariant` 캐시. 경과 시간 저장·복구 (`beginRestoredSession`).
+- **솔버·재생 안전화**: 자동풀어보기 세대 토큰, `Budget.isCancelled` + DFS 조기 종료, `isBoardLocked` 가드 (apply/undo/redo), 재생 중 타이머 정지, `goHome` 재생 정리.
+- **미완료**: T-239 Winnable 탐색 비동기화 (별도 단계).
+### 검증
+- `swift test -c release` **258개 전부 통과** (253 + ChallengeTests 3 + FreeCellSolverTests 2).
+- `swift build -c release` 경고 0.
+- 문서: PLAN_v3.23/TODO/CHANGELOG 갱신.
+
 ## [3.22.0] — 2026-08-14 — [macos] — 홈 화면 + 게임 카테고리/난이도 그룹화 + 게임 중 난이도 (T-222~T-228)
 ### 변경
 - **홈 화면 (A)**: 앱 시작 시 게임 선택 화면이 먼저 표시(`showingHome`). 타이틀 헤더 + 빠른 진입(데일리 도전 ⌥⌘D / 게임 번호 ⌘G / 무작위 / 통계·업적·설정) + 카테고리 4그룹 게임 그리드. 타일 클릭 → 해당 변형 게임 진입. 사이드바 "홈"(house, ⌘1) + 게임 메뉴 홈(⌘1)으로 언제든 복귀. 홈에서는 창 타이틀 "Pure Solitaire".

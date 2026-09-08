@@ -291,6 +291,7 @@ final class FreeCellGame {
 ### 4.4 상태 관리
 - `@StateObject FreeCellViewModel` (ObservableObject, @Published)
 - 뷰모델이 `FreeCellGame`(GameCore)를 감싸고 UI 상태(선택, 드래그, 애니메이션)를 관리
+- v3.23 흐름 규칙: 새 게임 확정은 `gameSessionID` 갱신으로 발행 → ContentView가 홈→게임 전환 구독 (취소 시 홈 유지). 챌린지 판은 `pendingChallengeDeal` → `newGame` 확정 시 `activeChallenge`(판+시작일) 승격. 재생 중 보드 변조는 `isBoardLocked`로 차단. 자동풀어보기 탐색은 `autoSolveGeneration` 세대로 구 결과 파기.
 
 ## 5. 영구 저장
 
@@ -300,6 +301,7 @@ final class FreeCellGame {
 | 통계 | UserDefaults | `stats.*` |
 | 현재 게임 (자동 저장) | UserDefaults | `game.state` (선택적) |
 | 최근 게임 번호 | UserDefaults | `game.lastNumber` |
+| 이어하기 경과 시간 (v3.23) | UserDefaults | `persistence.elapsedSeconds` (persist 저장, 복원 시 연속) |
 
 ## 6. 빌드 / 배포 파이프라인
 
