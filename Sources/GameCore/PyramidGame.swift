@@ -3,7 +3,7 @@
 /// - 1덱 52장, 피라미드 28장(7줄: 1+2+3+4+5+6+7), 스톡 24장, 웨이스트 0장 시작
 /// - 카드 값: A=1, 2~10=숫자, J=11, Q=12, K=13 (rank.rawValue)
 /// - 노출 카드: 7번째 줄(맨 아래)은 항상 노출, 위 줄 카드는 아래 두 자식이 모두 제거됐을 때만 노출
-/// - 이동: 합이 13인 노출 카드 제거 (피라미드 2장 / 피라미드+웨이스트 / K 단독), 스톡→웨이스트 드로(재활용 없음)
+/// - 이동: 합이 13인 노출 카드 제거 (피라미드 2장 / 피라미드+웨이스트 / K 단독), 스톡→웨이스트 드로(재활용 1회)
 /// - 승리: 피라미드 28장 전부 제거
 public struct PyramidGame: Equatable, Sendable, Codable {
     /// 피라미드 카드 (글로벌 인덱스 0~27, row r = r+1장, rowStart(r) = r*(r+1)/2). nil = 제거됨.
@@ -12,6 +12,8 @@ public struct PyramidGame: Equatable, Sendable, Codable {
     public internal(set) var waste: [Card]
     public let gameNumber: Int
     public private(set) var moveCount: Int = 0
+    /// 웨이스트→스톡 재활용을 이미 사용했는지 (1회 제한)
+    public private(set) var didRecycle = false
     private var history = UndoHistory<Snapshot>()
 
     private struct Snapshot: Equatable, Codable {
@@ -19,6 +21,38 @@ public struct PyramidGame: Equatable, Sendable, Codable {
         var stock: [Card]
         var waste: [Card]
         var moveCount: Int
+        var didRecycle: Bool
+
+        // 이전 저장 스냅샷 호환 — didRecycle 키 없으면 false
+        init(pyramid: [Card?], stock: [Card], waste: [Card], moveCount: Int, didRecycle: Bool) {
+            self.pyramid = pyramid
+            self.stock = stock
+            self.waste = waste
+            self.moveCount = moveCount
+            self.didRecycle = didRecycle
+        }
+
+        private enum Keys: String, CodingKey {
+            case pyramid, stock, waste, moveCount, didRecycle
+        }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: Keys.self)
+            pyramid = try c.decode([Card?].self, forKey: .pyramid)
+            stock = try c.decode([Card].self, forKey: .stock)
+            waste = try c.decode([Card].self, forKey: .waste)
+            moveCount = try c.decodeIfPresent(Int.self, forKey: .moveCount) ?? 0
+            didRecycle = try c.decodeIfPresent(Bool.self, forKey: .didRecycle) ?? false
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: Keys.self)
+            try c.encode(pyramid, forKey: .pyramid)
+            try c.encode(stock, forKey: .stock)
+            try c.encode(waste, forKey: .waste)
+            try c.encode(moveCount, forKey: .moveCount)
+            try c.encode(didRecycle, forKey: .didRecycle)
+        }
     }
 
     public static let pyramidRows = 7
@@ -38,7 +72,7 @@ public struct PyramidGame: Equatable, Sendable, Codable {
     // MARK: - Codable (이전 저장 데이터 호환 — undoStack/redoStack 키 유지)
 
     private enum CodingKeys: String, CodingKey {
-        case pyramid, stock, waste, gameNumber, moveCount, undoStack, redoStack
+        case pyramid, stock, waste, gameNumber, moveCount, undoStack, redoStack, didRecycle
     }
 
     public init(from decoder: Decoder) throws {
@@ -48,6 +82,7 @@ public struct PyramidGame: Equatable, Sendable, Codable {
         waste = try c.decode([Card].self, forKey: .waste)
         gameNumber = try c.decode(Int.self, forKey: .gameNumber)
         moveCount = try c.decodeIfPresent(Int.self, forKey: .moveCount) ?? 0
+        didRecycle = try c.decodeIfPresent(Bool.self, forKey: .didRecycle) ?? false
         let undo = try c.decodeIfPresent([Snapshot].self, forKey: .undoStack) ?? []
         let redo = try c.decodeIfPresent([Snapshot].self, forKey: .redoStack) ?? []
         history = UndoHistory(undoStack: undo, redoStack: redo)
@@ -60,6 +95,7 @@ public struct PyramidGame: Equatable, Sendable, Codable {
         try c.encode(waste, forKey: .waste)
         try c.encode(gameNumber, forKey: .gameNumber)
         try c.encode(moveCount, forKey: .moveCount)
+        try c.encode(didRecycle, forKey: .didRecycle)
         try c.encode(history.undoStack, forKey: .undoStack)
         try c.encode(history.redoStack, forKey: .redoStack)
     }
@@ -127,9 +163,13 @@ public struct PyramidGame: Equatable, Sendable, Codable {
         case .drawFromStock:
             return !stock.isEmpty
 
+        // 재활용 1회 — 스톡이 비고 웨이스트가 있고 아직 사용하지 않았을 때
+        case .recycleStock:
+            return stock.isEmpty && !waste.isEmpty && !didRecycle
+
         // 다른 게임 전용 이동은 발생하지 않음
         case .columnToColumn, .columnToFreeCell, .freeCellToColumn, .columnToHome,
-             .freeCellToHome, .homeToColumn, .homeToFreeCell, .recycleStock,
+             .freeCellToHome, .homeToColumn, .homeToFreeCell,
              .wasteToColumn, .wasteToFoundation, .flipColumnCard, .dealFromStock,
              .columnToWaste, .triPeaksRemove, .dealReserve:
             return false
@@ -163,6 +203,12 @@ public struct PyramidGame: Equatable, Sendable, Codable {
         case .drawFromStock:
             waste.append(stock.removeLast())
 
+        // 재활용 1회 — 웨이스트를 역순으로 스톡에 복귀 (원래 드로 순서로 다시 뽑힘)
+        case .recycleStock:
+            stock = waste.reversed()
+            waste.removeAll()
+            didRecycle = true
+
         default:
             break
         }
@@ -174,7 +220,7 @@ public struct PyramidGame: Equatable, Sendable, Codable {
     public var canRedo: Bool { history.canRedo }
 
     private var currentSnapshot: Snapshot {
-        Snapshot(pyramid: pyramid, stock: stock, waste: waste, moveCount: moveCount)
+        Snapshot(pyramid: pyramid, stock: stock, waste: waste, moveCount: moveCount, didRecycle: didRecycle)
     }
 
     public mutating func undo() {
@@ -192,6 +238,7 @@ public struct PyramidGame: Equatable, Sendable, Codable {
         stock = snapshot.stock
         waste = snapshot.waste
         moveCount = snapshot.moveCount
+        didRecycle = snapshot.didRecycle
     }
 
     // MARK: - 힌트
@@ -228,9 +275,11 @@ public struct PyramidGame: Equatable, Sendable, Codable {
             }
         }
 
-        // 드로 (스톡 일회성 — 재활용 없음)
+        // 드로 (스톡이 비면 재활용 1회)
         if !stock.isEmpty {
             moves.append(.drawFromStock)
+        } else if !waste.isEmpty && !didRecycle {
+            moves.append(.recycleStock)
         }
 
         return moves

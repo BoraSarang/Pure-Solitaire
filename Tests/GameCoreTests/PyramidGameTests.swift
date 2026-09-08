@@ -166,12 +166,88 @@ final class PyramidGameTests: XCTestCase {
         XCTAssertEqual(g.stock.count, stockBefore - 1)
     }
 
-    /// 스톡 소진 후 드로 불가 (재활용 없음)
-    func testDrawFromStockNoRecycle() {
+    /// 스톡 소진 후 드로 불가
+    func testDrawFromStockEmptyStockRejected() {
         var g = makeBottomRowGame([])
         g.stock = []
         XCTAssertFalse(g.canMove(.drawFromStock))
         XCTAssertFalse(g.apply(.drawFromStock))
+    }
+
+    // MARK: - 스톡 재활용 (1회)
+
+    /// 전체 드로 후 재활용 1회: 웨이스트가 원래 드로 순서로 스톡 복귀 + 2회 재활용 거부
+    func testRecycleOnce() {
+        var g = PyramidGame(gameNumber: 617)
+        let originalStock = g.stock
+        for _ in 0..<g.stock.count {
+            XCTAssertTrue(g.apply(.drawFromStock))
+        }
+        XCTAssertTrue(g.stock.isEmpty)
+        XCTAssertEqual(g.waste.count, 24)
+        XCTAssertTrue(g.canMove(.recycleStock))
+
+        XCTAssertTrue(g.apply(.recycleStock))
+        XCTAssertTrue(g.didRecycle)
+        XCTAssertEqual(g.stock, originalStock)
+        XCTAssertTrue(g.waste.isEmpty)
+
+        // 2회 재활용 거부
+        XCTAssertFalse(g.canMove(.recycleStock))
+        XCTAssertFalse(g.apply(.recycleStock))
+
+        // 재활용 후 다시 드로 가능
+        XCTAssertTrue(g.canMove(.drawFromStock))
+    }
+
+    /// 스톡에 카드가 남아있으면 재활용 거부
+    func testRecycleNotAllowedWithStock() {
+        var g = makeBottomRowGame([])
+        g.stock = [card(.spades, .ace), card(.hearts, .two)]
+        g.waste = [card(.diamonds, .three)]
+        XCTAssertFalse(g.canMove(.recycleStock))
+        XCTAssertFalse(g.apply(.recycleStock))
+    }
+
+    /// 웨이스트가 비어있으면 재활용 거부
+    func testRecycleEmptyWasteRejected() {
+        var g = makeBottomRowGame([])
+        g.stock = []
+        XCTAssertFalse(g.canMove(.recycleStock))
+    }
+
+    /// undo/redo가 재활용 상태(didRecycle)까지 복원
+    func testRecycleUndoRedo() {
+        var g = PyramidGame(gameNumber: 617)
+        for _ in 0..<g.stock.count {
+            XCTAssertTrue(g.apply(.drawFromStock))
+        }
+        XCTAssertTrue(g.apply(.recycleStock))
+        XCTAssertTrue(g.didRecycle)
+        XCTAssertEqual(g.stock.count, 24)
+        XCTAssertTrue(g.waste.isEmpty)
+
+        g.undo()
+        XCTAssertFalse(g.didRecycle)
+        XCTAssertTrue(g.stock.isEmpty)
+        XCTAssertEqual(g.waste.count, 24)
+
+        g.redo()
+        XCTAssertTrue(g.didRecycle)
+        XCTAssertEqual(g.stock.count, 24)
+        XCTAssertTrue(g.waste.isEmpty)
+    }
+
+    /// hint: 스톡이 비고 재활용 가능이면 재활용을 후보로 제안
+    func testHintIncludesRecycleWhenStockEmpty() {
+        var g = PyramidGame(gameNumber: 617)
+        for _ in 0..<g.stock.count {
+            XCTAssertTrue(g.apply(.drawFromStock))
+        }
+        XCTAssertTrue(g.hintCandidates().contains(.recycleStock))
+        XCTAssertTrue(g.apply(.recycleStock))
+        XCTAssertFalse(g.hintCandidates().contains(.recycleStock))
+        XCTAssertTrue(g.hintCandidates().contains(.drawFromStock))
     }
 
     // MARK: - 승리 / 종료
@@ -231,5 +307,33 @@ final class PyramidGameTests: XCTestCase {
         let data = try JSONEncoder().encode(g)
         let decoded = try JSONDecoder().decode(PyramidGame.self, from: data)
         XCTAssertEqual(g, decoded)
+    }
+
+    /// 재활용 상태를 포함한 왕복 (didRecycle 보존)
+    func testCodableRoundTripWithRecycle() throws {
+        var g = PyramidGame(gameNumber: 617)
+        for _ in 0..<g.stock.count {
+            XCTAssertTrue(g.apply(.drawFromStock))
+        }
+        XCTAssertTrue(g.apply(.recycleStock))
+        let data = try JSONEncoder().encode(g)
+        let decoded = try JSONDecoder().decode(PyramidGame.self, from: data)
+        XCTAssertEqual(g, decoded)
+        XCTAssertTrue(decoded.didRecycle)
+    }
+
+    /// 이전 버전 저장(키 'didRecycle' 없음) → 기본 false로 디코드
+    func testDecodeLegacyWithoutDidRecycleKey() throws {
+        var g = PyramidGame(gameNumber: 617)
+        XCTAssertTrue(g.apply(.drawFromStock))
+        let data = try JSONEncoder().encode(g)
+        let object = try XCTUnwrap(JSONSerialization.jsonObject(with: data))
+        var json = try XCTUnwrap(object as? [String: Any])
+        json.removeValue(forKey: "didRecycle")
+        let legacyData = try JSONSerialization.data(withJSONObject: json)
+        let decoded = try JSONDecoder().decode(PyramidGame.self, from: legacyData)
+        XCTAssertFalse(decoded.didRecycle)
+        XCTAssertEqual(decoded.pyramid, g.pyramid)
+        XCTAssertEqual(decoded.stock, g.stock)
     }
 }

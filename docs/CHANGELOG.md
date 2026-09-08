@@ -1,5 +1,13 @@
 # CHANGELOG — 변경 이력
 
+## [미배포] — 2026-09-09 — [macos] — Pyramid 스톡 재활용 1회 + Spider 스톡 표시 (T-254~T-257, PLAN_v3.27)
+### 변경
+- **Pyramid 재활용 1회**: 스톡이 비고 웨이스트가 있고 재활용을 아직 안 썼으면 스톡 탭 1회로 웨이스트를 역순(원래 드로 순서)으로 스톡에 되돌림(Par Pyramid). 스톡 비었을 때 스톡 자리에 유턴 아이콘 + 접근성 "누르면 1회 재활용". 사용 후엔 드로 불가 빈 슬롯. hint도 재활용 후보 제안. undo/redo·저장 복원에 재활용 상태(`didRecycle`) 포함, 기존 저장 데이터(키 없음)는 false로 디코드 — 호환 유지. 점수는 재활용 -100(Scoring 기존 상수).
+- **Spider 스톡 더미 표시 수정**: 스톡 50장·클릭 1회 = 10장 딜인데 더미 5개가 스톡 전체 존재 여부로만 렌더되어, 마지막 클릭에서 한꺼번에 사라지던 문제 → 더미당 10장씩(`cardsLeft > index * 10`) 클릭마다 하나씩 소진 표시.
+### 검증
+- `swift test -c release` **274개 전부 통과** (267 + Pyramid 재활용 7개).
+- `swift build -c release` 성공(기존 Scorpion dead-code 경고만).
+
 ## [미배포] — 2026-09-09 — [macos] — 코드베이스 리팩토링 (무동작 변경)
 ### 변경
 - **스톡 탭 가드 일원화**: Golf/Pyramid/TriPeaks 스톡 탭 핸들러의 중복 `canMove` 가드 제거 → `_ = apply(.drawFromStock)` 단일 경로.

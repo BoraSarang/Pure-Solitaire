@@ -425,18 +425,27 @@ struct GameBoardView: View {
         .accessibilityLabel("스톡, 웨이스트")
     }
 
-    /// Pyramid 스톡: 카드가 있으면 뒷면 묶음, 없으면 빈 슬롯 (재활용 없음)
+    /// Pyramid 스톡: 카드가 있으면 뒷면 묶음(드로), 스톡 비고 재활용 가능이면 유턴 표시, 소진 후엔 빈 슬롯
     private func pyramidStockView(cardSize: CGSize) -> some View {
         let hasStock = !(vm.pyramid?.stock.isEmpty ?? true)
+        let canRecycle = (vm.pyramid?.waste.isEmpty == false) && (vm.pyramid?.didRecycle == false)
         return CardView(
             card: Card(suit: .spades, rank: .ace),
             style: settings.cardStyle,
             isHighlighted: true,
             showBack: true,
             cardBack: settings.cardBack,
-            accessibilityHintText: "누르면 1장 드로"
+            accessibilityHintText: hasStock ? "누르면 1장 드로"
+                : (canRecycle ? "누르면 1회 재활용" : "재활용 소진 — 드로 불가")
         )
         .opacity(hasStock ? 1 : 0.35)
+        .overlay {
+            if !hasStock && canRecycle {
+                Image(systemName: "arrow.uturn.left.circle")
+                    .foregroundStyle(settings.feltTextBase.opacity(0.5))
+                    .font(.system(size: cardSize.width * 0.4))
+            }
+        }
         .frame(width: cardSize.width, height: cardSize.height)
         .onTapGesture { vm.tapPyramidStock() }
         .contentShape(Rectangle())
@@ -591,9 +600,11 @@ struct GameBoardView: View {
         .accessibilityLabel("스톡 \(vm.spider?.stock.count ?? 0)장, 완성 수트 \(vm.spider?.completedSuits ?? 0)/8")
     }
 
-    /// Spider 스톡 더미 (남은 카드가 있으면 뒷면 묶음)
+    /// Spider 스톡 더미 — 클릭 1회에 10장씩 딜되므로 더미당 10장을 나타냄
+    /// (stock 남은 장수가 index*10+1장 이상이면 해당 더미 표시)
     private func spiderStockPile(_ index: Int, cardSize: CGSize) -> some View {
-        let hasStock = !(vm.spider?.stock.isEmpty ?? true)
+        let cardsLeft = vm.spider?.stock.count ?? 0
+        let hasStock = cardsLeft > index * 10
         return CardView(
             card: Card(suit: .spades, rank: .ace),
             style: settings.cardStyle,

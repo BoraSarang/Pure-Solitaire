@@ -134,7 +134,7 @@ final class FreeCellGame {
 ### 3.9 Pyramid (v3.7)
 - **규칙**: 1덱 52장, **피라미드 28장**(7줄: 1+2+3+4+5+6+7) + 스톡 24장(웨이스트 0장 시작), 카드 값 A=1~K=13, 노출 카드만 이동
 - **노출 판정**: `pyramid: [Card?]` 28슬롯 — row r은 r+1장, `rowStart(r) = r*(r+1)/2`. 카드 i는 남아있고 아래 두 자식(`rowStart(row+1)+pos`, `+1`, row<6일 때)이 모두 nil이면 노출. 7번째 줄은 항상 노출
-- **이동**: 합이 **13**인 노출 카드 제거 — `Move.pyramidRemovePair(first:second:)`(피라미드 2장) / `.pyramidRemoveWastePair(card:)`(피라미드+웨이스트) / `.pyramidRemoveSingle(card:)`(**K 단독**), `drawFromStock` 재사용(재활용 없음)
+- **이동**: 합이 **13**인 노출 카드 제거 — `Move.pyramidRemovePair(first:second:)`(피라미드 2장) / `.pyramidRemoveWastePair(card:)`(피라미드+웨이스트) / `.pyramidRemoveSingle(card:)`(**K 단독**), `drawFromStock`(스톡 1장→웨이스트), **`recycleStock`(웨이스트→스톡 재활용 1회** — 스톡이 비고 웨이스트가 있고 미사용 시. 웨이스트를 역순으로 스톡에 복귀해 원래 드로 순서로 다시 뽑힘. `didRecycle` 상태로 1회 제한, Pars Pyramid. 점수 -100)
 - **승리** = 피라미드 전부 nil, **종료 판정** = `hint() == nil`
 - `CardSource.pyramid(Int)` 추가 — 선택/드래그에 사용. hint 우선순위: K 단독 > 피라미드 짝 > 웨이스트 짝 > 드로
 - 자동 플레이 없음 (제거 기반)

@@ -1161,9 +1161,14 @@ final class FreeCellViewModel: ObservableObject {
 
     // MARK: - Pyramid 상호작용
 
-    /// 스톡 클릭: 1장 드로 (재활용 없음 — 스톡이 비면 canMove 가드로 무시)
+    /// 스톡 클릭: 1장 드로 (스톡이 비면 웨이스트를 1회 재활용)
     func tapPyramidStock() {
-        _ = apply(.drawFromStock)
+        guard let p = pyramid else { return }
+        if p.stock.isEmpty {
+            _ = apply(.recycleStock)
+        } else {
+            _ = apply(.drawFromStock)
+        }
     }
 
     /// 웨이스트 클릭: 아무 동작 없음 (Pyramid 웨이스트는 기준 카드)
