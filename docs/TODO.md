@@ -77,6 +77,13 @@
 - [x] T-253: 이중 발화 차단 — 자식 계층(카드/스톡/피라미드·트라이픽스 body) 히트 테스트 차단으로 포인터 탭은 라우터만, 접근성 활성화는 기존 유지 (회귀 267개 통과).
   - 남은 작업: FreeCell/Klondike 등 남은 변형 라이브 검증 — 디스플레이 슬립/잠금 상태로 GUI 검증 보류.
 
+## v3.26 — 코드베이스 리팩토링 (완료 — 2026-09-09, 무동작 변경)
+- [x] 스톡 탭 3종 중복 가드 제거 — FreeCellViewModel `tapGolfStock`/`tapPyramidStock`/`tapTriPeaksStock` → `apply(.drawFromStock)` 일원화 (커밋 abb7284).
+- [x] undo/redo 중복 제거 — `UndoHistory<Snapshot>` 제네릭 공용화 (9개 게임: canUndo/canRedo/undo/redo/apply 기록 로직 축소). 저장 호환 유지 위해 각 게임 커스텀 Codable에서 기존 `undoStack`/`redoStack` 키 그대로 직렬화 (커밋 38182db).
+- [x] 카드 무늬 색상 하드코딩 통일 — `Suit.uiColor` View 확장 (SuitSymbolView/미니카드/faceColor 값 통일) (커밋 5070461).
+- [x] GameSaver 27개 보일러플레이트 축소 — variant→key 매핑 + 제네릭 `save/restore/hasData/clear` + `clearAll()`. 호출부(restoredVariant 캐시/init 11분기/persist/clearSave) 단일화 (커밋 c1e28d3).
+- [x] 검증: `swift test -c release` 267개 전부 통과 (커밋별 267개 고정), 빌드 성공.
+
 ## v3.23 — 게임 흐름 버그 수정 (진행중, PLAN_v3.23_macos.md)
 - [x] T-229: 데일리 단일화 — `startDailyDeal` 폐지 → `startTodayDeal(variant:)` (9판 매핑 후 `startChallenge` 위임). SideBarView:62, GameCommands:27 교체.
 - [x] T-230: `activeChallenge: (deal, startDate)?` 구조체화 + `newGame` 진입 리셋 + `pendingChallengeDeal` (확인 다이얼로그 경로).

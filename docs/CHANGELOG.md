@@ -1,5 +1,15 @@
 # CHANGELOG — 변경 이력
 
+## [미배포] — 2026-09-09 — [macos] — 코드베이스 리팩토링 (무동작 변경)
+### 변경
+- **스톡 탭 가드 일원화**: Golf/Pyramid/TriPeaks 스톡 탭 핸들러의 중복 `canMove` 가드 제거 → `_ = apply(.drawFromStock)` 단일 경로.
+- **undo/redo 공용화**: 게임 9종에 중복된 `undoStack`/`redoStack`/`undo()`/`redo()`/`canUndo`/`canRedo` 보일러플레이트를 `GameCore.UndoHistory<Snapshot>` 제네릭으로 통합 (기록·팝 연산 포함). 각 게임 커스텀 Codable에서 기존 `undoStack`/`redoStack` JSON 키 그대로 유지 — 기존 저장 데이터 호환.
+- **카드 색상 통일**: SuitSymbolView/미니 카드/faceColor에 흩어진 하드코딩 RGB를 `Suit.uiColor` 확장으로 통합 (레드 수트·블랙 수트 상수 1곳).
+- **GameSaver 축소**: variant→저장 키 매핑 중앙화 + 제네릭 `save/restore/hasData/clear(variant:)`/`clearAll()`로 27개 개별 메서드 제거. 저장 키 스트링·저장 형식은 변경 없음 (기존 진행 게임 이어하기 호환).
+### 검증
+- `swift test -c release` **267개 전부 통과** (커밋 4건 각각).
+- `swift build -c release` 성공.
+
 ## [미배포] — 2026-09-09 — [macos] — 보드 탭 라우팅 보강 (T-253)
 ### 변경
 - **이중 발화 차단**: 피라미드/트라이픽스 body와 보드 콘텐츠 VStack에 `.allowsHitTesting(false)` 적용 — 실제 히트 테스트는 상위 `SpatialTapGesture` 라우터만 통과. 자식 `.onTapGesture`(기존 접근성 활성화 경로)와 이벤트가 중복 발화하지 않아, 일부 머신(타일 상단 오버레이 등)에서 라우터+자식 둘 다 반응하던 경우를 예방.
