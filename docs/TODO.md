@@ -72,10 +72,10 @@
 - [x] T-249: 테스트 3개 + 회귀 263개 통과.
 - [x] T-250: 문서/커밋/푸시 마무리 — 커밋 e098d2b에 CHANGELOG·PLAN_v3.24 포함, 푸시 완료.
 
-## v3.25 — 보드 탭 라우팅 (진행중)
+## v3.25 — 보드 탭 라우팅 (완료 — 2026-09-09, 사용자 실기 확인)
 - [x] T-252: 보드 내 카드/스톡 탭 불능 해결 — 상위 `SpatialTapGesture` 좌표 라우팅 (Pyramid 실동작 확인, 회귀 267개 통과, 커밋 6c3d872).
 - [x] T-253: 이중 발화 차단 — 자식 계층(카드/스톡/피라미드·트라이픽스 body) 히트 테스트 차단으로 포인터 탭은 라우터만, 접근성 활성화는 기존 유지 (회귀 267개 통과).
-  - 남은 작업: FreeCell/Klondike 등 남은 변형 라이브 검증 — 디스플레이 슬립/잠금 상태로 GUI 검증 보류.
+  - **GUI 라이브 검증 완료 (2026-09-09)**: FreeCell/Klondike/Forty Thieves/Golf/TriPeaks/Yukon/Scorpion/Spider/Sea Tower/Super FreeCell 변형 탭·드래그 사용자 실기 확인 — "잘 됨". T-253 완결.
 
 ## v3.26 — 코드베이스 리팩토링 (완료 — 2026-09-09, 무동작 변경)
 - [x] 스톡 탭 3종 중복 가드 제거 — FreeCellViewModel `tapGolfStock`/`tapPyramidStock`/`tapTriPeaksStock` → `apply(.drawFromStock)` 일원화 (커밋 abb7284).
@@ -106,7 +106,7 @@
 - [x] T-242: `isBoardLocked` 가드 (apply/undo/redo) + 재생 중 경과시간 정지 + `goHome` 재생 취소.
 - [x] T-239: Winnable 탐색 비동기화 — newGame/startGame 분리 + 로딩 UI + 세대 취소. FreeCellSolverTests 2개 추가.
 - [x] T-239a (버그 수정): `gameSessionID` @Published 누락 수정 + dealRow 항상 dismiss (시트 위 다이얼로그 충돌 회피) + 측정 QoS utility.
-- [x] T-243: 회귀 + CHANGELOG/DESIGN 갱신 (커밋 4b4e1e5 — 258개 통과, DESIGN 4.4 흐름 규칙 + 저장 키 기록). build_and_run.sh release 수동 시나리오는 GUI 검증 블록(T-253)과 묶어 대기.
+- [x] T-243: 회귀 + CHANGELOG/DESIGN 갱신 (커밋 4b4e1e5 — 258개 통과, DESIGN 4.4 흐름 규칙 + 저장 키 기록). `build_and_run.sh release` 수동 시나리오 완료 (2026-09-09 재실행 설치 확인).
 
 ## v3.22 — 홈 화면 + 게임 카테고리/난이도 그룹화 + 게임 중 난이도 (완료 — 2026-08-14, 릴리스 v3.22.0)
 - [x] T-222: `GameVariant` 표시 전용 속성 — `GameCategory`(4그룹) + `baseDifficulty`/`categoryOrder` + `homeOrderedVariants`. `allCases` 순서 유지(데일리 셔플/순환 매핑 무영향). GameVariantDisplayTests 4개 통과.
@@ -156,12 +156,12 @@
 - [x] T-014: scripts/build_and_run.sh (.app 번들 생성 + ~/Applications 설치)
 - [x] T-015: 빌드/설치/실행 검증 + 자동 플레이 테스트 + 스크린샷/a11y 덤프 (release 빌드, 28개 테스트 통과, 창 1000×732, 카드 52장 렌더링 확인)
 
-## v1.1 — 안정화 (진행중)
+## v1.1 — 안정화 (완료 — 2026-08-05)
 - [x] T-016: 수동 플레이 피드백 반영 (v1.0.6 커스텀 드래그 오버레이 + 좌표 정밀화로 커서 정확 추종 "굿" 확인, 자동 이동 연쇄/더블클릭/오버레이 겹침 수정, undo 스냅샷 전환으로 실행취소 크래시 수정 — 2026-08-05 완료)
 - [x] T-017: 자동 저장(중간 복구) (Codable 직렬화 + GameSaver + scenePhase 안전 저장, 30개 테스트 통과, 사용자 재시작 복구 확인 완료 — 2026-08-05)
 - [x] T-018: 접근성(VoiceOver) 개선 (구현 완료 — 카드 힌트/값 + 보드 그룹 + 버튼 라벨 + 드래그 오버레이 hidden. 열 상단 고정도 함께 반영해 사용자 확인 완료. VoiceOver 실제 동작은 추후 보류)
 
-## v2.0 — 두 번째 게임 (진행중)
+## v2.0 — 두 번째 게임 (완료 — 2026-08-05)
 - [x] T-019: 게임 형식 결정 및 GameRule 확장 (Baker's Game 선택, PLAN_v2.0_macos.md 작성 완료)
 - [x] T-020: GameVariant enum + FreeCellRule 같은-수트/수퍼무브 분기 + 테스트
 - [x] T-021: FreeCellGame variant 통합 (freeCellCount, canMove, apply, Codable decodeIfPresent)
@@ -192,7 +192,7 @@
 - [x] T-045: 게임 중 경과 시간 표시 + 중지/재개
 - [x] T-046: 통계/기록 초기화 (StatsStore.resetAll + RecordStore.clearAll)
 
-## v3.0 — Klondike 추가 (진행중 — 2026-08-06)
+## v3.0 — Klondike 추가 (완료 — 2026-08-06, 수동 검증 2026-09-09)
 - [x] T-050: KlondikeGame 구현 (GameCore, 병렬 추가)
 - [x] T-051: Move에 Klondike 케이스 추가
 - [x] T-052: GameVariant.klondike 추가
@@ -201,9 +201,9 @@
 - [x] T-055: GameSaver Klondike 저장/복원
 - [x] T-056: GameBoardView Klondike 레이아웃 (스톡/웨이스트/홈셀 + 7열 faceUp 분기)
 - [x] T-057: 드래그/드롭/탭 파라미터화 + 스톡/웨이스트 (waste 소스, 컬럼 카운트 파라미터화, 게임 전환 3개 순환)
-- [ ] T-058: 회귀 + Klondike 테스트, release 검증 (빌드/설치 완료 — 수동 검증 대기)
+- [x] T-058: 회귀 + Klondike 테스트, release 검증 — 수동 검증 완료 (2026-09-09 GUI 확인).
 
-## v3.1 — Spider 추가 (진행중 — 2026-08-06)
+## v3.1 — Spider 추가 (완료 — 2026-08-06, 수동 검증 2026-09-09)
 - [x] T-060: DealGenerator spiderCards (104장 셔플, 수트 구성)
 - [x] T-061: Move.dealFromStock + GameVariant.spider + SpiderDifficulty
 - [x] T-062: SpiderGame 구현 (10열+스톡+완성수트)
@@ -212,7 +212,7 @@
 - [x] T-065: GameSaver spider 저장/복원
 - [x] T-066: GameBoardView spider 레이아웃 (10열+스톡+완성표시)
 - [x] T-067: 게임 번호 시트 난이도 선택 + 게임 전환 순환
-- [ ] T-068: 회귀 + Spider 테스트, release 검증 (빌드/설치/실행 완료, 72개 테스트 통과 — 수동 검증 대기)
+- [x] T-068: 회귀 + Spider 테스트, release 검증 — 수동 검증 완료 (2026-09-09 GUI 확인).
 
 ## 보류
 - [ ] T-030: 변형 프리셀 추가 (Sea Tower / Super FreeCell) — 아주 나중으로 보류
@@ -229,7 +229,7 @@
 - [x] T-078: 회귀 + 신규 테스트, release 검증 + 문서
 - 보류 T-030 해제됨 (6개 게임 모두 추가 완료) — 수동 검증은 차례대로 진행 예정
 
-## v3.3 — Yukon 추가 (진행중 — 2026-08-06)
+## v3.3 — Yukon 추가 (완료 — 2026-08-06)
 - [x] T-080: GameVariant.yukon + DealGenerator.yukonDeal (7열 1/6/7/8/9/10/11, 뒤집힌 카드)
 - [x] T-081: YukonGame 구현 (유콘 이동: 앞면 카드+위 전부 그룹 이동, 노출 자동 앞면)
 - [x] T-082: 기존 GameCore 스위치 case .yukon 분기 + GameSaver 키
