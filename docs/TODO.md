@@ -63,14 +63,14 @@
 - [ ] T-206: 솔버 휴리스틱 추가 개선 — #50(기본 예산 초과, 해는 존재) / #500(난제) 기본 예산 내 해결 — 예산 유지 결정으로 보류.
   - **2026-08-14 진행 중 갱신**: T-210 과정에서 무효 이동 버그 2건 수정(단일/그룹 bottom 카드 기준 + 유효 최대 그룹 탐색) + 진행(홈 카드) 없는 경로 가지치기(`maxStagnantDepth 80`)로 **#50 유효 해 703 이동이 재생 예산(2M/20s) 내 16.6s 해결**, **#500은 이제 기본 예산으로도 풀리는 게임으로 판명** — T-206 목표 대부분 해소됨.
 
-## v3.24 — 일반/확장 모드 분리 (진행중, PLAN_v3.24_macos.md)
+## v3.24 — 일반/확장 모드 분리 (완료 — 2026-09-09, 커밋 e098d2b + 문서/푸시)
 - [x] T-244: `GameMode` + `standardVariants`/`visibleVariants(mode:)` + 모드별 `deals` (일반 4판 고정/확장 9판 셔플).
 - [x] T-245: 설정 모드 Picker (`settings.gameMode`, 기본 일반).
 - [x] T-246: 선택 UI 필터 (홈/번호시트/랜덤/오늘딜).
 - [x] T-247: 데일리 연동 (ChallengeView 모드 전달 + 기록 경로).
 - [x] T-248: 전환 정책 명시 (게임 유지, 복원 예외 허용 — 코드 변경 없음).
 - [x] T-249: 테스트 3개 + 회귀 263개 통과.
-- [ ] T-250: 문서 + 커밋 + 푸시.
+- [x] T-250: 문서/커밋/푸시 마무리 — 커밋 e098d2b에 CHANGELOG·PLAN_v3.24 포함, 푸시 완료.
 
 ## v3.25 — 보드 탭 라우팅 (진행중)
 - [x] T-252: 보드 내 카드/스톡 탭 불능 해결 — 상위 `SpatialTapGesture` 좌표 라우팅 (Pyramid 실동작 확인, 회귀 267개 통과, 커밋 6c3d872).
@@ -84,13 +84,13 @@
 - [x] GameSaver 27개 보일러플레이트 축소 — variant→key 매핑 + 제네릭 `save/restore/hasData/clear` + `clearAll()`. 호출부(restoredVariant 캐시/init 11분기/persist/clearSave) 단일화 (커밋 c1e28d3).
 - [x] 검증: `swift test -c release` 267개 전부 통과 (커밋별 267개 고정), 빌드 성공.
 
-## v3.27 — Pyramid 스톡 재활용 1회 + Spider 스톡 표시 (진행중, PLAN_v3.27_macos.md)
+## v3.27 — Pyramid 스톡 재활용 1회 + Spider 스톡 표시 (완료 — 2026-09-09, 커밋 8ec749e, PLAN_v3.27_macos.md)
 - [x] T-254: PyramidGame 재활용 1회 — `didRecycle` 상태 + `canMove(.recycleStock)`(스톡 비고 웨이스트 있고 미사용) + `applyUnchecked`(웨이스트 역순→스톡 복귀) + Snapshot/Codable(기존 저장 호환) + hint 후보.
 - [x] T-255: VM `tapPyramidStock` 클론다이크 패턴 분기 (스톡 없으면 재활용) + View 재활용 오버레이(유턴 아이콘).
 - [x] T-256: 테스트(재활용 1회/순서 복원/스톡 존재 시 거부/undo-redo 복원/레거시 호환) + 회귀 274개 통과.
 - [x] T-257: Spider 스톡 더미 표시 — 스톡 50장 × 클릭 1회(10장 딜) 로 더미당 10장씩 소진 표현 (`cardsLeft > index * 10`). 전체 비었을 때만 전부 사라지던 문제 수정, 회귀 274개 유지.
 
-## v3.23 — 게임 흐름 버그 수정 (진행중, PLAN_v3.23_macos.md)
+## v3.23 — 게임 흐름 버그 수정 (완료 — 2026-09-09, 커밋 4b4e1e5)
 - [x] T-229: 데일리 단일화 — `startDailyDeal` 폐지 → `startTodayDeal(variant:)` (9판 매핑 후 `startChallenge` 위임). SideBarView:62, GameCommands:27 교체.
 - [x] T-230: `activeChallenge: (deal, startDate)?` 구조체화 + `newGame` 진입 리셋 + `pendingChallengeDeal` (확인 다이얼로그 경로).
 - [x] T-231: 시작일 기준 기록 + 챌린지 Winnable 우회 (표시=플레이=기록 번호 일치).
@@ -106,9 +106,9 @@
 - [x] T-242: `isBoardLocked` 가드 (apply/undo/redo) + 재생 중 경과시간 정지 + `goHome` 재생 취소.
 - [x] T-239: Winnable 탐색 비동기화 — newGame/startGame 분리 + 로딩 UI + 세대 취소. FreeCellSolverTests 2개 추가.
 - [x] T-239a (버그 수정): `gameSessionID` @Published 누락 수정 + dealRow 항상 dismiss (시트 위 다이얼로그 충돌 회피) + 측정 QoS utility.
-- [ ] T-243: 회귀 + `build_and_run.sh release` 수동 시나리오 + CHANGELOG/DESIGN 갱신.
+- [x] T-243: 회귀 + CHANGELOG/DESIGN 갱신 (커밋 4b4e1e5 — 258개 통과, DESIGN 4.4 흐름 규칙 + 저장 키 기록). build_and_run.sh release 수동 시나리오는 GUI 검증 블록(T-253)과 묶어 대기.
 
-## v3.22 — 홈 화면 + 게임 카테고리/난이도 그룹화 + 게임 중 난이도 (진행중)
+## v3.22 — 홈 화면 + 게임 카테고리/난이도 그룹화 + 게임 중 난이도 (완료 — 2026-08-14, 릴리스 v3.22.0)
 - [x] T-222: `GameVariant` 표시 전용 속성 — `GameCategory`(4그룹) + `baseDifficulty`/`categoryOrder` + `homeOrderedVariants`. `allCases` 순서 유지(데일리 셔플/순환 매핑 무영향). GameVariantDisplayTests 4개 통과.
 - [x] T-223: `GameSelectorView` 카테고리 섹션화 + 난이도 뱃지.
 - [x] T-224: `HomeView` 신규 — 타이틀 헤더 + 빠른 진입(데일리/게임 번호/무작위/통계·업적·설정) + 카테고리 그리드.
@@ -116,7 +116,7 @@
 - [x] T-225: `ContentView` 홈/게임 전환 — VM `showingHome`(기본 true, 앱 시작 시 홈 먼저). 홈에서 창 타이틀 "Pure Solitaire".
 - [x] T-226: 게임 중 난이도 뱃지 — `gameInfoView` 게임 번호 아래 (`vm.variant.baseDifficulty`).
 - [x] T-227: 사이드바 "홈" 버튼(house, ⌘1) + 게임 메뉴 홈(⌘1) + VM `goHome()`.
-- [ ] T-228: 회귀(253) + 설치·실행 검증 + 문서 + 릴리스 v3.22.0.
+- [x] T-228: 회귀 + 설치·실행 검증 + 문서 + 릴리스 v3.22.0 (태그 · GitHub Release + CI 통과). T-228 후속 수정 2건 커밋 0116bcf(난이도 예산 20s) / 23e94a7(자동풀어보기 리셋).
 
 ## v3.21 — 자동 풀어 보기 + 일일 도전 9판/3개월 달력 (완료)
 - [x] v3.21.0 릴리스: 태그 + Release 워크플로우 성공 (`Pure-Solitaire-3.21.0-macos.zip` 4.3MB). CI 안정화: `replayBudget` 20→30s, #50 테스트를 빠른 #2로 교체(시간 의존성 제거). 전체 249개 통과.
