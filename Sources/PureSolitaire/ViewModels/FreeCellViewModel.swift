@@ -71,6 +71,8 @@ final class FreeCellViewModel: ObservableObject {
     private var autoSolveSnapshot: FreeCellGame?
     private var autoSolveTask: Task<Void, Never>?
     private var autoSolveTimer: Timer?
+    /// 자동 풀어 보기 세대 — 탐색 중 새 게임/중단 시 구 결과 파기용 (T-240)
+    private var autoSolveGeneration = 0
     private var moveHistory: [Move] = []
     private var redoMoveHistory: [Move] = []
     private var replayMoves: [Move] = []
@@ -326,6 +328,9 @@ final class FreeCellViewModel: ObservableObject {
 
     /// 홈 화면으로 이동 — 게임 화면에서 홈 복귀 (T-227)
     func goHome() {
+        // 백그라운드 재생 정리 — 복귀 후 타이머가 보드 변조 방지 (T-242)
+        cancelAutoSolve(restore: false, message: nil)
+        cancelReplaySilently()
         showingHome = true
         objectWillChange.send()
     }
@@ -722,7 +727,8 @@ final class FreeCellViewModel: ObservableObject {
         pauseAccumulated = 0
         elapsedTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
-                guard let self, !self.isPaused, !self.currentIsWon else { return }
+                guard let self, !self.isPaused, !self.currentIsWon,
+                      !self.isAutoSolving, !self.isReplaying else { return }
                 self.elapsedSeconds += 1
             }
         }
@@ -755,6 +761,9 @@ final class FreeCellViewModel: ObservableObject {
 
     // MARK: - 이동
 
+    /// 재생 중 보드 변조 방지 — 자동 풀어 보기/리플레이 중 이동·undo·redo 차단 (T-242)
+    private var isBoardLocked: Bool { isAutoSolving || isReplaying }
+
     func select(source: CardSource, cardCount: Int) {
         if selection?.source == source, selection?.cardCount == cardCount {
             selection = nil
@@ -779,6 +788,7 @@ final class FreeCellViewModel: ObservableObject {
 
     @discardableResult
     func apply(_ move: Move) -> Bool {
+        guard !isBoardLocked else { return false }
         let ok: Bool
         if spider != nil {
             spiderSuitsBeforeMove = spider?.completedSuits ?? 0
@@ -1632,7 +1642,7 @@ final class FreeCellViewModel: ObservableObject {
     // MARK: - 실행 취소 / 다시 실행
 
     func undo() {
-        guard !isAutoSolving else { return }
+        guard !isBoardLocked else { return }
         if spider != nil {
             spider?.undo()
         } else if klondike != nil {
@@ -1669,7 +1679,7 @@ final class FreeCellViewModel: ObservableObject {
     }
 
     func redo() {
-        guard !isAutoSolving else { return }
+        guard !isBoardLocked else { return }
         if spider != nil {
             spider?.redo()
         } else if klondike != nil {
@@ -2062,6 +2072,7 @@ final class FreeCellViewModel: ObservableObject {
         let targetVariant = variant
         let targetNumber = currentGameNumber
         let speed = autoSolveSpeed
+        autoSolveGeneration += 1
 
         autoSolveSnapshot = game
         isAutoSolving = true
@@ -2073,13 +2084,17 @@ final class FreeCellViewModel: ObservableObject {
         dismissMessage()
         showMessage("풀이를 찾고 있습니다…")
 
-        autoSolveTask = Task.detached(priority: .userInitiated) {
+        autoSolveTask = Task.detached(priority: .userInitiated) { [generation = autoSolveGeneration] in
+            var budget = FreeCellSolver.replayBudget
+            budget.isCancelled = { Task.isCancelled }
             let result = FreeCellSolver.solve(
                 gameNumber: targetNumber,
                 variant: targetVariant,
-                budget: FreeCellSolver.replayBudget
+                budget: budget
             )
             await MainActor.run {
+                // 구 세대 결과 파기 — 탐색 중 새 게임/중단 시 신 보드 보호 (T-240)
+                guard self.autoSolveGeneration == generation else { return }
                 guard let result else {
                     self.cancelAutoSolve(restore: true, message: "이 판은 풀이를 찾지 못했습니다.")
                     return
@@ -2116,6 +2131,7 @@ final class FreeCellViewModel: ObservableObject {
     private func cancelAutoSolve(restore: Bool, message: String?) {
         autoSolveTask?.cancel()
         autoSolveTask = nil
+        autoSolveGeneration += 1
         autoSolveTimer?.invalidate()
         autoSolveTimer = nil
         if restore, let snapshot = autoSolveSnapshot {

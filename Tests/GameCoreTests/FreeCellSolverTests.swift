@@ -106,6 +106,23 @@ final class FreeCellSolverTests: XCTestCase {
         XCTAssertNil(FreeCellSolver.solve(gameNumber: 1, variant: .klondike))
     }
 
+    /// 취소 플래그 설정 시 즉시 nil 반환 (T-241: 중단해도 예산 만료까지 도는 문제 수정)
+    func testSolveRespectsCancellation() {
+        var budget = FreeCellSolver.Budget(
+            nodeLimit: 10_000_000,
+            timeLimit: 60,
+            depthLimit: 60_000,
+            isCancelled: { true }
+        )
+        XCTAssertNil(FreeCellSolver.solve(gameNumber: 1, variant: .freecell, budget: budget))
+    }
+
+    /// 취소 없음(기본 예산)은 기존 동작 유지
+    func testSolveWithoutCancellationUnchanged() {
+        let budget = FreeCellSolver.Budget(isCancelled: { false })
+        XCTAssertNotNil(FreeCellSolver.solve(gameNumber: 1, variant: .freecell, budget: budget))
+    }
+
     /// replayBudget도 동일하게 유효한 풀이를 생성해야 함
     /// #50은 로컬 16.6s 소요로 CI에서 시간 예산에 민감 — 빠른 #2로 교체(결정적).
     func testSolveWithReplayBudget() {

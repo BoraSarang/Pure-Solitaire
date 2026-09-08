@@ -74,7 +74,10 @@
 - [x] T-236: 시트→다이얼로그 2단계 — `needsNewGameConfirmation` 공용화 + 확인 필요 시 시트 유지, `confirmNewGame`에서 시트 닫기.
 - [x] T-237: `newGame` 진입 `clearSave()` (stale 키 정리) + `restoredVariant` 캐시 (persist/clearSave 갱신).
 - [x] T-238: 경과 시간 저장·복구 — GameSaver elapsed 키 + `beginRestoredSession` 헬퍼 + init 11분기 교체.
-- [ ] T-239~T-242: 3단계 솔버·재생 안전화 (비동기 탐색/세대 토큰/취소 주입/변이 가드).
+- [x] T-240: 자동풀어보기 세대 토큰 (`autoSolveGeneration`, 완료 시점 대조 후 파기).
+- [x] T-241: `Budget.isCancelled` + DFS 루프 조기 종료 + startAutoSolve 취소 전달. FreeCellSolverTests 2개 추가.
+- [x] T-242: `isBoardLocked` 가드 (apply/undo/redo) + 재생 중 경과시간 정지 + `goHome` 재생 취소.
+- [ ] T-239: Winnable 탐색 비동기화 (newGame 호출 체인 전체 비동기 + 로딩 UI — 별도 단계로 분리).
 - [ ] T-243: 회귀 + `build_and_run.sh release` 수동 시나리오 + CHANGELOG/DESIGN 갱신.
 
 ## v3.22 — 홈 화면 + 게임 카테고리/난이도 그룹화 + 게임 중 난이도 (진행중)

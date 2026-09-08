@@ -16,11 +16,19 @@ public enum FreeCellSolver {
         public var nodeLimit: Int
         public var timeLimit: TimeInterval
         public var depthLimit: Int
+        /// 외부 취소 확인 — 설정 시 DFS 루프 선두에서 확인 후 조기 종료 (T-241)
+        public var isCancelled: (@Sendable () -> Bool)?
 
-        public init(nodeLimit: Int = 400_000, timeLimit: TimeInterval = 4.0, depthLimit: Int = 20_000) {
+        public init(
+            nodeLimit: Int = 400_000,
+            timeLimit: TimeInterval = 4.0,
+            depthLimit: Int = 20_000,
+            isCancelled: (@Sendable () -> Bool)? = nil
+        ) {
             self.nodeLimit = nodeLimit
             self.timeLimit = timeLimit
             self.depthLimit = depthLimit
+            self.isCancelled = isCancelled
         }
 
         public static let standard = Budget()
@@ -373,6 +381,7 @@ public enum FreeCellSolver {
         stack.append(Frame(state: current, moves: generalMoves(current), nextIndex: 0, appliedMove: nil, homeMoves: initial.homeMoves, homeCount: Self.homeCount(current), stagnantDepth: 0))
 
         while !stack.isEmpty {
+            if budget.isCancelled?() == true { return nil }
             if nodes > budget.nodeLimit { return nil }
             if Date().timeIntervalSince(start) > budget.timeLimit { return nil }
 
